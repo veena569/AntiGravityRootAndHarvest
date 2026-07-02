@@ -4,45 +4,15 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useApp, Product } from "@/context/AppContext";
+import { useApp } from "@/context/AppContext";
+import { Product } from "@/data/products";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check } from "lucide-react";
 
 export default function ProductsPage() {
-  const { products, addToCart } = useApp();
-  const [selectedSizes, setSelectedSizes] = useState<Record<string, string>>({});
-  const [addedMessage, setAddedMessage] = useState<string | null>(null);
-
-  // Initialize sizes
-  useEffect(() => {
-    const initialSizes: Record<string, string> = {};
-    products.forEach((p) => {
-      // Default to 1L or 500ml or first available size
-      if (p.sizes.includes("1 L")) {
-        initialSizes[p.id] = "1 L";
-      } else if (p.sizes.includes("1L")) {
-        initialSizes[p.id] = "1L";
-      } else {
-        initialSizes[p.id] = p.sizes[0];
-      }
-    });
-    setSelectedSizes(initialSizes);
-  }, [products]);
-
-  const handleSizeChange = (productId: string, size: string) => {
-    setSelectedSizes((prev) => ({ ...prev, [productId]: size }));
-  };
-
-  const handleAddToCart = (product: Product) => {
-    if (product.isComingSoon) return;
-    
-    const size = selectedSizes[product.id] || product.sizes[0];
-    addToCart(product, size, 1);
-    setAddedMessage(`Added ${product.name} to your bag.`);
-    setTimeout(() => setAddedMessage(null), 3000);
-  };
+  const { products } = useApp();
 
   return (
     <div className="bg-brand-bg text-dark font-sans font-light selection:bg-gold/30 min-h-screen">
@@ -61,26 +31,12 @@ export default function ProductsPage() {
             </p>
           </div>
 
-          {/* Added to Cart Notification Toast */}
-          <AnimatePresence>
-            {addedMessage && (
-              <motion.div
-                initial={{ opacity: 0, y: 50 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 50 }}
-                className="fixed bottom-8 right-8 z-50 bg-forest text-brand-bg px-8 py-4 flex items-center gap-4 shadow-xl border border-forest/20"
-              >
-                <Check className="w-5 h-5 text-gold" />
-                <span className="text-xs uppercase tracking-widest font-semibold">{addedMessage}</span>
-              </motion.div>
-            )}
-          </AnimatePresence>
+
 
           {/* Minimalist Product List (Vertical flow for extreme simplicity & large images) */}
           <div className="space-y-40">
             {products.map((product, index) => {
-              const currentSize = selectedSizes[product.id] || product.sizes[0];
-              const currentPrice = product.sizePrices[currentSize] || Object.values(product.sizePrices)[0];
+              const currentPrice = Object.values(product.sizePrices)[0];
               const isComingSoon = product.isComingSoon;
 
               return (
@@ -125,37 +81,17 @@ export default function ProductsPage() {
 
                     {!isComingSoon && (
                       <>
-                        {/* Size Selector */}
-                        <div className={`flex flex-wrap gap-4 ${index % 2 !== 0 ? 'justify-end' : 'justify-start'}`}>
-                          {product.sizes.map((size) => {
-                            const isSelected = currentSize === size;
-                            return (
-                              <button
-                                key={size}
-                                onClick={() => handleSizeChange(product.id, size)}
-                                className={`text-xs uppercase tracking-widest px-6 py-3 border transition-colors ${
-                                  isSelected
-                                    ? "border-forest text-forest bg-forest/5"
-                                    : "border-forest/10 text-dark/60 hover:border-forest/40"
-                                }`}
-                              >
-                                {size}
-                              </button>
-                            );
-                          })}
-                        </div>
-
-                        {/* Price and Cart Button */}
+                        {/* View Details Button */}
                         <div className="space-y-8 pt-6">
                           <div className="text-2xl font-serif text-forest">
-                            ₹{currentPrice}
+                            From ₹{currentPrice}
                           </div>
-                          <button
-                            onClick={() => handleAddToCart(product)}
-                            className="w-full max-w-sm px-8 py-5 bg-forest text-white text-xs uppercase tracking-widest font-semibold hover:bg-forest-light transition-colors"
+                          <Link
+                            href={`/products/${product.id}`}
+                            className="inline-block w-full max-w-sm px-8 py-5 bg-forest text-white text-xs uppercase tracking-widest font-semibold hover:bg-forest-light transition-colors text-center"
                           >
-                            Add To Cart
-                          </button>
+                            Select Size & Add To Cart
+                          </Link>
                         </div>
                       </>
                     )}

@@ -4,7 +4,8 @@ import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Settings, Plus, ShoppingBag, BarChart3, Database, Tag, Newspaper, Users, Eye, Check } from "lucide-react";
-import { useApp, Product } from "@/context/AppContext";
+import { useApp } from "@/context/AppContext";
+import { Product } from "@/data/products";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 

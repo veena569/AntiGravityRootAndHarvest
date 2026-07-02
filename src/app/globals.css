@@ -8,14 +8,15 @@
   
   /* Brand Colors */
   --color-brand-bg: #F8F5EF;
-  --color-forest: #1E4A3A;
-  --color-forest-light: #2C6B54;
-  --color-forest-dark: #123025;
-  --color-gold: #B8903A;
-  --color-gold-light: #D4AF37;
-  --color-gold-dark: #8E6E27;
-  --color-dark: #2B2B2B;
-  --color-grey: #F3F3F3;
+  --color-forest: #1E3D2B;
+  --color-forest-light: #2A563D;
+  --color-forest-dark: #12251A;
+  --color-gold: #C8A14A;
+  --color-gold-light: #D5B670;
+  --color-gold-dark: #A5843C;
+  --color-brown: #8B5E3C;
+  --color-dark: #1F2937;
+  --color-grey: #F3F4F6;
 }
 
 body {

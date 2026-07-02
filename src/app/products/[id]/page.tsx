@@ -3,12 +3,14 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, useRouter } from "next/navigation";
 import { ArrowLeft, Plus, Minus, Star, ChevronDown, ChevronUp, Check } from "lucide-react";
-import { useApp, Product } from "@/context/AppContext";
+import { useApp } from "@/context/AppContext";
+import { Product } from "@/data/products";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { motion, AnimatePresence } from "framer-motion";
+import { BrandBottle } from "@/components/ui/BrandBottle";
 
 export default function ProductDetailsPage({ params }: { params: { id: string } }) {
   const { products, addToCart } = useApp();
@@ -18,38 +20,22 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
     notFound();
   }
 
-  const [selectedSize, setSelectedSize] = useState(product.sizes.includes("1 L") ? "1 L" : product.sizes.includes("1L") ? "1L" : product.sizes[0]);
+  const router = useRouter();
+  const [selectedSize, setSelectedSize] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
-  const [addedMessage, setAddedMessage] = useState<string | null>(null);
 
-  const currentPrice = product.sizePrices[selectedSize] || Object.values(product.sizePrices)[0];
+  const currentPrice = selectedSize ? product.sizePrices[selectedSize] : Object.values(product.sizePrices)[0];
 
   const handleAddToCart = () => {
-    if (product.isComingSoon) return;
+    if (product.isComingSoon || !selectedSize) return;
     addToCart(product, selectedSize, quantity);
-    setAddedMessage(`Added ${quantity}x ${product.name} (${selectedSize}) to bag.`);
-    setTimeout(() => setAddedMessage(null), 3000);
+    router.push("/cart");
   };
 
   return (
     <div className="bg-brand-bg text-dark font-sans font-light selection:bg-gold/30 min-h-screen">
       <Navbar />
-
-      {/* Added Notification */}
-      <AnimatePresence>
-        {addedMessage && (
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 50 }}
-            className="fixed bottom-8 right-8 z-50 bg-forest text-brand-bg px-8 py-4 flex items-center gap-4 shadow-xl border border-forest/20"
-          >
-            <Check className="w-5 h-5 text-gold" />
-            <span className="text-xs uppercase tracking-widest font-semibold">{addedMessage}</span>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       <main>
         {/* Navigation Breadcrumb */}
@@ -65,13 +51,17 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
           
           {/* Huge Photography */}
           <div className="relative aspect-[4/5] bg-white w-full">
-            <Image
-              src={product.image}
-              alt={product.name}
-              fill
-              className={`object-cover p-4 ${product.isComingSoon ? "blur-md opacity-70 grayscale" : ""}`}
-              priority
-            />
+            {product.id === "groundnut-oil" ? (
+              <BrandBottle className="w-full h-full absolute inset-0" />
+            ) : (
+              <Image
+                src={product.image}
+                alt={product.name}
+                fill
+                className={`object-cover p-4 ${product.isComingSoon ? "blur-md opacity-70 grayscale" : ""}`}
+                priority
+              />
+            )}
           </div>
 
           {/* Core Info & Cart Actions */}
@@ -101,24 +91,20 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
                 
                 {/* Size Selection */}
                 <div className="space-y-6">
-                  <span className="text-xs uppercase tracking-widest text-forest/50 font-semibold block">Select Size</span>
-                  <div className="flex flex-wrap gap-4">
-                    {product.sizes.map((size) => {
-                      const isSelected = selectedSize === size;
-                      return (
-                        <button
-                          key={size}
-                          onClick={() => setSelectedSize(size)}
-                          className={`text-sm uppercase tracking-widest px-8 py-4 border transition-colors ${
-                            isSelected
-                              ? "border-forest text-forest bg-forest/5"
-                              : "border-forest/10 text-dark/50 hover:border-forest/40"
-                          }`}
-                        >
-                          {size}
-                        </button>
-                      );
-                    })}
+                  <label htmlFor="size-select" className="text-xs uppercase tracking-widest text-forest/50 font-semibold block">Select Size (Mandatory)</label>
+                  <div className="relative">
+                    <select
+                      id="size-select"
+                      value={selectedSize}
+                      onChange={(e) => setSelectedSize(e.target.value)}
+                      className="w-full appearance-none rounded-none border border-forest/20 bg-transparent px-8 py-4 text-sm uppercase tracking-widest text-forest focus:border-forest focus:outline-none transition-colors"
+                    >
+                      <option value="" disabled>Choose a size</option>
+                      {product.sizes.filter(size => ['250ml', '500ml', '1000ml', '250 ml', '500 ml', '1 L', '1L'].includes(size.toLowerCase()) || true).map((size) => (
+                        <option key={size} value={size}>{size}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 w-5 h-5 text-forest/50 pointer-events-none" />
                   </div>
                 </div>
 
@@ -150,9 +136,10 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
                     </div>
                     <button
                       onClick={handleAddToCart}
-                      className="w-full px-8 py-5 bg-forest text-white text-xs uppercase tracking-widest font-semibold hover:bg-forest-light transition-colors"
+                      disabled={!selectedSize}
+                      className="w-full px-8 py-5 bg-forest text-white text-xs uppercase tracking-widest font-semibold hover:bg-forest-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Add To Cart
+                      {selectedSize ? "Add To Cart" : "Select Size"}
                     </button>
                   </div>
                 </div>

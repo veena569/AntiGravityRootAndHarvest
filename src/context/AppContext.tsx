@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 
-import { Product, CartItem, ShippingAddress, Order, Subscription, INITIAL_PRODUCTS } from "../data/products";
+import { Product, INITIAL_PRODUCTS } from "../data/products";
 // Added CartItem, ShippingAddress, Order, Subscription types back to AppContext since they are closely tied to state. Wait, they weren't in products.ts. Let me restore them.
 export interface CartItem {
   product: Product;

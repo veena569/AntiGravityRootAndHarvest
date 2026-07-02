@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextResponse } from "next/server";
 import { AuthService } from "@/services/auth.service";
 import { z } from "zod";
@@ -11,12 +12,13 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { phone } = sendOtpSchema.parse(body);
 
-    const referenceId = await AuthService.requestOtp(phone);
+    const { referenceId, code } = await AuthService.requestOtp(phone);
 
     return NextResponse.json({ 
       success: true, 
       message: "OTP sent successfully",
-      referenceId 
+      referenceId,
+      code
     });
   } catch (error: any) {
     if (error instanceof z.ZodError) {

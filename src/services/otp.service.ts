@@ -7,7 +7,7 @@ export class OtpService {
   /**
    * Generates a new OTP for the given phone or email
    */
-  static async generateOtp({ phone, email }: { phone?: string; email?: string }): Promise<string> {
+  static async generateOtp({ phone, email }: { phone?: string; email?: string }): Promise<{ referenceId: string; code: string }> {
     if (!phone && !email) {
       throw new Error("Phone or email is required to generate OTP");
     }
@@ -49,7 +49,7 @@ export class OtpService {
     console.log(`[MOCK NOTIFICATION] OTP for ${phone || email}: ${code}`);
     console.log(`========================================\n\n`);
 
-    return otpRecord.id;
+    return { referenceId: otpRecord.id, code };
   }
 
   /**

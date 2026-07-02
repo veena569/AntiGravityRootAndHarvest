@@ -6,6 +6,7 @@ import { twMerge } from "tailwind-merge";
 import { Heading } from "./Heading";
 import { Price } from "./Price";
 import { Badge } from "./Badge";
+import { BrandBottle } from "./BrandBottle";
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -38,13 +39,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             <Badge variant="primary">{badge}</Badge>
           </div>
         )}
-        <Image
-          src={image}
-          alt={name}
-          fill
-          className="object-cover object-center transition-transform duration-700 group-hover:scale-105"
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-        />
+        {id === "groundnut-oil" ? (
+          <BrandBottle className="w-full h-full absolute inset-0 transition-transform duration-700 group-hover:scale-105" />
+        ) : (
+          <Image
+            src={image}
+            alt={name}
+            fill
+            className="object-cover object-center transition-transform duration-700 group-hover:scale-105"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          />
+        )}
         <div className="absolute inset-0 bg-forest/0 transition-colors duration-300 group-hover:bg-forest/5" />
       </Link>
       

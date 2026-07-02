@@ -9,6 +9,7 @@ import { useApp } from "@/context/AppContext";
 import { NAVIGATION_LINKS } from "@/constants";
 import { BRAND } from "@/config/brand";
 import { Button } from "@/components/ui/Button";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 
 export const Navbar: React.FC = () => {
   const { cart, wishlist } = useApp();
@@ -48,12 +49,7 @@ export const Navbar: React.FC = () => {
 
           {/* Logo */}
           <Link href="/" className="flex flex-col items-center">
-            <span className="text-xl md:text-2xl font-serif tracking-[0.25em] text-forest font-semibold uppercase leading-none">
-              Root & Harvest
-            </span>
-            <span className="text-[8px] md:text-[9px] uppercase tracking-[0.4em] text-gold mt-1 leading-none font-sans font-medium">
-              Pure Farm Heritage
-            </span>
+            <BrandLogo className="w-40 h-16" />
           </Link>
 
           {/* Desktop Navigation */}

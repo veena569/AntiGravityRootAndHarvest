@@ -1,270 +1,228 @@
-"use client";
-
 import React from "react";
-import Image from "next/image";
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { ArrowRight, Leaf, Droplet, Sun, ShieldCheck } from "lucide-react";
-import { Navbar } from "@/components/layout/Navbar";
-import { Footer } from "@/components/layout/Footer";
-import { useApp } from "@/context/AppContext";
+import { BrandBottle } from "@/components/ui/BrandBottle";
+import { ArrowRight, Leaf, ShieldCheck, Truck, CheckCircle2, Factory, Heart, Microscope } from "lucide-react";
+import { ProductCard } from "@/components/ui/ProductCard";
+import { INITIAL_PRODUCTS } from "@/data/products";
 
-const FadeIn = ({ children, delay = 0, className = "" }: { children: React.ReactNode, delay?: number, className?: string }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 30 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true, margin: "-100px" }}
-    transition={{ duration: 1, delay, ease: [0.21, 0.47, 0.32, 0.98] }}
-    className={className}
-  >
-    {children}
-  </motion.div>
-);
-
-export default function Home() {
-  const { products } = useApp();
-  const featuredProduct = products.find(p => p.id === "groundnut-oil") || products[0];
+export default function HomePage() {
+  const products = INITIAL_PRODUCTS;
+  const featuredProducts = products.slice(0, 4);
 
   return (
-    <div className="bg-brand-bg text-dark font-sans font-light selection:bg-gold/30">
-      <Navbar />
-
-      <main className="min-h-screen">
+    <div className="flex flex-col w-full selection:bg-gold/20 font-sans font-light bg-brand-bg text-dark overflow-x-hidden">
+      
+      {/* 1. HERO SECTION */}
+      <section className="relative w-full min-h-[90vh] flex flex-col lg:flex-row items-center max-w-7xl mx-auto px-6 md:px-12 pt-12 lg:pt-0">
         
-        {/* 1. Hero Section */}
-        <section className="relative min-h-[90vh] md:min-h-screen flex items-center justify-center pt-20 overflow-hidden">
-          {/* Extremely minimal background */}
-          <div className="absolute inset-0 bg-brand-bg z-0" />
+        {/* Left: Copy */}
+        <div className="w-full lg:w-1/2 flex flex-col justify-center space-y-8 z-10 py-12 lg:py-0">
+          <div className="space-y-4">
+            <span className="text-xs tracking-[0.3em] uppercase text-gold font-semibold flex items-center gap-4">
+              <span className="w-8 h-[1px] bg-gold"></span>
+              Premium Farm Heritage
+            </span>
+            <h1 className="text-5xl md:text-7xl font-serif text-forest leading-[1.1] tracking-tight">
+              Return to Purity. <br/>
+              <span className="italic text-forest/80">Rooted in Trust.</span>
+            </h1>
+          </div>
           
-          <div className="relative z-10 text-center max-w-4xl mx-auto px-6 flex flex-col items-center">
-            <motion.span 
-              initial={{ opacity: 0 }} 
-              animate={{ opacity: 1 }} 
-              transition={{ duration: 1, delay: 0.2 }}
-              className="text-xs uppercase tracking-[0.4em] text-forest/70 font-semibold mb-6 block"
+          <p className="text-lg text-dark/70 max-w-md leading-relaxed">
+            Every bottle begins with carefully selected farms and traditional wood pressing, bringing pure nourishment from our family to yours.
+          </p>
+          
+          <div className="flex flex-col sm:flex-row gap-4 pt-4">
+            <Link 
+              href="/products"
+              className="px-8 py-4 bg-forest text-white text-xs uppercase tracking-widest font-semibold hover:bg-forest-light transition-all flex items-center justify-center gap-2 group shadow-lg shadow-forest/20"
             >
-              Root & Harvest
-            </motion.span>
-            
-            <motion.h1 
-              initial={{ opacity: 0, y: 20 }} 
-              animate={{ opacity: 1, y: 0 }} 
-              transition={{ duration: 1.2, delay: 0.4, ease: "easeOut" }}
-              className="text-5xl md:text-7xl lg:text-8xl font-serif text-forest tracking-tight leading-[1.1] mb-8"
+              Shop Groundnut Oil
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </Link>
+            <Link 
+              href="#our-story"
+              className="px-8 py-4 bg-transparent border border-forest/20 text-forest text-xs uppercase tracking-widest font-semibold hover:border-forest hover:bg-forest/5 transition-all flex items-center justify-center text-center"
             >
-              From Trusted Farms <br className="hidden md:block" />
-              <span className="italic font-normal text-gold">To Your Family.</span>
-            </motion.h1>
-            
-            <motion.p 
-              initial={{ opacity: 0 }} 
-              animate={{ opacity: 1 }} 
-              transition={{ duration: 1, delay: 0.8 }}
-              className="text-lg md:text-xl text-dark/70 font-light max-w-2xl leading-relaxed mb-12"
-            >
-              We combine generations of agricultural values with modern engineering precision to bring transparency and authentic, naturally crafted foods back into every Indian kitchen.
-            </motion.p>
-            
-            <motion.div 
-              initial={{ opacity: 0 }} 
-              animate={{ opacity: 1 }} 
-              transition={{ duration: 1, delay: 1.2 }}
-            >
-              <Link 
-                href="/products/groundnut-oil" 
-                className="group flex items-center gap-3 text-xs uppercase tracking-[0.2em] font-semibold text-forest pb-2 border-b border-forest/30 hover:border-forest transition-all"
-              >
-                Discover Our Harvest
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </Link>
-            </motion.div>
+              Our Story
+            </Link>
           </div>
+        </div>
 
-          {/* Hero Image (Abstract/Soft) */}
-          <motion.div 
-            initial={{ opacity: 0, scale: 1.05 }} 
-            animate={{ opacity: 1, scale: 1 }} 
-            transition={{ duration: 2, delay: 0.5 }}
-            className="absolute bottom-0 left-0 right-0 h-[30vh] md:h-[40vh] z-0 opacity-40"
-          >
-            <div className="absolute inset-0 bg-gradient-to-t from-brand-bg to-transparent z-10" />
-            <Image 
-              src="/indian_farm_sunrise_1782932084103.jpg" 
-              alt="Indian farm sunrise" 
-              fill 
-              className="object-cover object-bottom"
-              priority
-            />
-          </motion.div>
-        </section>
-
-        {/* 2. Our Story */}
-        <section className="py-32 md:py-48 px-6 bg-white">
-          <div className="max-w-3xl mx-auto text-center space-y-12">
-            <FadeIn>
-              <span className="text-xs uppercase tracking-[0.3em] text-gold font-semibold block mb-6">Our Story</span>
-              <h2 className="text-3xl md:text-5xl font-serif text-forest leading-tight mb-8">
-                Founded by engineers, <br className="hidden md:block" />raised by farmers.
-              </h2>
-            </FadeIn>
-            <FadeIn delay={0.2}>
-              <p className="text-lg md:text-xl text-dark/80 font-light leading-relaxed">
-                Growing up in agricultural families, we understood the immense care that goes into growing honest food. But as we moved to the city, we realized that the food on our plates had lost its authenticity, obscured by complex supply chains and chemical processing. 
-              </p>
-            </FadeIn>
-            <FadeIn delay={0.4}>
-              <p className="text-lg md:text-xl text-dark/80 font-light leading-relaxed">
-                Root & Harvest was born to bridge this gap. We apply engineering precision to traditional wisdom, ensuring that every drop of oil and spoonful of honey is as pure as nature intended—transparently tracked from our trusted farms to your table.
-              </p>
-            </FadeIn>
+        {/* Right: The Amber Bottle */}
+        <div className="w-full lg:w-1/2 h-[500px] lg:h-screen relative flex items-center justify-center">
+          {/* Subtle background glow/circle */}
+          <div className="absolute w-[80%] h-[80%] bg-gold/5 rounded-full blur-3xl"></div>
+          
+          {/* The Hero Bottle */}
+          <div className="relative w-full h-[120%] lg:scale-[1.2] lg:translate-x-12">
+             <BrandBottle className="w-full h-full" />
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* 3. Our Promise (Minimal Grid) */}
-        <section className="py-32 md:py-40 px-6 bg-brand-bg border-y border-forest/10">
-          <div className="max-w-6xl mx-auto">
-            <FadeIn className="text-center mb-24">
-              <span className="text-xs uppercase tracking-[0.3em] text-gold font-semibold block mb-4">Our Promise</span>
-              <h2 className="text-3xl md:text-4xl font-serif text-forest">No compromises. Just honest food.</h2>
-            </FadeIn>
+      {/* 2. TRUST BAR */}
+      <section className="border-y border-forest/10 bg-white/50 backdrop-blur-md relative z-20">
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-6 text-xs uppercase tracking-widest text-forest font-semibold">
+            <span className="flex items-center gap-2"><Leaf className="w-4 h-4 text-gold" /> 100% Natural</span>
+            <span className="flex items-center gap-2"><ShieldCheck className="w-4 h-4 text-gold" /> No Preservatives</span>
+            <span className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-gold" /> Secure Payments</span>
+            <span className="flex items-center gap-2"><Truck className="w-4 h-4 text-gold" /> Fast Delivery</span>
+            <span className="flex items-center gap-2"><Factory className="w-4 h-4 text-gold" /> Made in India</span>
+            <span className="flex items-center gap-2"><Heart className="w-4 h-4 text-gold" /> Family Trusted</span>
+          </div>
+        </div>
+      </section>
+
+      {/* 3. OUR STORY */}
+      <section id="our-story" className="py-24 lg:py-32 relative">
+        <div className="max-w-7xl mx-auto px-6 md:px-12 flex flex-col lg:flex-row gap-16 items-center">
+          <div className="w-full lg:w-1/2 space-y-8">
+            <span className="text-xs tracking-[0.3em] uppercase text-gold font-semibold">Our Heritage</span>
+            <h2 className="text-4xl md:text-5xl font-serif text-forest tracking-tight">Why We Started <br/>Root & Harvest</h2>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-16 md:gap-24 text-center">
-              {[
-                { icon: Leaf, title: "100% Natural", desc: "No chemicals, no preservatives, no hidden ingredients." },
-                { icon: ShieldCheck, title: "Engineered Trust", desc: "Every batch rigorously tested and fully traceable." },
-                { icon: Sun, title: "Traditional Methods", desc: "Slow, cold-extraction preserving all native nutrients." }
-              ].map((feature, i) => (
-                <FadeIn key={i} delay={i * 0.2} className="flex flex-col items-center space-y-6">
-                  <div className="w-16 h-16 rounded-full border border-forest/20 flex items-center justify-center text-gold">
-                    <feature.icon className="w-6 h-6 stroke-[1.5]" />
-                  </div>
-                  <h3 className="text-lg font-serif text-forest">{feature.title}</h3>
-                  <p className="text-sm text-dark/70 font-light leading-relaxed max-w-[250px]">
-                    {feature.desc}
-                  </p>
-                </FadeIn>
-              ))}
+            <div className="space-y-6 text-dark/70 text-lg leading-relaxed">
+              <p>
+                Root & Harvest was founded by two software engineers who grew up deeply connected to farming. 
+              </p>
+              <p>
+                As we built our careers in technology, we realized how disconnected modern food production had become from nature. We believe every family deserves food they can implicitly trust.
+              </p>
+              <p className="font-serif text-xl italic text-forest">
+                That belief became Root & Harvest.
+              </p>
             </div>
           </div>
-        </section>
-
-        {/* 4. Farm to Family Journey (Large Photography) */}
-        <section className="py-32 md:py-48 bg-white">
-          <div className="max-w-7xl mx-auto px-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
-              <FadeIn className="relative aspect-[4/5] w-full bg-brand-bg">
-                <Image 
-                  src="/traditional_wood_press_1782932105490.jpg" 
-                  alt="Traditional Vagai Wood Press" 
-                  fill 
-                  className="object-cover"
-                />
-              </FadeIn>
+          
+          <div className="w-full lg:w-1/2 bg-white rounded-3xl p-8 md:p-12 shadow-sm border border-forest/5">
+            <div className="relative pl-8 border-l border-forest/10 space-y-12 py-4">
               
-              <div className="space-y-10 lg:pl-12">
-                <FadeIn>
-                  <span className="text-xs uppercase tracking-[0.3em] text-gold font-semibold block mb-6">The Journey</span>
-                  <h2 className="text-3xl md:text-5xl font-serif text-forest leading-tight mb-8">
-                    Crafted with time.
-                  </h2>
-                  <div className="space-y-6 text-base md:text-lg text-dark/80 font-light leading-relaxed">
-                    <p>
-                      We don't believe in shortcuts. Our groundnut oil is extracted using the ancient <em>Lakdi Ghani</em> method, a massive wooden mortar and pestle carved from Vagai wood.
-                    </p>
-                    <p>
-                      Operating at a slow 14 revolutions per minute, the process generates almost zero heat. This cold-extraction preserves the fragile antioxidants, vitamins, and the distinctly sweet, nutty aroma of the harvest. 
-                    </p>
-                    <p>
-                      It takes time. It yields less oil. But the quality is undeniable.
-                    </p>
-                  </div>
-                </FadeIn>
+              <div className="relative">
+                <div className="absolute w-3 h-3 bg-gold rounded-full -left-[38.5px] top-1.5 shadow-[0_0_0_4px_rgba(200,161,74,0.2)]"></div>
+                <h4 className="text-lg font-serif text-forest font-medium">Roots</h4>
+                <p className="text-sm text-dark/60 mt-1">Deeply connected to agricultural heritage.</p>
               </div>
-            </div>
-          </div>
-        </section>
 
-        {/* 5. Why Root & Harvest (Typography Focus) */}
-        <section className="py-32 md:py-40 bg-forest text-brand-bg text-center px-6 selection:bg-brand-bg/30">
-          <div className="max-w-4xl mx-auto">
-            <FadeIn>
-              <h2 className="text-3xl md:text-5xl lg:text-6xl font-serif leading-tight font-light text-white/90">
-                "We believe that premium food shouldn't be a luxury—it should be the standard. We are here to restore the dignity of the Indian kitchen."
-              </h2>
-              <div className="mt-16 flex items-center justify-center gap-4 text-xs uppercase tracking-[0.2em] text-gold">
-                <span>The Founders</span>
-                <span className="w-8 h-[1px] bg-gold/50" />
-                <span>Root & Harvest</span>
+              <div className="relative">
+                <div className="absolute w-3 h-3 bg-forest rounded-full -left-[38.5px] top-1.5 shadow-[0_0_0_4px_rgba(30,61,43,0.1)]"></div>
+                <h4 className="text-lg font-serif text-forest font-medium">Traditional Farming</h4>
+                <p className="text-sm text-dark/60 mt-1">Partnering directly with local farmers.</p>
               </div>
-            </FadeIn>
-          </div>
-        </section>
 
-        {/* 6. Featured Product (Minimalist layout) */}
-        <section className="py-32 md:py-48 px-6 bg-brand-bg">
-          <div className="max-w-6xl mx-auto">
-            <FadeIn className="text-center mb-20">
-              <span className="text-xs uppercase tracking-[0.3em] text-gold font-semibold block mb-4">The Launch Collection</span>
-              <h2 className="text-3xl md:text-4xl font-serif text-forest">Our Signature Harvest</h2>
-            </FadeIn>
+              <div className="relative">
+                <div className="absolute w-3 h-3 bg-forest rounded-full -left-[38.5px] top-1.5 shadow-[0_0_0_4px_rgba(30,61,43,0.1)]"></div>
+                <h4 className="text-lg font-serif text-forest font-medium">Engineering Precision</h4>
+                <p className="text-sm text-dark/60 mt-1">Applying meticulous standards to natural extraction.</p>
+              </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
-              <FadeIn className="order-2 md:order-1 space-y-8 md:pr-12 text-center md:text-left">
-                <h3 className="text-3xl md:text-4xl font-serif text-forest">{featuredProduct.name}</h3>
-                <p className="text-lg text-dark/70 font-light leading-relaxed">
-                  {featuredProduct.tagline}
-                </p>
-                <div className="pt-8">
-                  <Link 
-                    href={`/products/${featuredProduct.id}`}
-                    className="inline-block px-8 py-4 bg-forest text-white text-xs uppercase tracking-widest font-semibold hover:bg-forest-light transition-colors"
-                  >
-                    View Product
-                  </Link>
+              <div className="relative">
+                <div className="absolute w-3 h-3 bg-forest rounded-full -left-[38.5px] top-1.5 shadow-[0_0_0_4px_rgba(30,61,43,0.1)]"></div>
+                <h4 className="text-lg font-serif text-forest font-medium">Uncompromising Quality</h4>
+                <p className="text-sm text-dark/60 mt-1">Rigorous testing ensuring absolute purity.</p>
+              </div>
+
+              <div className="relative">
+                <div className="absolute w-4 h-4 bg-forest rounded-full -left-[40.5px] top-1 flex items-center justify-center shadow-[0_0_0_6px_rgba(30,61,43,0.15)]">
+                  <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
                 </div>
-              </FadeIn>
-              
-              <FadeIn className="order-1 md:order-2 relative aspect-[3/4] w-full max-w-md mx-auto bg-white shadow-xl">
-                <Image 
-                  src={featuredProduct.image} 
-                  alt={featuredProduct.name} 
-                  fill 
-                  className="object-cover p-8"
-                />
-              </FadeIn>
+                <h4 className="text-lg font-serif text-forest font-medium">Your Family</h4>
+                <p className="text-sm text-dark/60 mt-1">Delivering nourishment you can trust.</p>
+              </div>
+
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* 7. Join Our Journey */}
-        <section className="py-32 md:py-40 bg-white border-t border-forest/10 px-6 text-center">
-          <div className="max-w-2xl mx-auto space-y-10">
-            <FadeIn>
-              <h2 className="text-3xl md:text-4xl font-serif text-forest mb-6">Join the Family.</h2>
-              <p className="text-base text-dark/70 font-light leading-relaxed mb-10">
-                Subscribe to our journal for stories from the farm, transparency reports, and early access to new harvests.
-              </p>
-              <form className="flex flex-col sm:flex-row max-w-md mx-auto gap-4">
-                <input 
-                  type="email" 
-                  placeholder="Email Address" 
-                  className="flex-grow px-6 py-4 border border-forest/20 text-sm focus:outline-none focus:border-gold bg-brand-bg transition-colors"
-                  required
-                />
-                <button 
-                  type="submit" 
-                  className="px-8 py-4 bg-forest text-white text-xs uppercase tracking-widest font-semibold hover:bg-forest-light transition-colors shrink-0"
-                >
-                  Subscribe
-                </button>
-              </form>
-            </FadeIn>
+      {/* 4. WHY CHOOSE US */}
+      <section className="py-24 lg:py-32 bg-forest text-white">
+        <div className="max-w-7xl mx-auto px-6 md:px-12">
+          <div className="text-center max-w-2xl mx-auto space-y-4 mb-16">
+            <span className="text-xs tracking-[0.3em] uppercase text-gold font-semibold">Our Promise</span>
+            <h2 className="text-4xl md:text-5xl font-serif text-brand-bg tracking-tight">The Root & Harvest Difference</h2>
           </div>
-        </section>
 
-      </main>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[
+              { icon: <Factory />, title: "Freshly Wood Pressed", desc: "Extracted at low temperatures using traditional wooden ghani." },
+              { icon: <Leaf />, title: "No Chemicals", desc: "Absolutely no solvents, preservatives, or artificial additives." },
+              { icon: <CheckCircle2 />, title: "Small Batch Production", desc: "Made in limited quantities to ensure maximum freshness." },
+              { icon: <Microscope />, title: "Lab Tested Quality", desc: "Rigorously tested for purity, nutrition, and safety." },
+              { icon: <Truck />, title: "Direct From Farmers", desc: "Sourced directly from trusted family farms across India." },
+              { icon: <Heart />, title: "Made For Families", desc: "Crafted with the same care we demand for our own children." }
+            ].map((feature, idx) => (
+              <div key={idx} className="bg-forest-light/30 border border-white/5 p-8 rounded-2xl hover:bg-forest-light/50 transition-colors group">
+                <div className="w-12 h-12 rounded-xl bg-brand-bg/10 flex items-center justify-center text-gold mb-6 group-hover:scale-110 transition-transform">
+                  {feature.icon}
+                </div>
+                <h3 className="text-xl font-serif mb-3 text-brand-bg">{feature.title}</h3>
+                <p className="text-sm text-brand-bg/60 leading-relaxed">{feature.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
-      <Footer />
+      {/* 5. COLLECTIONS / PRODUCTS */}
+      <section className="py-24 lg:py-32 bg-white">
+        <div className="max-w-7xl mx-auto px-6 md:px-12">
+          <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
+            <div className="space-y-4">
+              <span className="text-xs tracking-[0.3em] uppercase text-gold font-semibold">Curated Selection</span>
+              <h2 className="text-4xl md:text-5xl font-serif text-forest tracking-tight">Premium Essentials</h2>
+            </div>
+            <Link href="/products" className="text-sm font-semibold uppercase tracking-widest text-forest hover:text-gold transition-colors flex items-center gap-2 luxury-underline">
+              View All Products
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {featuredProducts.map((product) => (
+              <ProductCard 
+                key={product.id} 
+                id={product.id}
+                name={product.name}
+                tagline={product.tagline}
+                image={product.image}
+                price={Object.values(product.sizePrices)[0]}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 6. TESTIMONIALS */}
+      <section className="py-24 lg:py-32 bg-brand-bg border-t border-forest/10">
+        <div className="max-w-7xl mx-auto px-6 md:px-12 text-center">
+          <div className="space-y-4 mb-16">
+            <span className="text-xs tracking-[0.3em] uppercase text-gold font-semibold">Family Trusted</span>
+            <h2 className="text-4xl font-serif text-forest tracking-tight">What Our Customers Say</h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              { quote: "The purity of the groundnut oil is unmatched. It reminds me of the oil we used to get directly from the village press when I was a child.", author: "Meera R.", location: "Bangalore" },
+              { quote: "Finally, a brand that doesn't just market purity but actually delivers it. You can taste the difference in every meal cooked.", author: "Arjun S.", location: "Mumbai" },
+              { quote: "Their commitment to transparency and quality is why I trust Root & Harvest for my family's everyday cooking needs.", author: "Priya M.", location: "Delhi" }
+            ].map((testimonial, idx) => (
+              <div key={idx} className="bg-white p-10 rounded-2xl shadow-sm border border-forest/5 flex flex-col justify-between">
+                <div className="mb-8">
+                  <div className="flex justify-center gap-1 mb-6 text-gold">
+                    {[...Array(5)].map((_, i) => <span key={i}>★</span>)}
+                  </div>
+                  <p className="text-dark/80 italic font-serif text-lg leading-relaxed">"{testimonial.quote}"</p>
+                </div>
+                <div>
+                  <p className="font-semibold text-forest uppercase tracking-widest text-xs">{testimonial.author}</p>
+                  <p className="text-xs text-dark/40 mt-1">{testimonial.location}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
     </div>
   );
 }

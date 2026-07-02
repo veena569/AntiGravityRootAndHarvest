@@ -7,7 +7,7 @@ export class AuthService {
   /**
    * Request OTP
    */
-  static async requestOtp(phone: string): Promise<string> {
+  static async requestOtp(phone: string): Promise<{ referenceId: string; code: string }> {
     return await OtpService.generateOtp({ phone });
   }
 
