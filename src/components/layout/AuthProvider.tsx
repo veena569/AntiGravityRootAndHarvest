@@ -7,7 +7,8 @@ import { useRouter, usePathname } from "next/navigation";
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (phone: string, code: string) => Promise<boolean>;
+  login: (phone: string, firebaseIdToken: string, name?: string) => Promise<boolean>;
+  loginWithEmail: (email: string, code: string, name?: string) => Promise<boolean>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
 }
@@ -62,12 +63,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const login = async (phone: string, code: string) => {
+  const login = async (phone: string, firebaseIdToken: string, name?: string) => {
     try {
-      const res = await fetch("/api/auth/verify-otp", {
+      const res = await fetch("/api/auth/firebase-login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone, code }),
+        body: JSON.stringify({ phone, idToken: firebaseIdToken, name }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUser(data.user);
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  };
+
+  const loginWithEmail = async (email: string, code: string, name?: string) => {
+    try {
+      const res = await fetch("/api/auth/verify-email-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, code, name }),
       });
       if (res.ok) {
         const data = await res.json();
@@ -91,7 +110,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout, refresh }}>
+    <AuthContext.Provider value={{ user, isLoading, login, loginWithEmail, logout, refresh }}>
       {children}
     </AuthContext.Provider>
   );

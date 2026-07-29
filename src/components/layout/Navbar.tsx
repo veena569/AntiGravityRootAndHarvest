@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ShoppingBag, Heart, Menu, X, User, Settings, ArrowRight } from "lucide-react";
+import { ShoppingBag, Heart, Menu, X, User, ArrowRight } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { NAVIGATION_LINKS } from "@/constants";
 import { BRAND } from "@/config/brand";
@@ -30,26 +30,27 @@ export const Navbar: React.FC = () => {
 
   return (
     <>
+      {/* Top Announcement Banner */}
+      <div className="w-full bg-forest text-gold text-[10px] sm:text-xs uppercase tracking-[0.2em] py-2.5 px-4 text-center font-semibold z-50">
+        10% OFF & FREE SHIPPING FOR THE FIRST 100 ORDERS
+      </div>
+
       <header
-        className={`sticky top-0 z-50 transition-all duration-300 ${
-          isScrolled
-            ? "bg-brand-bg/90 backdrop-blur-md py-4 shadow-sm border-b border-forest/10"
-            : "bg-transparent py-6"
-        }`}
+        className={`sticky top-0 z-50 transition-all duration-300 h-20 flex items-center bg-brand-bg/95 backdrop-blur-md border-b border-forest/10 shadow-sm`}
       >
-        <div className="max-w-7xl mx-auto px-6 md:px-12 flex items-center justify-between">
+        <div className="w-full max-w-[1280px] mx-auto px-3.5 md:px-12 flex items-center justify-between">
           {/* Mobile menu toggle */}
           <button
             onClick={() => setIsOpen(true)}
-            className="md:hidden p-2 text-forest hover:opacity-85"
+            className="md:hidden p-1.5 text-forest hover:opacity-85"
             aria-label="Open menu"
           >
             <Menu className="w-6 h-6" />
           </button>
 
           {/* Logo */}
-          <Link href="/" className="flex flex-col items-center">
-            <BrandLogo className="w-40 h-16" />
+          <Link href="/" className="flex items-center">
+            <BrandLogo />
           </Link>
 
           {/* Desktop Navigation */}
@@ -71,18 +72,11 @@ export const Navbar: React.FC = () => {
           </nav>
 
           {/* Icons Bar */}
-          <div className="flex items-center space-x-3 md:space-x-6">
-            <Link
-              href="/admin"
-              className="p-2 text-forest hover:text-gold transition-colors"
-              title="Admin Panel"
-            >
-              <Settings className="w-5 h-5" />
-            </Link>
-            
+          <div className="flex items-center space-x-2 md:space-x-6">
+
             <Link
               href="/account"
-              className="p-2 text-forest hover:text-gold transition-colors"
+              className="p-1.5 md:p-2 text-forest hover:text-gold transition-colors"
               title="My Account"
             >
               <User className="w-5 h-5" />
@@ -90,12 +84,12 @@ export const Navbar: React.FC = () => {
 
             <Link
               href="/products?filter=wishlist"
-              className="relative p-2 text-forest hover:text-gold transition-colors"
+              className="relative p-1.5 md:p-2 text-forest hover:text-gold transition-colors"
               title="Wishlist"
             >
               <Heart className="w-5 h-5" />
               {wishlistCount > 0 && (
-                <span className="absolute top-0 right-0 bg-gold text-brand-bg text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                <span className="absolute -top-0.5 -right-0.5 bg-gold text-brand-bg text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
                   {wishlistCount}
                 </span>
               )}
@@ -103,12 +97,12 @@ export const Navbar: React.FC = () => {
 
             <Link
               href="/cart"
-              className="relative p-2 text-forest hover:text-gold transition-colors"
+              className="relative p-1.5 md:p-2 text-forest hover:text-gold transition-colors"
               title="Shopping Cart"
             >
               <ShoppingBag className="w-5 h-5" />
               {cartCount > 0 && (
-                <span className="absolute top-0 right-0 bg-forest text-brand-bg text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                <span className="absolute -top-0.5 -right-0.5 bg-forest text-brand-bg text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
                   {cartCount}
                 </span>
               )}
@@ -168,14 +162,6 @@ export const Navbar: React.FC = () => {
                   >
                     My Account
                     <User className="w-4 h-4 opacity-50" />
-                  </Link>
-                  <Link
-                    href="/admin"
-                    onClick={() => setIsOpen(false)}
-                    className="text-lg tracking-widest uppercase font-medium text-forest hover:text-gold transition-colors flex items-center justify-between"
-                  >
-                    Admin Panel
-                    <Settings className="w-4 h-4 opacity-50" />
                   </Link>
                 </nav>
               </div>

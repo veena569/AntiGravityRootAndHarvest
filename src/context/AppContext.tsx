@@ -7,6 +7,7 @@ import { Product, INITIAL_PRODUCTS } from "../data/products";
 export interface CartItem {
   product: Product;
   size: string;
+  bottleType?: string;
   price: number;
   quantity: number;
 }
@@ -58,9 +59,9 @@ interface AppContextType {
   promoCode: string | null;
   discountAmount: number;
   shippingCost: number;
-  addToCart: (product: Product, size: string, quantity: number) => void;
-  removeFromCart: (productId: string, size: string) => void;
-  updateCartQuantity: (productId: string, size: string, quantity: number) => void;
+  addToCart: (product: Product, size: string, quantity: number, bottleType?: string) => void;
+  removeFromCart: (productId: string, size: string, bottleType?: string) => void;
+  updateCartQuantity: (productId: string, size: string, quantity: number, bottleType?: string) => void;
   clearCart: () => void;
   toggleWishlist: (productId: string) => void;
   applyPromoCode: (code: string) => boolean;
@@ -104,11 +105,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         id: "addr-1",
         name: "Abhinav Patel",
         phone: "+91 98765 43210",
-        addressLine1: "Flat 402, Oakwood Residency",
-        addressLine2: "12th Main Road, Indiranagar",
-        city: "Bengaluru",
-        state: "Karnataka",
-        pincode: "560038",
+        addressLine1: "Central Park Phase -1",
+        addressLine2: "Serilingmapally",
+        city: "Hyderabad",
+        state: "Telangana",
+        pincode: "500019",
         isDefault: true
       };
       setAddresses([seedAddress]);
@@ -139,10 +140,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem("rh_subscriptions", JSON.stringify(subscriptions));
   }, [subscriptions]);
 
-  const addToCart = (product: Product, size: string, quantity: number) => {
+  const addToCart = (product: Product, size: string, quantity: number, bottleType?: string) => {
     setCart((prev) => {
-      const existingIdx = prev.findIndex((item) => item.product.id === product.id && item.size === size);
-      const price = product.sizePrices[size] || Object.values(product.sizePrices)[0];
+      const existingIdx = prev.findIndex((item) => item.product.id === product.id && item.size === size && item.bottleType === bottleType);
+      let price = product.sizePrices[size] || Object.values(product.sizePrices)[0];
+      if (bottleType === "Lightweight Bottle") {
+        if (size === "500 ml") {
+          price = 225;
+        } else if (size === "1 L") {
+          price = Math.max(0, price - 50);
+        }
+      }
       if (existingIdx > -1) {
         const nextCart = [...prev];
         nextCart[existingIdx] = {
@@ -151,22 +159,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         };
         return nextCart;
       }
-      return [...prev, { product, size, price, quantity }];
+      return [...prev, { product, size, bottleType, price, quantity }];
     });
   };
 
-  const removeFromCart = (productId: string, size: string) => {
-    setCart((prev) => prev.filter((item) => !(item.product.id === productId && item.size === size)));
+  const removeFromCart = (productId: string, size: string, bottleType?: string) => {
+    setCart((prev) => prev.filter((item) => !(item.product.id === productId && item.size === size && item.bottleType === bottleType)));
   };
 
-  const updateCartQuantity = (productId: string, size: string, quantity: number) => {
+  const updateCartQuantity = (productId: string, size: string, quantity: number, bottleType?: string) => {
     if (quantity <= 0) {
-      removeFromCart(productId, size);
+      removeFromCart(productId, size, bottleType);
       return;
     }
     setCart((prev) => {
       const nextCart = [...prev];
-      const idx = nextCart.findIndex((item) => item.product.id === productId && item.size === size);
+      const idx = nextCart.findIndex((item) => item.product.id === productId && item.size === size && item.bottleType === bottleType);
       if (idx > -1) {
         nextCart[idx] = { ...nextCart[idx], quantity };
       }

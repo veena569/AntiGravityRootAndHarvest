@@ -1,5 +1,5 @@
 export const SIZES = {
-  OILS: ["250 ml", "500 ml", "1 L", "2 L", "5 L"],
+  OILS: ["500 ml", "1 L", "2 L", "5 L"],
   HONEY: ["250 g", "500 g"],
 };
 
@@ -20,22 +20,22 @@ export const COLORS = {
 };
 
 export const NAVIGATION_LINKS = [
-  { name: "Shop Oils", href: "/products?category=Oils" },
-  { name: "Shop Honey", href: "/products?category=Honey" },
+  { name: "Shop Oils", href: "/products" },
   { name: "Our Story", href: "/about" },
 ];
 
 export const FOOTER_LINKS = {
   shop: [
     { name: "Groundnut Oil", href: "/products/groundnut-oil" },
-    { name: "Mustard Oil", href: "/products/mustard-oil" },
-    { name: "Himalayan Honey", href: "/products/himalayan-honey" },
+    { name: "Sesame Oil", href: "/products/sesame-oil" },
   ],
   support: [
     { name: "Track Order", href: "/account" },
     { name: "FAQ", href: "/faq" },
     { name: "Shipping Policy", href: "/shipping" },
     { name: "Returns & Refunds", href: "/returns" },
+    { name: "Privacy Policy", href: "/privacy" },
+    { name: "Terms of Service", href: "/terms" },
     { name: "Contact Us", href: "/contact" },
   ],
   company: [

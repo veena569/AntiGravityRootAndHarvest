@@ -17,7 +17,6 @@ export default function AdminPage() {
   const [inventoryList, setInventoryList] = useState([
     { name: "Wood Pressed Groundnut Oil (1 L)", sku: "RH-GNT-1L", stock: 124, limit: 20 },
     { name: "Wood Pressed Groundnut Oil (5 L)", sku: "RH-GNT-5L", stock: 18, limit: 10 },
-    { name: "Wood Pressed Black Mustard Oil (1 L)", sku: "RH-MST-1L", stock: 89, limit: 15 },
     { name: "Raw Himalayan Honey (500 g)", sku: "RH-HNY-500G", stock: 45, limit: 15 }
   ]);
 
@@ -77,7 +76,7 @@ export default function AdminPage() {
             <div className="flex gap-4 text-xs font-semibold uppercase tracking-wider text-forest bg-white border p-4 shrink-0">
               <div className="text-left">
                 <span className="text-[9px] text-dark/50 block">Operational Node</span>
-                <span>AHMEDABAD HUB (GUJARAT)</span>
+                <span>HYDERABAD HUB (INDIA)</span>
               </div>
             </div>
           </div>

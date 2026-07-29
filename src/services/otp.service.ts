@@ -44,7 +44,22 @@ export class OtpService {
       }
     });
 
-    // MOCK: In production, call SMS/Email provider here
+    // If Fast2SMS API key is set in environment, send real SMS via 'q' (Quick SMS) route in the background
+    if (process.env.FAST2SMS_API_KEY && phone) {
+      const rawPhone = phone.replace(/\D/g, "").slice(-10); // get last 10 digits for Indian numbers
+      const smsMessage = encodeURIComponent(`Your Root & Harvest verification code is: ${code}`);
+      const fast2smsUrl = `https://www.fast2sms.com/dev/bulkV2?authorization=${process.env.FAST2SMS_API_KEY}&route=q&message=${smsMessage}&numbers=${rawPhone}`;
+      fetch(fast2smsUrl, { method: "GET" })
+        .then(res => res.json())
+        .then(resJson => {
+          console.log(`[Fast2SMS SMS Sent] Phone: ${rawPhone}, Status:`, resJson);
+        })
+        .catch(smsErr => {
+          console.error("[Fast2SMS Error sending SMS]", smsErr);
+        });
+    }
+
+    // Console fallback
     console.log(`\n\n========================================`);
     console.log(`[MOCK NOTIFICATION] OTP for ${phone || email}: ${code}`);
     console.log(`========================================\n\n`);

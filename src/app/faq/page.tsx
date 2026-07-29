@@ -29,7 +29,7 @@ export default function FAQPage() {
       items: [
         {
           q: "Where do you source your groundnuts and seeds?",
-          a: "We source our bold-variety groundnuts directly from small family farms in the rain-fed Saurashtra region of Gujarat. Sourcing from specific, mineral-rich soils gives our oil its signature sweet, rich taste. Our mustard is sourced from select organic growers in Rajasthan."
+          a: "We source our bold-variety groundnuts directly from small family farms. Sourcing from specific, mineral-rich soils gives our oil its signature sweet, rich taste."
         },
         {
           q: "Are the crops organically grown?",
@@ -59,7 +59,7 @@ export default function FAQPage() {
       items: [
         {
           q: "Where do you ship, and what is the cost?",
-          a: "We offer free shipping on all orders across India. Orders are shipped from our farm packaging hub in Gujarat and delivered through express shipping partners within 3 to 5 business days."
+          a: "We offer free shipping on all orders across India. Orders are shipped from our packaging hub in Hyderabad, India and delivered through express shipping partners within 3 to 5 business days."
         },
         {
           q: "Do you ship in plastic or glass containers?",

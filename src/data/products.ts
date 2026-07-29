@@ -22,6 +22,7 @@ export interface Product {
   gallery: string[];
   sizes: string[];
   sizePrices: Record<string, number>;
+  originalSizePrices?: Record<string, number>;
   benefits: string[];
   ingredients: string;
   storage: string;
@@ -43,7 +44,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     id: "groundnut-oil",
     name: "Wood Pressed Groundnut Oil",
     tagline: "Slow-pressed in vagai wood, keeping nutrients pristine.",
-    description: "Our signature oil is made from premium bold-variety groundnuts sourced from trusted rain-fed farms in Saurashtra. Cold pressed using traditional wood-pressing (Lakdi Ghani) methods in seasoned Vagai (Black Siris) wood pestles at speeds under 14 RPM, keeping the extraction temperature below 38°C to retain all natural antioxidants, phytosterols, and the authentic sweet nutty aroma of Gujarat's premium groundnuts.",
+    description: "Our signature oil is made from premium bold-variety groundnuts sourced from trusted rain-fed farms. Cold pressed using traditional wood-pressing (Lakdi Ghani) methods in seasoned Vagai (Black Siris) wood pestles at speeds under 14 RPM, keeping the extraction temperature below 38°C to retain all natural antioxidants, phytosterols, and the authentic sweet nutty aroma of premium groundnuts.",
     shortDescription: "Traditional wood-pressed groundnut oil. 100% natural, single-source groundnuts, zero chemical refining, sediment-filtered.",
     image: "/images/groundnut-oil-1l.jpg",
     gallery: [
@@ -51,13 +52,16 @@ export const INITIAL_PRODUCTS: Product[] = [
       "/images/groundnut-oil-farm.jpg",
       "/images/groundnut-oil-press.jpg"
     ],
-    sizes: ["250 ml", "500 ml", "1 L", "2 L", "5 L"],
+    sizes: ["500 ml", "1 L", "2 L"],
     sizePrices: {
-      "250 ml": 120,
-      "500 ml": 220,
-      "1 L": 410,
-      "2 L": 800,
-      "5 L": 1950
+      "500 ml": 249,
+      "1 L": 499,
+      "2 L": 900
+    },
+    originalSizePrices: {
+      "500 ml": 275,
+      "1 L": 550,
+      "2 L": 1000
     },
     benefits: [
       "Rich in Monounsaturated Fatty Acids (MUFA) which support healthy cholesterol levels.",
@@ -90,7 +94,7 @@ export const INITIAL_PRODUCTS: Product[] = [
         rating: 5,
         date: "2026-06-28",
         title: "Smells like my childhood",
-        comment: "This groundnut oil took me back to my grandmother's kitchen in Gujarat. It has that authentic sweet nutty aroma that you simply cannot get from modern refined oils. Excellent for frying pooris!",
+        comment: "This groundnut oil took me back to my grandmother's kitchen. It has that authentic sweet nutty aroma that you simply cannot get from modern refined oils. Excellent for frying pooris!",
         verified: true
       },
       {
@@ -128,110 +132,100 @@ export const INITIAL_PRODUCTS: Product[] = [
     isComingSoon: false
   },
   {
-    id: "mustard-oil",
-    name: "Wood Pressed Black Mustard Oil",
-    tagline: "Pungent, authentic, and naturally cold-extracted.",
-    description: "Crafted from selected high-pungency black mustard seeds sourced from organic farmers in Rajasthan. Crushed slowly in traditional wooden mills, this oil possesses a sharp, robust aroma and rich color, preserving natural allyl isothiocyanate (the active compound) which aids digestion and circulation.",
-    shortDescription: "Traditional wood-pressed black mustard oil (Sarso ka tel) with high pungency and nutrient retention.",
-    image: "/images/mustard-oil-1l.jpg",
-    gallery: ["/images/mustard-oil-1l.jpg"],
-    sizes: ["500 ml", "1 L", "5 L"],
+    id: "sesame-oil",
+    name: "Wood Pressed Sesame Oil",
+    tagline: "Ancient Indian superfood oil. Rich, nutty, deeply nourishing.",
+    description: "Our premium Sesame Oil (Til Oil) is slowly extracted using organic sesame seeds from select farms in southern India. Cold pressed in traditional wooden Ghani mills at speeds below 14 RPM to preserve natural sesamol, sesamolin, and rich lignans. It possesses an authentic golden color, high smoke point, and a highly aromatic nutty flavor.",
+    shortDescription: "Traditional wood-pressed sesame oil. 100% natural, single-source sesame seeds, unrefined, zero preservatives.",
+    image: "/images/sesame-oil-1l.jpg",
+    gallery: [
+      "/images/sesame-oil-1l.jpg"
+    ],
+    sizes: ["500 ml", "1 L", "2 L", "5 L"],
     sizePrices: {
-      "500 ml": 160,
-      "1 L": 290,
-      "5 L": 1390
+      "500 ml": 1,
+      "1 L": 490,
+      "2 L": 960,
+      "5 L": 2350
     },
     benefits: [
-      "Strong antimicrobial and anti-inflammatory properties.",
-      "High level of Omega-3 and Omega-6 essential fatty acids.",
-      "Ideal for high-heat cooking, tempering, and pickling.",
-      "Zero chemicals, artificial colors, or argemone oil contaminants."
+      "Rich in powerful antioxidants (sesamol and sesamolin) that support heart health.",
+      "Excellent source of healthy unsaturated fats and vitamin E.",
+      "Traditional extraction retains native flavor and key bioactive compounds.",
+      "Highly stable for everyday cooking, sautéing, and oil pulling."
     ],
-    ingredients: "100% Pure Wood Pressed Black Mustard Seeds.",
-    storage: "Store in a cool dry place. Keep the bottle airtight.",
+    ingredients: "100% Pure Cold Pressed Sesame Oil.",
+    storage: "Store in a cool, dry place away from direct sunlight. Close the cap tightly after use.",
     nutrition: [
-      { label: "Energy", value: "899 kcal" },
-      { label: "Total Fat", value: "99.9 g" },
-      { label: "Saturated Fat", value: "11.6 g" },
-      { label: "MUFA", value: "59.2 g" },
-      { label: "PUFA", value: "29.1 g" },
-      { label: "Allyl Isothiocyanate", value: "Natural Pungency Retention" }
+      { label: "Energy", value: "898 kcal" },
+      { label: "Total Fat", value: "99.8 g" },
+      { label: "Saturated Fat", value: "14.2 g" },
+      { label: "Monounsaturated Fat (MUFA)", value: "39.7 g" },
+      { label: "Polyunsaturated Fat (PUFA)", value: "41.7 g" },
+      { label: "Trans Fat", value: "0 g" },
+      { label: "Vitamin E", value: "14.1 mg" },
+      { label: "Cholesterol", value: "0 mg" }
     ],
-    pressedOn: "June 22, 2026",
+    pressedOn: "June 23, 2026",
     packedOn: "June 25, 2026",
-    bestBefore: "December 21, 2026",
-    batchNumber: "RH-MST-2506A",
+    bestBefore: "December 22, 2026 (6 Months from Packing)",
+    batchNumber: "RH-SES-2506A",
     rating: 4.8,
-    reviewsCount: 96,
+    reviewsCount: 64,
     reviews: [
       {
-        author: "Preeti Banerjee",
+        author: "Meera Krishnan",
         rating: 5,
-        date: "2026-06-29",
-        title: "Perfect for Bengali cooking!",
-        comment: "Excellent pungency and smell. Cooked Machher Jhol and the flavor was outstanding. The absolute best sarso tel in the market.",
+        date: "2026-06-28",
+        title: "Smells wonderful!",
+        comment: "The aroma of this sesame oil is so rich and authentic. It matches the quality of stone-pressed oil from Tamil Nadu perfectly. Excellent for cooking and oil pulling.",
         verified: true
       }
     ],
     faqs: [
       {
-        q: "Why is it called black mustard oil?",
-        a: "Black mustard seeds have a higher concentration of natural oils and essential pungent elements than yellow mustard, creating a richer flavor profile favored in traditional regional cooking."
+        q: "What is sesame oil commonly used for?",
+        a: "Sesame oil is a staple in Asian and South Indian cooking, known for its deep nutty aroma and nutritional density. It is also highly recommended in Ayurveda for daily oil pulling (Kavala)."
       }
     ],
     category: "Oils",
     isComingSoon: true
   },
   {
-    id: "himalayan-honey",
-    name: "Raw Himalayan Honey",
-    tagline: "Single-source wildflower nectar, unfiltered.",
-    description: "Sourced from the high-altitude forests of the Himalayas. Collected by local traditional bee-keepers in small batches, our honey is never pasteurized, heated, or micro-filtered. It contains all natural pollen, enzymes, and trace minerals just as nature intended.",
-    shortDescription: "Unheated, unfiltered wild-nectar honey. Packed with native enzymes and wild forest pollens.",
-    image: "/images/honey-500g.jpg",
-    gallery: ["/images/honey-500g.jpg"],
-    sizes: ["250 g", "500 g"],
+    id: "coconut-oil",
+    name: "Cold Pressed Coconut Oil",
+    tagline: "Pure virgin coconut oil from Kerala's coastal farms.",
+    description: "Our pure cold pressed coconut oil is made from select coconuts sourced directly from organic coastal farms in Kerala. Extracted slowly to retain natural MCTs, vitamins, and a fresh tropical aroma. Zero heat, chemical bleaching, or mineral oils.",
+    shortDescription: "100% natural, single-source cold pressed coconut oil, unrefined and nutrient-rich.",
+    image: "/images/coconut-oil-1l.jpg",
+    gallery: ["/images/coconut-oil-1l.jpg"],
+    sizes: ["500 ml", "1 L"],
     sizePrices: {
-      "250 g": 250,
-      "500 g": 450
+      "500 ml": 1,
+      "1 L": 520
     },
     benefits: [
-      "Natural immunity booster containing active floral enzymes.",
-      "Soothing for throat infections and aids digestive wellness.",
-      "100% pure wild nectar with zero added sugars, corn syrup, or flavorings."
+      "Rich in medium-chain triglycerides (MCTs) which provide instant energy.",
+      "Excellent source of healthy fats for cooking and hair/skin nourishment.",
+      "Naturally high smoke point makes it highly stable for daily cooking."
     ],
-    ingredients: "100% Pure, Raw Wildflower Honey.",
-    storage: "Store at room temperature. Real honey naturally crystallizes over time. If crystallized, place the jar in warm water (below 40°C) to liquefy.",
+    ingredients: "100% Pure Cold Pressed Coconut Oil.",
+    storage: "Store in a cool dry place. Keep airtight.",
     nutrition: [
-      { label: "Energy", value: "320 kcal" },
-      { label: "Carbohydrates", value: "80 g" },
-      { label: "Natural Sugars", value: "78 g" },
-      { label: "Protein", value: "0.3 g" },
-      { label: "Sodium", value: "4 mg" }
+      { label: "Energy", value: "898 kcal" },
+      { label: "Total Fat", value: "99.8 g" },
+      { label: "Saturated Fat", value: "86.5 g" },
+      { label: "MCTs", value: "Present" }
     ],
-    pressedOn: "N/A (Harvested: May 2026)",
-    packedOn: "June 10, 2026",
-    bestBefore: "June 09, 2028 (24 Months from Packing)",
-    batchNumber: "RH-HNY-1006A",
-    rating: 4.9,
-    reviewsCount: 88,
-    reviews: [
-      {
-        author: "Vikram Malhotra",
-        rating: 5,
-        date: "2026-06-25",
-        title: "Distinct forest aroma",
-        comment: "This has a complex wildflower aroma, unlike the store-bought honey which tastes like pure sugar syrup. Highly recommend the 500g glass jar.",
-        verified: true
-      }
-    ],
-    faqs: [
-      {
-        q: "Why does my honey look solid/crystallized?",
-        a: "Crystallization is the absolute signature of raw, unheated honey. Glucose naturally separates from water and forms crystals. Commercial honey is heated to high levels to destroy the crystals, which also kills the live enzymes. Crystallization shows our honey is completely alive and pure."
-      }
-    ],
-    category: "Honey",
+    pressedOn: "N/A",
+    packedOn: "N/A",
+    bestBefore: "6 Months from Packing",
+    batchNumber: "RH-CCN-MOCK",
+    rating: 5.0,
+    reviewsCount: 0,
+    reviews: [],
+    faqs: [],
+    category: "Oils",
     isComingSoon: true
   }
 ];

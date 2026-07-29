@@ -22,7 +22,7 @@ export const Footer: React.FC = () => {
 
   return (
     <footer className="bg-forest-dark text-brand-bg pt-24 pb-12 border-t border-forest/10 font-sans font-light">
-      <div className="max-w-7xl mx-auto px-6 md:px-12 grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-8">
+      <div className="max-w-[1280px] mx-auto px-6 md:px-12 grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-8">
         
         {/* Newsletter & Brand */}
         <div className="lg:col-span-5 space-y-12">
@@ -100,13 +100,21 @@ export const Footer: React.FC = () => {
                   Instagram
                 </a>
               </li>
+              <li>
+                <a href={BRAND.socials.youtube} target="_blank" rel="noopener noreferrer" className="text-sm text-brand-bg/70 hover:text-gold transition-colors flex items-center gap-3">
+                  <svg className="w-4 h-4 text-brand-bg/40 fill-current" viewBox="0 0 24 24">
+                    <path d="M23.498 6.163a3.003 3.003 0 0 0-2.11-2.11C19.518 3.545 12 3.545 12 3.545s-7.518 0-9.388.508a3.003 3.003 0 0 0-2.11 2.11C0 8.033 0 12 0 12s0 3.967.502 5.837a3.003 3.003 0 0 0 2.11 2.11c1.87.508 9.388.508 9.388.508s7.518 0 9.388-.508a3.003 3.003 0 0 0 2.11-2.11C24 15.967 24 12 24 12s0-3.967-.502-5.837zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                  </svg>
+                  YouTube
+                </a>
+              </li>
             </ul>
           </div>
 
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 md:px-12 mt-24 pt-8 border-t border-brand-bg/10 flex flex-col md:flex-row justify-between items-center gap-6">
+      <div className="max-w-[1280px] mx-auto px-6 md:px-12 mt-24 pt-8 border-t border-brand-bg/10 flex flex-col md:flex-row justify-between items-center gap-6">
         <p className="text-[11px] text-brand-bg/40 uppercase tracking-widest">
           © {new Date().getFullYear()} {BRAND.name}. All rights reserved.
         </p>

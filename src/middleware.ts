@@ -7,7 +7,7 @@ const secret = new TextEncoder().encode(
 );
 
 // Protected paths
-const protectedPaths = ["/checkout", "/orders", "/profile", "/wishlist", "/saved-addresses"];
+const protectedPaths = ["/orders", "/profile", "/wishlist", "/saved-addresses", "/api/orders", "/api/addresses"];
 const adminPaths = ["/admin"];
 
 export async function middleware(req: NextRequest) {
@@ -72,7 +72,6 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    "/checkout/:path*",
     "/orders/:path*",
     "/profile/:path*",
     "/wishlist/:path*",
@@ -80,5 +79,7 @@ export const config = {
     "/admin/:path*",
     "/api/create-order",
     "/api/get-order",
+    "/api/orders",
+    "/api/addresses",
   ],
 };

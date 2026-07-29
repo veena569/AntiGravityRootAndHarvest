@@ -6,11 +6,11 @@ export const BRAND = {
   contact: {
     email: "hello@rootandharvest.in",
     phone: "+91 98765 43210",
-    address: "Root & Harvest HQ, 12th Main, Indiranagar, Bengaluru, 560038, India",
+    address: "Root & Harvest.in, Central Park Phase -1, Serilingmapally, Hyderabad, Telangana 500019",
   },
   socials: {
-    instagram: "https://instagram.com/rootandharvest",
-    youtube: "https://youtube.com/rootandharvest",
+    instagram: "https://www.instagram.com/rootandharvest.in/",
+    youtube: "https://www.youtube.com/@rootandharvest",
   },
   founders: {
     names: "Abhinav & Veenapatel",

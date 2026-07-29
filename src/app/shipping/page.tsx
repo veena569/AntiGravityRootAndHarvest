@@ -25,7 +25,7 @@ export default function ShippingPage() {
 
             <h3 className="text-base font-serif font-semibold text-forest uppercase tracking-wider pt-4">1. Shipping Charges</h3>
             <p>
-              ROOT & HARVEST offers **Free Delivery** on all orders shipped across India. We believe transparency should extend to fulfillment; the price listed on the page is the final price you pay.
+              ROOT & HARVEST currently delivers **only within Hyderabad**. We offer **Free Delivery** on all orders. We believe transparency should extend to fulfillment; the price listed on the page is the final price you pay.
             </p>
 
             <h3 className="text-base font-serif font-semibold text-forest uppercase tracking-wider pt-4">2. Processing Time</h3>
@@ -35,7 +35,7 @@ export default function ShippingPage() {
 
             <h3 className="text-base font-serif font-semibold text-forest uppercase tracking-wider pt-4">3. Estimated Delivery Window</h3>
             <p>
-              Our express shipping partners deliver to metropolitan areas (Delhi NCR, Mumbai, Bengaluru, Chennai, Hyderabad, Pune, Ahmedabad) within **3 to 4 business days**. Delivery to tier-2 and tier-3 cities may require **5 business days**.
+              The estimated delivery time is **4 to 5 business days** only in Hyderabad.
             </p>
 
             <h3 className="text-base font-serif font-semibold text-forest uppercase tracking-wider pt-4">4. Transit Issues & Leakages</h3>

@@ -28,6 +28,7 @@ model User {
   orders        Order[]
   refreshTokens RefreshToken[]
   addresses     Address[]
+  reviews       Review[]
 }
 
 model Otp {
@@ -63,11 +64,16 @@ model Order {
   updatedAt        DateTime    @updatedAt
   shippingName     String
   shippingPhone    String
+  shippingEmail    String?
   shippingAddress1 String
   shippingAddress2 String?
   shippingCity     String
   shippingState    String
   shippingPincode  String
+  saveAddress      Boolean     @default(true)
+  addressType      String      @default("Home")
+  smsNotificationSent Boolean  @default(false)
+  cartReminderSent    Boolean  @default(false)
   items            OrderItem[]
 }
 
@@ -82,6 +88,7 @@ model Address {
   city         String
   state        String
   pincode      String
+  type         String   @default("Home")
   isDefault    Boolean  @default(false)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -96,4 +103,16 @@ model OrderItem {
   size      String
   price     Float
   quantity  Int
+}
+
+model Review {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name       String
+  rating     Int
+  comment    String
+  isVerified Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }

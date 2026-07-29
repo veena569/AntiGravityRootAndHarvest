@@ -10,7 +10,7 @@ export default function AddressesPage() {
   // Simple form state for adding a new address
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
-    name: "", phone: "", addressLine1: "", addressLine2: "", city: "", state: "", pincode: "", isDefault: false
+    name: "", phone: "", addressLine1: "", addressLine2: "", city: "", state: "", pincode: "", isDefault: false, type: "Home"
   });
   const [saving, setSaving] = useState(false);
 
@@ -38,7 +38,7 @@ export default function AddressesPage() {
       });
       if (res.ok) {
         setShowForm(false);
-        setFormData({ name: "", phone: "", addressLine1: "", addressLine2: "", city: "", state: "", pincode: "", isDefault: false });
+        setFormData({ name: "", phone: "", addressLine1: "", addressLine2: "", city: "", state: "", pincode: "", isDefault: false, type: "Home" });
         fetchAddresses();
       }
     } finally {
@@ -99,6 +99,25 @@ export default function AddressesPage() {
                 <label className="text-[10px] uppercase tracking-widest text-dark/50 font-semibold">Pincode</label>
                 <input required value={formData.pincode} onChange={e => setFormData({...formData, pincode: e.target.value})} className="w-full p-3 text-sm border border-forest/20 focus:border-forest outline-none bg-brand-bg/50" />
               </div>
+              <div className="space-y-2 md:col-span-2">
+                <label className="text-[10px] uppercase tracking-widest text-dark/50 font-semibold block mb-2">Address Tag</label>
+                <div className="flex gap-3">
+                  {["Home", "Office", "Other"].map((tag) => (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => setFormData({...formData, type: tag})}
+                      className={`px-4 py-2 text-xs font-semibold uppercase tracking-wider border rounded-sm transition-all ${
+                        formData.type === tag
+                          ? "bg-forest text-white border-forest shadow-sm"
+                          : "border-forest/20 text-forest hover:bg-forest/5 bg-transparent"
+                      }`}
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <div className="space-y-2 md:col-span-2 flex items-center gap-2">
                 <input type="checkbox" id="isDefault" checked={formData.isDefault} onChange={e => setFormData({...formData, isDefault: e.target.checked})} className="accent-forest" />
                 <label htmlFor="isDefault" className="text-xs text-dark/70 cursor-pointer">Set as default shipping address</label>
@@ -129,7 +148,14 @@ export default function AddressesPage() {
                   Default
                 </span>
               )}
-              <p className="font-semibold text-forest text-sm">{address.name}</p>
+              <div className="flex items-center gap-2">
+                <p className="font-semibold text-forest text-sm">{address.name}</p>
+                {address.type && (
+                  <span className="bg-forest/10 text-forest text-[9px] uppercase tracking-widest px-2 py-0.5 font-semibold rounded-sm">
+                    {address.type}
+                  </span>
+                )}
+              </div>
               <div className="mt-4 text-xs text-dark/70 space-y-1">
                 <p>{address.addressLine1}</p>
                 {address.addressLine2 && <p>{address.addressLine2}</p>}

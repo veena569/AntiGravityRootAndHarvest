@@ -12,6 +12,7 @@ const addressSchema = z.object({
   city: z.string().min(2),
   state: z.string().min(2),
   pincode: z.string().min(5),
+  type: z.string().optional().default("Home"),
   isDefault: z.boolean().optional().default(false),
 });
 

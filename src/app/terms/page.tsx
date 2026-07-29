@@ -40,7 +40,7 @@ export default function TermsPage() {
 
             <h3 className="text-base font-serif font-semibold text-forest uppercase tracking-wider pt-4">4. Governing Law</h3>
             <p>
-              These Terms & Conditions are governed by and construed in accordance with the laws of India. Any disputes arising out of your purchase shall be subject to the exclusive jurisdiction of the courts in Ahmedabad, Gujarat.
+              These Terms & Conditions are governed by and construed in accordance with the laws of India. Any disputes arising out of your purchase shall be subject to the exclusive jurisdiction of the courts in Hyderabad, India.
             </p>
           </div>
 
