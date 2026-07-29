@@ -65,19 +65,19 @@ export async function GET(req: Request) {
       let shouldUpdate = false;
 
       // 1. Transition Placed ➔ Packed ("Completed" packing) after 3 business days
-      if (order.orderStatus === "placed" && businessDays >= 3) {
+      if (updatedStatus === "placed" && businessDays >= 3) {
         updatedStatus = "packed";
         shouldUpdate = true;
       }
 
       // 2. Transition Packed ➔ Shipped after 4 business days
-      if (order.orderStatus === "packed" && businessDays >= 4) {
+      if (updatedStatus === "packed" && businessDays >= 4) {
         updatedStatus = "shipped";
         shouldUpdate = true;
       }
 
       // 3. Transition Shipped ➔ Out for Delivery after 5 business days
-      if (order.orderStatus === "shipped" && businessDays >= 5) {
+      if (updatedStatus === "shipped" && businessDays >= 5) {
         updatedStatus = "out_for_delivery";
         shouldUpdate = true;
       }
