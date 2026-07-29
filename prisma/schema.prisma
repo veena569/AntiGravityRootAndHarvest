@@ -74,6 +74,8 @@ model Order {
   addressType      String      @default("Home")
   smsNotificationSent Boolean  @default(false)
   cartReminderSent    Boolean  @default(false)
+  deliveryApprovalSent Boolean @default(false)
+  deliveryApproved     Boolean @default(false)
   items            OrderItem[]
 }
 

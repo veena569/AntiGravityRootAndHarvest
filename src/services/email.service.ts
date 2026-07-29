@@ -226,6 +226,156 @@ export class EmailService {
     }
   }
 
+  private static buildDeliveryApprovalEmailBody(order: any, items: any[], approveUrl: string) {
+    const itemsHtml = this.buildOrderItemsHtml(items);
+    return `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px; color: #2b2b2b; background-color: #f8f5ef;">
+        <h2 style="color: #1e4a3a; font-family: serif; border-bottom: 2px solid #1e4a3a; padding-bottom: 10px; margin-top: 0; text-transform: uppercase; letter-spacing: 0.1em;">Root & Harvest</h2>
+        <h3 style="color: #b8903a; font-family: serif; font-style: italic;">
+          Delivery Notification Approval Required
+        </h3>
+        <p style="font-size: 14px; line-height: 1.5;">
+          Order <strong>${order.orderNumber}</strong> has been in "Out for Delivery" status for 12 hours. Please approve to mark it as Delivered and notify the customer.
+        </p>
+
+        <div style="background-color: #ffffff; padding: 16px; border: 1px solid #e5e7eb; border-radius: 4px; margin-bottom: 20px;">
+          <p style="margin: 4px 0; font-size: 13px;"><strong>Order Number:</strong> ${order.orderNumber}</p>
+          <p style="margin: 4px 0; font-size: 13px;"><strong>Customer Name:</strong> ${order.shippingName}</p>
+          <p style="margin: 4px 0; font-size: 13px;"><strong>Phone:</strong> ${order.shippingPhone}</p>
+          <p style="margin: 4px 0; font-size: 13px;"><strong>Email:</strong> ${order.shippingEmail || "—"}</p>
+          <p style="margin: 4px 0; font-size: 13px;"><strong>Date Placed:</strong> ${new Date(order.createdAt).toLocaleString()}</p>
+        </div>
+
+        <h4 style="color: #1e4a3a; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; margin-bottom: 10px; text-transform: uppercase; font-size: 12px; letter-spacing: 0.05em;">Items Ordered</h4>
+        <table style="width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 20px;">
+          <thead>
+            <tr style="background-color: #1e4a3a; color: #ffffff;">
+              <th style="padding: 10px; text-align: left;">Item</th>
+              <th style="padding: 10px; text-align: center; width: 80px;">Qty</th>
+              <th style="padding: 10px; text-align: right; width: 100px;">Price</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemsHtml}
+            <tr>
+              <td colspan="2" style="padding: 12px; font-weight: bold; text-align: right; border-top: 2px solid #1e4a3a;">Total Amount</td>
+              <td style="padding: 12px; font-weight: bold; text-align: right; color: #1e4a3a; border-top: 2px solid #1e4a3a;">Rs. ${order.total}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${approveUrl}" style="background-color: #1e4a3a; color: #ffffff; text-decoration: none; padding: 12px 24px; font-size: 14px; font-weight: bold; border-radius: 4px; display: inline-block; letter-spacing: 0.05em; text-transform: uppercase;">
+            Approve & Send Notification
+          </a>
+        </div>
+
+        <div style="margin-top: 30px; font-size: 11px; color: #6b7280; border-top: 1px solid #e5e7eb; padding-top: 12px; text-align: center;">
+          Root & Harvest Co. • Hyderabad, Telangana
+        </div>
+      </div>
+    `;
+  }
+
+  private static buildOrderDeliveredEmailBody(order: any, items: any[]) {
+    const itemsHtml = this.buildOrderItemsHtml(items);
+    return `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px; color: #2b2b2b; background-color: #f8f5ef;">
+        <h2 style="color: #1e4a3a; font-family: serif; border-bottom: 2px solid #1e4a3a; padding-bottom: 10px; margin-top: 0; text-transform: uppercase; letter-spacing: 0.1em;">Root & Harvest</h2>
+        <h3 style="color: #b8903a; font-family: serif; font-style: italic;">
+          Your order has been delivered!
+        </h3>
+        <p style="font-size: 14px; line-height: 1.5;">
+          Hello ${order.shippingName || "there"},<br><br>
+          We are pleased to inform you that your Root & Harvest order has been delivered successfully. We hope you enjoy your premium unrefined wood-pressed items!
+        </p>
+
+        <div style="background-color: #ffffff; padding: 16px; border: 1px solid #e5e7eb; border-radius: 4px; margin-bottom: 20px;">
+          <p style="margin: 4px 0; font-size: 13px;"><strong>Order Number:</strong> ${order.orderNumber}</p>
+          <p style="margin: 4px 0; font-size: 13px;"><strong>Payment ID:</strong> ${order.paymentId || "—"}</p>
+          <p style="margin: 4px 0; font-size: 13px;"><strong>Delivery Date:</strong> ${new Date().toLocaleString()}</p>
+        </div>
+
+        <h4 style="color: #1e4a3a; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; margin-bottom: 10px; text-transform: uppercase; font-size: 12px; letter-spacing: 0.05em;">Delivered Items</h4>
+        <table style="width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 20px;">
+          <thead>
+            <tr style="background-color: #1e4a3a; color: #ffffff;">
+              <th style="padding: 10px; text-align: left;">Item</th>
+              <th style="padding: 10px; text-align: center; width: 80px;">Qty</th>
+              <th style="padding: 10px; text-align: right; width: 100px;">Price</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemsHtml}
+            <tr>
+              <td colspan="2" style="padding: 12px; font-weight: bold; text-align: right; border-top: 2px solid #1e4a3a;">Total Amount Paid</td>
+              <td style="padding: 12px; font-weight: bold; text-align: right; color: #1e4a3a; border-top: 2px solid #1e4a3a;">Rs. ${order.total}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div style="margin-top: 30px; font-size: 11px; color: #6b7280; border-top: 1px solid #e5e7eb; padding-top: 12px; text-align: center;">
+          Root & Harvest Co. • Hyderabad, Telangana
+        </div>
+      </div>
+    `;
+  }
+
+  static async sendDeliveryApprovalEmail(order: any, items: any[], approveUrl: string) {
+    const adminRecipients = [
+      "rootandharvestindia@gmail.com"
+    ];
+
+    const transporter = this.getTransporter();
+    const subject = `Delivery Notification Approval Request - Order ${order.orderNumber}`;
+    const html = this.buildDeliveryApprovalEmailBody(order, items, approveUrl);
+
+    if (!transporter) {
+      console.log(`\n[MOCK ADMIN APPROVAL EMAIL] To: ${adminRecipients.join(", ")}\nSubject: ${subject}\nApprove URL: ${approveUrl}\n`);
+      return;
+    }
+
+    try {
+      await transporter.sendMail({
+        from: `"Root & Harvest Admin" <${process.env.SMTP_USER}>`,
+        to: adminRecipients.join(", "),
+        subject,
+        html,
+      });
+      console.info(`[EMAIL_ADMIN_SUCCESS] Delivery approval email sent to: ${adminRecipients.join(", ")}`);
+    } catch (err) {
+      console.error("[EMAIL_ADMIN_ERROR] Failed to send admin delivery approval email", err);
+    }
+  }
+
+  static async sendOrderDeliveredEmail(order: any, items: any[]) {
+    if (!order.shippingEmail) {
+      console.warn("[EMAIL_DELIVERED_WARNING] No customer email address available on order.");
+      return;
+    }
+
+    const transporter = this.getTransporter();
+    const subject = `Your order has been delivered! - ${order.orderNumber}`;
+    const html = this.buildOrderDeliveredEmailBody(order, items);
+
+    if (!transporter) {
+      console.log(`\n[MOCK CUSTOMER DELIVERED EMAIL] To: ${order.shippingEmail}\nSubject: ${subject}\n`);
+      return;
+    }
+
+    try {
+      await transporter.sendMail({
+        from: `"Root & Harvest" <${process.env.SMTP_USER}>`,
+        to: order.shippingEmail,
+        subject,
+        html,
+      });
+      console.info(`[EMAIL_CUSTOMER_SUCCESS] Delivery confirmation email sent to ${order.shippingEmail}`);
+    } catch (err) {
+      console.error(`[EMAIL_CUSTOMER_ERROR] Failed to send to ${order.shippingEmail}`, err);
+    }
+  }
+
   static async sendEmailOtp(email: string, code: string) {
     const transporter = this.getTransporter();
     const subject = `Your Root & Harvest verification code is: ${code}`;

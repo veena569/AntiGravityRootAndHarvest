@@ -94,4 +94,37 @@ export class SmsService {
       console.error(`[SMS ERROR] FAST2SMS customer failed: ${error.message || error}`);
     }
   }
+
+  static async sendCustomerDeliverySMS(order: any) {
+    try {
+      const apiKey = process.env.FAST2SMS_API_KEY;
+      if (!apiKey) {
+        console.warn("[SMS WARNING] FAST2SMS_API_KEY is not configured in environment.");
+        return;
+      }
+
+      const customerPhone = order.shippingPhone.replace(/\D/g, "").slice(-10);
+      console.log(`[SMS] Sending customer delivery SMS to ${customerPhone}`);
+
+      const message = `Root & Harvest: Your order ${order.orderNumber} has been successfully delivered. Thank you for shopping with us!`;
+
+      const response = await fetch("https://www.fast2sms.com/dev/bulkV2", {
+        method: "POST",
+        headers: {
+          "Authorization": apiKey,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          route: "q",
+          message: message,
+          numbers: customerPhone,
+        }),
+      });
+
+      const responseText = await response.text();
+      console.log(`[SMS] FAST2SMS customer delivery response: ${responseText}`);
+    } catch (error: any) {
+      console.error(`[SMS ERROR] FAST2SMS customer delivery failed: ${error.message || error}`);
+    }
+  }
 }

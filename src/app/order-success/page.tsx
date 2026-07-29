@@ -315,7 +315,7 @@ function OrderSuccessContent() {
                 <div className="relative pl-6 space-y-8">
                   <div className="absolute left-[7px] top-2 bottom-2 w-[2px] bg-forest/10" />
                   
-                  {/* Timeline point 1: Completed */}
+                  {/* Timeline point 1: Order Placed */}
                   <div className="relative flex gap-4 items-start">
                     <div className="absolute -left-[24px] w-4.5 h-4.5 rounded-full bg-green-500 flex items-center justify-center text-white border-2 border-white shadow-sm">
                       <Check className="w-2.5 h-2.5 stroke-[3]" />
@@ -327,39 +327,103 @@ function OrderSuccessContent() {
                     </div>
                   </div>
 
-                  {/* Timeline point 2: Current In Progress */}
-                  <div className="relative flex gap-4 items-start">
-                    <div className="absolute -left-[24px] w-4.5 h-4.5 rounded-full bg-forest flex items-center justify-center text-white border-2 border-white shadow-sm animate-pulse">
-                      <Clock className="w-2.5 h-2.5" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold uppercase tracking-wider text-forest">Preparing &amp; Packing</p>
-                      <p className="text-[10px] text-gold font-semibold uppercase tracking-wider mt-0.5">In Progress</p>
-                      <p className="text-xs text-dark/70 mt-1">We are wood-pressing fresh items and carefully packing your order.</p>
-                    </div>
-                  </div>
+                  {/* Timeline point 2: Preparing & Packing */}
+                  {(() => {
+                    const status = order.orderStatus || "placed";
+                    const isDone = ["packed", "shipped", "out_for_delivery", "delivered"].includes(status);
+                    const isActive = status === "placed";
+                    
+                    return (
+                      <div className={`relative flex gap-4 items-start ${!isDone && !isActive ? "opacity-50" : ""}`}>
+                        <div className={`absolute -left-[24px] w-4.5 h-4.5 rounded-full flex items-center justify-center border-2 border-white shadow-sm ${
+                          isDone ? "bg-green-500 text-white" : isActive ? "bg-forest text-white animate-pulse" : "bg-white border-forest/30 text-dark/30"
+                        }`}>
+                          {isDone ? <Check className="w-2.5 h-2.5 stroke-[3]" /> : <Clock className="w-2.5 h-2.5" />}
+                        </div>
+                        <div>
+                          <p className={`text-xs font-bold uppercase tracking-wider ${isDone || isActive ? "text-forest" : ""}`}>Preparing &amp; Packing</p>
+                          {isActive && <p className="text-[10px] text-gold font-semibold uppercase tracking-wider mt-0.5">In Progress</p>}
+                          {isDone && <p className="text-[10px] text-green-600 font-semibold uppercase tracking-wider mt-0.5">Completed</p>}
+                          <p className="text-xs text-dark/70 mt-1">
+                            {isDone ? "Your items have been fresh wood-pressed and packed." : "We are wood-pressing fresh items and carefully packing your order."}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })()}
 
-                  {/* Timeline point 3: Pending */}
-                  <div className="relative flex gap-4 items-start opacity-50">
-                    <div className="absolute -left-[24px] w-4.5 h-4.5 rounded-full bg-white border border-forest/30 flex items-center justify-center text-dark/30 shadow-sm">
-                      <Package className="w-2.5 h-2.5" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold uppercase tracking-wider">Shipped</p>
-                      <p className="text-[10px] text-dark/50 mt-0.5">Pending courier pickup</p>
-                    </div>
-                  </div>
+                  {/* Timeline point 3: Shipped */}
+                  {(() => {
+                    const status = order.orderStatus || "placed";
+                    const isDone = ["shipped", "out_for_delivery", "delivered"].includes(status);
+                    const isActive = status === "packed";
+                    
+                    return (
+                      <div className={`relative flex gap-4 items-start ${!isDone && !isActive ? "opacity-50" : ""}`}>
+                        <div className={`absolute -left-[24px] w-4.5 h-4.5 rounded-full flex items-center justify-center border-2 border-white shadow-sm ${
+                          isDone ? "bg-green-500 text-white" : isActive ? "bg-forest text-white animate-pulse" : "bg-white border-forest/30 text-dark/30"
+                        }`}>
+                          {isDone ? <Check className="w-2.5 h-2.5 stroke-[3]" /> : <Package className="w-2.5 h-2.5" />}
+                        </div>
+                        <div>
+                          <p className={`text-xs font-bold uppercase tracking-wider ${isDone || isActive ? "text-forest" : ""}`}>Shipped</p>
+                          {isActive && <p className="text-[10px] text-gold font-semibold uppercase tracking-wider mt-0.5">In Progress</p>}
+                          {isDone && <p className="text-[10px] text-green-600 font-semibold uppercase tracking-wider mt-0.5">Completed</p>}
+                          <p className="text-xs text-dark/70 mt-1">
+                            {isDone ? "Courier has picked up your order and it is on the way." : "Pending courier pickup."}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })()}
 
-                  {/* Timeline point 4: Pending */}
-                  <div className="relative flex gap-4 items-start opacity-50">
-                    <div className="absolute -left-[24px] w-4.5 h-4.5 rounded-full bg-white border border-forest/30 flex items-center justify-center text-dark/30 shadow-sm">
-                      <Truck className="w-2.5 h-2.5" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold uppercase tracking-wider">Out for Delivery</p>
-                      <p className="text-[10px] text-dark/50 mt-0.5">Pending arrival at nearest hub</p>
-                    </div>
-                  </div>
+                  {/* Timeline point 4: Out for Delivery */}
+                  {(() => {
+                    const status = order.orderStatus || "placed";
+                    const isDone = ["delivered"].includes(status);
+                    const isActive = status === "out_for_delivery";
+                    
+                    return (
+                      <div className={`relative flex gap-4 items-start ${!isDone && !isActive ? "opacity-50" : ""}`}>
+                        <div className={`absolute -left-[24px] w-4.5 h-4.5 rounded-full flex items-center justify-center border-2 border-white shadow-sm ${
+                          isDone ? "bg-green-500 text-white" : isActive ? "bg-forest text-white animate-pulse" : "bg-white border-forest/30 text-dark/30"
+                        }`}>
+                          {isDone ? <Check className="w-2.5 h-2.5 stroke-[3]" /> : <Truck className="w-2.5 h-2.5" />}
+                        </div>
+                        <div>
+                          <p className={`text-xs font-bold uppercase tracking-wider ${isDone || isActive ? "text-forest" : ""}`}>Out for Delivery</p>
+                          {isActive && <p className="text-[10px] text-gold font-semibold uppercase tracking-wider mt-0.5">In Progress</p>}
+                          {isDone && <p className="text-[10px] text-green-600 font-semibold uppercase tracking-wider mt-0.5">Completed</p>}
+                          <p className="text-xs text-dark/70 mt-1">
+                            {isDone ? "Order has arrived in your city and is out for delivery." : isActive ? "Order is out with Delhivery Express courier for delivery." : "Pending arrival at nearest hub."}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Timeline point 5: Delivered */}
+                  {(() => {
+                    const status = order.orderStatus || "placed";
+                    const isDone = status === "delivered";
+                    
+                    return (
+                      <div className={`relative flex gap-4 items-start ${!isDone ? "opacity-50" : ""}`}>
+                        <div className={`absolute -left-[24px] w-4.5 h-4.5 rounded-full flex items-center justify-center border-2 border-white shadow-sm ${
+                          isDone ? "bg-green-500 text-white" : "bg-white border-forest/30 text-dark/30"
+                        }`}>
+                          {isDone ? <Check className="w-2.5 h-2.5 stroke-[3]" /> : <MapPin className="w-2.5 h-2.5" />}
+                        </div>
+                        <div>
+                          <p className={`text-xs font-bold uppercase tracking-wider ${isDone ? "text-forest" : ""}`}>Delivered</p>
+                          {isDone && <p className="text-[10px] text-green-600 font-semibold uppercase tracking-wider mt-0.5">Completed</p>}
+                          <p className="text-xs text-dark/70 mt-1">
+                            {isDone ? "Delivered successfully! Enjoy your Root & Harvest goods." : "Pending delivery confirmation."}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                 </div>
 
