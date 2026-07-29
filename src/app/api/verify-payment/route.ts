@@ -120,17 +120,8 @@ export async function POST(req: Request) {
     // 2. Send SMS notifications via Fast2SMS
     if (process.env.FAST2SMS_API_KEY) {
       try {
-        // Customer notification (avoiding ampersand character to prevent URL splitting errors)
-        const customerPhone = updatedOrder.shippingPhone.replace(/\D/g, "").slice(-10);
-        const customerMsg = encodeURIComponent(
-          `Thank you for ordering with Root and Harvest Your order ${updatedOrder.orderNumber} for Rs ${updatedOrder.total} has been successfully placed`
-        );
-        const customerSmsUrl = `https://www.fast2sms.com/dev/bulkV2?authorization=${process.env.FAST2SMS_API_KEY}&route=q&message=${customerMsg}&numbers=${customerPhone}`;
-        
-        fetch(customerSmsUrl, { method: "GET" })
-          .then((res) => res.json())
-          .then((resJson) => console.log(`[SMS_CUSTOMER_SUCCESS]`, resJson))
-          .catch((err) => console.error(`[SMS_CUSTOMER_ERROR]`, err));
+        // Customer notification
+        await SmsService.sendCustomerOrderSMS(updatedOrder);
 
         // Admin notifications
         await SmsService.sendAdminOrderSMS(updatedOrder);
