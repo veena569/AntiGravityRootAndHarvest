@@ -9,8 +9,6 @@ import { Button } from "@/components/ui/Button";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Review } from "@/components/ui";
-import { storage } from "@/lib/firebase";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 // Scroll reveal hook
 function useScrollReveal() {
@@ -74,33 +72,27 @@ export default function HomePage() {
       return;
     }
 
-    // Classify media type
-    const mime = file.type;
-    let mediaType = "image";
-    if (mime.startsWith("video/")) {
-      mediaType = "video";
-    } else if (!mime.startsWith("image/")) {
-      setErrorMsg("Only image and video uploads are allowed.");
-      return;
-    }
-
     setUploading(true);
     setErrorMsg("");
 
-    try {
-      const timestamp = Date.now();
-      const random = Math.floor(Math.random() * 1000);
-      const sanitizedName = file.name.replace(/[^a-zA-Z0-9.]/g, "_");
-      const uniqueFileName = `${timestamp}_${random}_${sanitizedName}`;
-      
-      const fileRef = ref(storage, `reviews/${uniqueFileName}`);
-      await uploadBytes(fileRef, file);
-      const downloadUrl = await getDownloadURL(fileRef);
+    const formData = new FormData();
+    formData.append("file", file);
 
-      setMediaFiles((prev) => [...prev, { url: downloadUrl, type: mediaType }]);
-    } catch (err: any) {
+    try {
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setMediaFiles((prev) => [...prev, { url: data.mediaUrl, type: data.mediaType }]);
+      } else {
+        setErrorMsg(data.error || "Failed to upload file.");
+      }
+    } catch (err) {
       console.error("[FILE_UPLOAD_FAILED]", err);
-      setErrorMsg(err.message || "Failed to upload file to storage.");
+      setErrorMsg("Failed to upload file due to network error.");
     } finally {
       setUploading(false);
     }
