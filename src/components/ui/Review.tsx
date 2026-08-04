@@ -14,8 +14,8 @@ export interface ReviewProps {
   comment: string;
   title?: string;
   verified?: boolean;
-  mediaUrl?: string;
-  mediaType?: string;
+  mediaUrls?: string[];
+  mediaTypes?: string[];
   className?: string;
 }
 
@@ -26,8 +26,8 @@ export const Review: React.FC<ReviewProps> = ({
   comment,
   title,
   verified = false,
-  mediaUrl,
-  mediaType,
+  mediaUrls = [],
+  mediaTypes = [],
   className,
 }) => {
   return (
@@ -54,22 +54,29 @@ export const Review: React.FC<ReviewProps> = ({
         "{comment}"
       </p>
 
-      {mediaUrl && (
-        <div className="mt-2 rounded overflow-hidden max-w-sm border border-forest/10 bg-brand-bg/20">
-          {mediaType === "video" ? (
-            <video 
-              src={mediaUrl} 
-              controls 
-              className="w-full max-h-60 object-contain bg-black"
-            />
-          ) : (
-            <img 
-              src={mediaUrl} 
-              alt="Review Attachment" 
-              className="w-full max-h-60 object-cover cursor-pointer hover:scale-[1.02] transition-transform duration-300"
-              onClick={() => window.open(mediaUrl, '_blank')}
-            />
-          )}
+      {mediaUrls && mediaUrls.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-2">
+          {mediaUrls.map((url, index) => {
+            const type = mediaTypes[index] || "image";
+            return (
+              <div key={index} className="rounded overflow-hidden w-28 h-28 border border-forest/10 bg-brand-bg/20 relative shrink-0">
+                {type === "video" ? (
+                  <video 
+                    src={url} 
+                    controls 
+                    className="w-full h-full object-cover bg-black"
+                  />
+                ) : (
+                  <img 
+                    src={url} 
+                    alt={`Review Attachment ${index + 1}`} 
+                    className="w-full h-full object-cover cursor-pointer hover:scale-[1.02] transition-transform duration-300"
+                    onClick={() => window.open(url, '_blank')}
+                  />
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
 

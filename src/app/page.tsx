@@ -43,8 +43,7 @@ export default function HomePage() {
   const [submitLoading, setSubmitLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
-  const [mediaUrl, setMediaUrl] = useState("");
-  const [mediaType, setMediaType] = useState("");
+  const [mediaFiles, setMediaFiles] = useState<{ url: string; type: string }[]>([]);
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
@@ -68,6 +67,11 @@ export default function HomePage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    if (mediaFiles.length >= 2) {
+      setErrorMsg("You can only upload up to 2 files per review.");
+      return;
+    }
+
     setUploading(true);
     setErrorMsg("");
 
@@ -82,8 +86,7 @@ export default function HomePage() {
 
       const data = await res.json();
       if (res.ok) {
-        setMediaUrl(data.mediaUrl);
-        setMediaType(data.mediaType);
+        setMediaFiles((prev) => [...prev, { url: data.mediaUrl, type: data.mediaType }]);
       } else {
         setErrorMsg(data.error || "Failed to upload file.");
       }
@@ -95,9 +98,8 @@ export default function HomePage() {
     }
   };
 
-  const handleRemoveMedia = () => {
-    setMediaUrl("");
-    setMediaType("");
+  const handleRemoveMedia = (indexToRemove: number) => {
+    setMediaFiles((prev) => prev.filter((_, idx) => idx !== indexToRemove));
   };
 
   const handleReviewSubmit = async (e: React.FormEvent) => {
@@ -110,7 +112,12 @@ export default function HomePage() {
       const res = await fetch("/api/reviews", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rating, comment, mediaUrl, mediaType }),
+        body: JSON.stringify({ 
+          rating, 
+          comment, 
+          mediaUrls: mediaFiles.map((f) => f.url), 
+          mediaTypes: mediaFiles.map((f) => f.type) 
+        }),
       });
 
       const data = await res.json();
@@ -118,8 +125,7 @@ export default function HomePage() {
         setSuccessMsg("Thank you! Your review has been submitted and published successfully.");
         setComment("");
         setRating(5);
-        setMediaUrl("");
-        setMediaType("");
+        setMediaFiles([]);
         // Refresh reviews
         const updatedRes = await fetch("/api/reviews");
         if (updatedRes.ok) {
@@ -436,8 +442,8 @@ export default function HomePage() {
                   date={r.createdAt}
                   comment={r.comment}
                   verified={r.isVerified}
-                  mediaUrl={r.mediaUrl}
-                  mediaType={r.mediaType}
+                  mediaUrls={r.mediaUrls}
+                  mediaTypes={r.mediaTypes}
                 />
               ))}
             </div>
@@ -551,28 +557,34 @@ export default function HomePage() {
                   />
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-[10px] uppercase tracking-widest text-forest/60 font-semibold block">Attach Photo or Video</label>
+                 <div className="space-y-1">
+                  <label className="text-[10px] uppercase tracking-widest text-forest/60 font-semibold block">Attach Photos or Videos (Up to 2)</label>
                   
-                  {mediaUrl ? (
-                    <div className="relative border border-forest/10 p-2 rounded bg-brand-bg/10 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        {mediaType === "video" ? (
-                          <div className="w-12 h-12 bg-black rounded flex items-center justify-center text-[10px] text-white animate-pulse">Video</div>
-                        ) : (
-                          <img src={mediaUrl} alt="Thumbnail" className="w-12 h-12 object-cover rounded" />
-                        )}
-                        <span className="text-[10px] text-dark/70 truncate max-w-[180px]">Attachment ready</span>
-                      </div>
-                      <button 
-                        type="button" 
-                        onClick={handleRemoveMedia}
-                        className="text-red-500 hover:text-red-700 text-xs font-semibold"
-                      >
-                        Remove
-                      </button>
+                  {mediaFiles.length > 0 && (
+                    <div className="space-y-2 mb-2">
+                      {mediaFiles.map((file, idx) => (
+                        <div key={idx} className="relative border border-forest/10 p-2 rounded bg-brand-bg/10 flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            {file.type === "video" ? (
+                              <div className="w-12 h-12 bg-black rounded flex items-center justify-center text-[10px] text-white">Video</div>
+                            ) : (
+                              <img src={file.url} alt={`Thumbnail ${idx + 1}`} className="w-12 h-12 object-cover rounded" />
+                            )}
+                            <span className="text-[10px] text-dark/70 truncate max-w-[180px]">Attachment {idx + 1} ready</span>
+                          </div>
+                           <button 
+                            type="button" 
+                            onClick={() => handleRemoveMedia(idx)}
+                            className="text-red-500 hover:text-red-700 text-xs font-semibold"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ))}
                     </div>
-                  ) : (
+                  )}
+
+                  {mediaFiles.length < 2 && (
                     <div className="relative">
                       <input
                         type="file"
@@ -588,7 +600,7 @@ export default function HomePage() {
                           uploading ? "opacity-50 cursor-not-allowed" : ""
                         }`}
                       >
-                        {uploading ? "Uploading media..." : "Choose File (Image/Video)"}
+                        {uploading ? "Uploading media..." : `Choose File ${mediaFiles.length + 1} (Image/Video)`}
                       </label>
                     </div>
                   )}

@@ -115,8 +115,8 @@ model Review {
   rating     Int
   comment    String
   isVerified Boolean  @default(false)
-  mediaUrl   String?
-  mediaType  String?
+  mediaUrls  String[]
+  mediaTypes String[]
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 }

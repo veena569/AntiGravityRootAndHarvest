@@ -32,8 +32,8 @@ export async function GET() {
         name: r.name,
         location: city,
         isVerified: true,
-        mediaUrl: r.mediaUrl,
-        mediaType: r.mediaType,
+        mediaUrls: r.mediaUrls,
+        mediaTypes: r.mediaTypes,
         createdAt: r.createdAt.toISOString(),
       };
     });
@@ -79,7 +79,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { rating, comment, mediaUrl, mediaType } = body;
+    const { rating, comment, mediaUrls, mediaTypes } = body;
 
     if (!rating || typeof rating !== "number" || rating < 1 || rating > 5) {
       return NextResponse.json({ error: "Please provide a valid rating between 1 and 5." }, { status: 400 });
@@ -106,8 +106,8 @@ export async function POST(req: Request) {
         rating,
         comment: comment.trim(),
         isVerified: true, // User is verified (has paid or cod orders)
-        mediaUrl: mediaUrl || null,
-        mediaType: mediaType || null,
+        mediaUrls: mediaUrls || [],
+        mediaTypes: mediaTypes || [],
       },
     });
 
