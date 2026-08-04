@@ -14,6 +14,8 @@ export interface ReviewProps {
   comment: string;
   title?: string;
   verified?: boolean;
+  mediaUrl?: string;
+  mediaType?: string;
   className?: string;
 }
 
@@ -24,6 +26,8 @@ export const Review: React.FC<ReviewProps> = ({
   comment,
   title,
   verified = false,
+  mediaUrl,
+  mediaType,
   className,
 }) => {
   return (
@@ -49,6 +53,25 @@ export const Review: React.FC<ReviewProps> = ({
       <p className="text-dark/80 leading-relaxed">
         "{comment}"
       </p>
+
+      {mediaUrl && (
+        <div className="mt-2 rounded overflow-hidden max-w-sm border border-forest/10 bg-brand-bg/20">
+          {mediaType === "video" ? (
+            <video 
+              src={mediaUrl} 
+              controls 
+              className="w-full max-h-60 object-contain bg-black"
+            />
+          ) : (
+            <img 
+              src={mediaUrl} 
+              alt="Review Attachment" 
+              className="w-full max-h-60 object-cover cursor-pointer hover:scale-[1.02] transition-transform duration-300"
+              onClick={() => window.open(mediaUrl, '_blank')}
+            />
+          )}
+        </div>
+      )}
 
       <div className="flex items-center space-x-2 pt-2 text-sm text-dark/70 font-medium border-t border-forest/5">
         <span>{author}</span>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Settings, Plus, ShoppingBag, BarChart3, Database, Tag, Newspaper, Users, Eye, Check } from "lucide-react";
@@ -12,6 +12,54 @@ import { Footer } from "@/components/layout/Footer";
 export default function AdminPage() {
   const { products, orders } = useApp();
   const [activeTab, setActiveTab] = useState<"orders" | "inventory" | "coupons" | "analytics" | "content">("orders");
+
+  const [dbOrders, setDbOrders] = useState<any[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState(true);
+  const [ordersError, setOrdersError] = useState<string | null>(null);
+
+  const fetchDbOrders = async () => {
+    try {
+      setLoadingOrders(true);
+      setOrdersError(null);
+      const res = await fetch("/api/admin/orders");
+      const data = await res.json();
+      if (res.ok) {
+        setDbOrders(data.orders || []);
+      } else {
+        setOrdersError(data.error || "Failed to fetch orders");
+      }
+    } catch (err: any) {
+      setOrdersError(err.message || "Failed to load orders");
+    } finally {
+      setLoadingOrders(false);
+    }
+  };
+
+  const handleUpdateOrderStatus = async (orderId: string, newStatus: string) => {
+    try {
+      const res = await fetch("/api/admin/orders", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ orderId, orderStatus: newStatus }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setDbOrders((prev) =>
+          prev.map((ord) => (ord.id === orderId ? { ...ord, orderStatus: newStatus } : ord))
+        );
+      } else {
+        alert(`Failed to update status: ${data.error}`);
+      }
+    } catch (err: any) {
+      alert(`Error updating order: ${err.message || err}`);
+    }
+  };
+
+  useEffect(() => {
+    fetchDbOrders();
+  }, []);
 
   // Mock inventories
   const [inventoryList, setInventoryList] = useState([
@@ -84,8 +132,20 @@ export default function AdminPage() {
           {/* Quick Metrics Summary row */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { label: "Operational Revenue", val: `₹${orders.reduce((acc, o) => acc + o.total, 0) + 54980}`, desc: "Calculated from order registers" },
-              { label: "Fulfillment Orders", val: orders.length + 32, desc: "Pending dispatches: 1" },
+              { 
+                label: "Operational Revenue", 
+                val: `₹${dbOrders.length > 0 
+                  ? dbOrders.reduce((acc, o) => acc + o.total, 0) 
+                  : orders.reduce((acc, o) => acc + o.total, 0) + 54980}`, 
+                desc: "Calculated from database registers" 
+              },
+              { 
+                label: "Fulfillment Orders", 
+                val: dbOrders.length > 0 ? dbOrders.length : orders.length + 32, 
+                desc: `Pending dispatches: ${dbOrders.length > 0 
+                  ? dbOrders.filter((o) => o.orderStatus === "placed" || o.orderStatus === "processing").length 
+                  : 1}` 
+              },
               { label: "Batches Sourced", val: products.length, desc: "Active traced farm batches" },
               { label: "Purity Audits", val: "100%", desc: "Verified laboratory trace clearances" }
             ].map((metric, i) => (
@@ -123,6 +183,13 @@ export default function AdminPage() {
                   </button>
                 );
               })}
+              <Link
+                href="/admin/whatsapp"
+                className="w-full p-4 text-xs font-semibold uppercase tracking-wider flex items-center gap-3 text-forest hover:bg-forest/5 border-t border-forest/5 mt-4 transition-colors"
+              >
+                <Settings className="w-4 h-4 text-gold" />
+                WhatsApp Settings
+              </Link>
             </div>
 
             {/* Panel Area (Right - 9 columns) */}
@@ -133,31 +200,56 @@ export default function AdminPage() {
                 <div className="space-y-6">
                   <h3 className="text-lg font-serif text-forest font-semibold border-b border-forest/5 pb-3">Active Order Book</h3>
                   
-                  {orders.length === 0 ? (
-                    <p className="text-xs text-dark/60">No new orders placed. Default mock bookings active.</p>
+                  {loadingOrders ? (
+                    <p className="text-xs text-dark/60">Fetching order registers from database...</p>
+                  ) : ordersError ? (
+                    <div className="bg-red-50 border border-red-200 text-red-700 p-4 text-xs">
+                      Error: {ordersError}
+                      <button onClick={fetchDbOrders} className="ml-4 font-bold underline">Retry</button>
+                    </div>
+                  ) : dbOrders.length === 0 ? (
+                    <p className="text-xs text-dark/60">No database orders found.</p>
                   ) : (
                     <div className="overflow-x-auto">
                       <table className="w-full text-xs font-light text-dark divide-y divide-forest/10">
                         <thead className="bg-brand-bg text-[10px] uppercase font-semibold text-forest text-left">
                           <tr>
-                            <th className="p-3">ID</th>
-                            <th className="p-3">Customer</th>
-                            <th className="p-3">Amount</th>
-                            <th className="p-3">Payment</th>
-                            <th className="p-3">Status</th>
+                            <th className="p-3 text-left">Order Number</th>
+                            <th className="p-3 text-left">Customer</th>
+                            <th className="p-3 text-left">Amount</th>
+                            <th className="p-3 text-left">Payment</th>
+                            <th className="p-3 text-left">Payment Status</th>
+                            <th className="p-3 text-left">Order Status</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-forest/5">
-                          {orders.map((ord) => (
-                            <tr key={ord.id} className="hover:bg-brand-bg/20">
+                          {dbOrders.map((ord) => (
+                            <tr key={ord.id} className="hover:bg-brand-bg/20 text-left">
                               <td className="p-3 font-mono font-semibold">{ord.orderNumber}</td>
-                              <td className="p-3">{ord.address.name}</td>
-                              <td className="p-3 font-semibold">₹{ord.total}</td>
-                              <td className="p-3 uppercase">{ord.paymentMethod}</td>
                               <td className="p-3">
-                                <span className="text-[9px] bg-green-50 text-green-700 font-bold px-2 py-0.5 uppercase">
+                                <div className="font-semibold text-forest">{ord.shippingName}</div>
+                                <div className="text-[10px] text-dark/60">{ord.shippingPhone}</div>
+                              </td>
+                              <td className="p-3 font-semibold">₹{ord.total}</td>
+                              <td className="p-3 uppercase">{ord.paymentId ? "Online" : "COD"}</td>
+                              <td className="p-3">
+                                <span className={`text-[9px] font-bold px-2 py-0.5 uppercase ${
+                                  ord.paymentStatus === "paid" ? "bg-green-50 text-green-700" : "bg-yellow-50 text-yellow-700"
+                                }`}>
                                   {ord.paymentStatus}
                                 </span>
+                              </td>
+                              <td className="p-3">
+                                <select
+                                  value={ord.orderStatus}
+                                  onChange={(e) => handleUpdateOrderStatus(ord.id, e.target.value)}
+                                  className="text-[10px] border border-forest/15 bg-white p-1 text-forest uppercase font-semibold focus:outline-none"
+                                >
+                                  <option value="placed">Placed</option>
+                                  <option value="processing">Processing</option>
+                                  <option value="shipped">Shipped</option>
+                                  <option value="delivered">Delivered</option>
+                                </select>
                               </td>
                             </tr>
                           ))}

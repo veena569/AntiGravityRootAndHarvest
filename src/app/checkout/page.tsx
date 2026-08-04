@@ -104,6 +104,7 @@ export default function CheckoutPage() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<"idle" | "processing" | "success">("idle");
   const [createdOrder, setCreatedOrder] = useState<any>(null);
+  const [paymentMethod, setPaymentMethod] = useState<"Razorpay" | "COD">("Razorpay");
 
   const subtotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
 
@@ -177,9 +178,34 @@ export default function CheckoutPage() {
       const cleanPhone = phoneStr.replace(/\D/g, "");
       const formattedPhone = `+91${cleanPhone.slice(-10)}`;
       
-      const result = await signInWithPhoneNumber(auth, formattedPhone, recaptchaVerifier);
-      setConfirmationResult(result);
-      setOtpTimer(30);
+      const isDev = process.env.NODE_ENV !== "production";
+      if (isDev) {
+        console.log("[DEV BYPASS] Simulating checkout phone OTP confirmation result directly...");
+        setConfirmationResult({
+          confirm: async (code: string) => {
+            const verifyRes = await fetch("/api/auth/verify-otp", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ phone: formattedPhone, code }),
+            });
+            const verifyData = await verifyRes.json();
+            if (verifyRes.ok) {
+              return {
+                user: {
+                  getIdToken: async () => "mock-firebase-id-token"
+                }
+              };
+            } else {
+              throw new Error(verifyData.error || "Invalid OTP code");
+            }
+          }
+        } as any);
+        setOtpTimer(30);
+      } else {
+        const result = await signInWithPhoneNumber(auth, formattedPhone, recaptchaVerifier);
+        setConfirmationResult(result);
+        setOtpTimer(30);
+      }
     } catch (err: any) {
       console.error("[FIREBASE_SEND_OTP_CHECKOUT_ERROR]", err);
       let userMsg = `Could not send verification code. Error: ${err.message || err.code || "Unknown error"}`;
@@ -286,10 +312,22 @@ export default function CheckoutPage() {
       const response = await fetch("/api/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: subtotal, cartItems: cart, shippingData }),
+        body: JSON.stringify({ amount: subtotal, cartItems: cart, shippingData, paymentMethod }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error);
+
+      // If COD, complete order directly without showing Razorpay modal (only in dev/localhost)
+      const isDev = process.env.NODE_ENV !== "production";
+      if (isDev && paymentMethod === "COD") {
+        setPaymentStatus("success");
+        setTimeout(() => {
+          clearCart();
+          setShowPaymentModal(false);
+          router.push(`/order-success?id=${data.db_order_id}`);
+        }, 1500);
+        return;
+      }
 
       // Trigger Razorpay payment modal
       const formattedPhone = shippingData?.phone
@@ -685,9 +723,40 @@ export default function CheckoutPage() {
                       </div>
                     </div>
 
+                    {/* Payment Method Selector */}
+                    {process.env.NODE_ENV !== "production" && (
+                      <div className="bg-brand-bg/50 p-6 space-y-3 border border-forest/5 text-sm mt-6">
+                        <span className="text-[10px] uppercase tracking-widest text-dark/50 font-semibold block">Select Payment Method</span>
+                        <div className="flex gap-4">
+                          <button
+                            type="button"
+                            onClick={() => setPaymentMethod("Razorpay")}
+                            className={`flex-1 p-3 text-center text-xs font-semibold border transition-all ${
+                              paymentMethod === "Razorpay" 
+                                ? "bg-forest text-brand-bg border-forest" 
+                                : "bg-white text-forest border-forest/15 hover:bg-forest/5"
+                            }`}
+                          >
+                            Online Payment (Razorpay)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setPaymentMethod("COD")}
+                            className={`flex-1 p-3 text-center text-xs font-semibold border transition-all ${
+                              paymentMethod === "COD" 
+                                ? "bg-forest text-brand-bg border-forest" 
+                                : "bg-white text-forest border-forest/15 hover:bg-forest/5"
+                            }`}
+                          >
+                            Cash on Delivery (COD)
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
                     <div className="pt-8">
                       <button onClick={handleProceedToPayment} className="w-full px-8 py-5 bg-forest text-white text-xs uppercase tracking-widest font-semibold hover:bg-forest-light transition-colors flex items-center justify-center gap-2 group">
-                        Proceed to Payment <Lock className="w-3.5 h-3.5" />
+                        {process.env.NODE_ENV !== "production" && paymentMethod === "COD" ? "Place COD Order" : "Proceed to Payment"} <Lock className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </div>

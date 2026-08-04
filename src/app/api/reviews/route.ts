@@ -32,45 +32,13 @@ export async function GET() {
         name: r.name,
         location: city,
         isVerified: true,
+        mediaUrl: r.mediaUrl,
+        mediaType: r.mediaType,
         createdAt: r.createdAt.toISOString(),
       };
     });
 
-    // Default placeholder testimonials
-    const defaultPlaceholderReviews = [
-      {
-        id: "default-1",
-        rating: 5,
-        comment: "The purity of the groundnut oil is unmatched. It reminds me of the oil we used to get directly from the village press when I was a child.",
-        name: "Meera R.",
-        location: "Bangalore",
-        isVerified: true,
-        createdAt: new Date("2026-06-01").toISOString(),
-      },
-      {
-        id: "default-2",
-        rating: 5,
-        comment: "Finally, a brand that doesn't just market purity but actually delivers it. You can taste the difference in every meal cooked with this oil.",
-        name: "Arjun S.",
-        location: "Mumbai",
-        isVerified: true,
-        createdAt: new Date("2026-06-15").toISOString(),
-      },
-      {
-        id: "default-3",
-        rating: 5,
-        comment: "Their commitment to transparency and quality is why I trust Root & Harvest for my family's everyday cooking needs.",
-        name: "Priya M.",
-        location: "Delhi",
-        isVerified: true,
-        createdAt: new Date("2026-06-28").toISOString(),
-      },
-    ];
-
-    // Merge DB reviews and default placeholders
-    const allReviews = [...formattedDbReviews, ...defaultPlaceholderReviews];
-
-    return NextResponse.json({ reviews: allReviews });
+    return NextResponse.json({ reviews: formattedDbReviews });
   } catch (error) {
     console.error("[REVIEWS_GET_FAILED]", error);
     return NextResponse.json({ error: "Failed to fetch reviews" }, { status: 500 });
@@ -91,15 +59,17 @@ export async function POST(req: Request) {
 
     const userId = decoded.sub;
 
-    // Check if the user has a paid order to be considered a verified buyer
-    const paidOrdersCount = await prisma.order.count({
+    // Check if the user has a paid or cod order to be considered a verified buyer
+    const completedOrdersCount = await prisma.order.count({
       where: {
         userId,
-        paymentStatus: "paid",
+        paymentStatus: {
+          in: ["paid", "cod"]
+        },
       },
     });
 
-    const isVerifiedBuyer = paidOrdersCount > 0;
+    const isVerifiedBuyer = completedOrdersCount > 0;
 
     if (!isVerifiedBuyer) {
       return NextResponse.json(
@@ -109,7 +79,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { rating, comment } = body;
+    const { rating, comment, mediaUrl, mediaType } = body;
 
     if (!rating || typeof rating !== "number" || rating < 1 || rating > 5) {
       return NextResponse.json({ error: "Please provide a valid rating between 1 and 5." }, { status: 400 });
@@ -135,7 +105,9 @@ export async function POST(req: Request) {
         name: user.name || "Verified Buyer",
         rating,
         comment: comment.trim(),
-        isVerified: true, // User is verified (has paid orders)
+        isVerified: true, // User is verified (has paid or cod orders)
+        mediaUrl: mediaUrl || null,
+        mediaType: mediaType || null,
       },
     });
 

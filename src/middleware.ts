@@ -8,7 +8,7 @@ const secret = new TextEncoder().encode(
 
 // Protected paths
 const protectedPaths = ["/orders", "/profile", "/wishlist", "/saved-addresses", "/api/orders", "/api/addresses"];
-const adminPaths = ["/admin"];
+const adminPaths = ["/admin", "/api/admin"];
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -77,6 +77,7 @@ export const config = {
     "/wishlist/:path*",
     "/saved-addresses/:path*",
     "/admin/:path*",
+    "/api/admin/:path*",
     "/api/create-order",
     "/api/get-order",
     "/api/orders",

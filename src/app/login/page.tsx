@@ -101,10 +101,36 @@ function SecureCheckoutContent() {
       // Hardcode Indian Phone Number Prefix (+91)
       const formattedPhone = `+91${cleanPhone.slice(-10)}`;
       
-      const result = await signInWithPhoneNumber(auth, formattedPhone, recaptchaVerifier);
-      setConfirmationResult(result);
-      setStep("otp");
-      setResendTimer(30);
+      const isDev = process.env.NODE_ENV !== "production";
+      if (isDev) {
+        console.log("[DEV BYPASS] Simulating phone OTP confirmation result directly...");
+        setConfirmationResult({
+          confirm: async (code: string) => {
+            const verifyRes = await fetch("/api/auth/verify-otp", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ phone: formattedPhone, code }),
+            });
+            const verifyData = await verifyRes.json();
+            if (verifyRes.ok) {
+              return {
+                user: {
+                  getIdToken: async () => "mock-firebase-id-token"
+                }
+              };
+            } else {
+              throw new Error(verifyData.error || "Invalid OTP code");
+            }
+          }
+        } as any);
+        setStep("otp");
+        setResendTimer(30);
+      } else {
+        const result = await signInWithPhoneNumber(auth, formattedPhone, recaptchaVerifier);
+        setConfirmationResult(result);
+        setStep("otp");
+        setResendTimer(30);
+      }
     } catch (err: any) {
       console.error("[FIREBASE_SEND_OTP_ERROR]", err);
       let userMessage = `Failed to send OTP. Error: ${err.message || err.code || "Unknown error"}`;

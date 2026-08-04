@@ -7,6 +7,7 @@ import { JwtService } from "@/services/jwt.service";
 import Razorpay from "razorpay";
 import { SmsService } from "@/services/sms.service";
 import { EmailService } from "@/services/email.service";
+import { WhatsappMetaService } from "@/services/whatsapp-meta.service";
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID || "",
@@ -61,12 +62,15 @@ export async function POST(req: Request) {
     const orderNumber = `RH-${Math.floor(Math.random() * 90000) + 10000}`;
 
     // 1. Create the Order in the local database (marked as pending)
+    const isDev = process.env.NODE_ENV !== "production";
+    const isCOD = isDev && body.paymentMethod === "COD";
+
     const order = await prisma.order.create({
       data: {
         orderNumber,
         userId: userId,
         total: amount,
-        paymentStatus: body.paymentMethod === "COD" ? "cod" : "pending",
+        paymentStatus: isCOD ? "cod" : "pending",
         orderStatus: "placed",
         shippingName: shippingData.name,
         shippingPhone: shippingData.phone,
@@ -129,8 +133,13 @@ export async function POST(req: Request) {
 
 
     // If Cash on Delivery, send the SMS immediately and return success (skipping Razorpay)
-    if (body.paymentMethod === "COD") {
+    if (isCOD) {
       await SmsService.sendAdminOrderSMS(order);
+      try {
+        await WhatsappMetaService.queueOrderPlacedNotification(order.id);
+      } catch (waErr) {
+        console.error("[COD_WHATSAPP_NOTIFICATION_FAILED]", waErr);
+      }
       return NextResponse.json({
         success: true,
         db_order_id: order.id,

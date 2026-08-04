@@ -30,7 +30,7 @@ export default function AdminLoginPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to authenticate");
       
-      router.push("/admin/dashboard");
+      router.push("/admin");
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -39,7 +39,7 @@ export default function AdminLoginPage() {
   };
 
   if (user?.role === "ADMIN" || user?.role === "SUPER_ADMIN") {
-    router.push("/admin/dashboard");
+    router.push("/admin");
     return null;
   }
 

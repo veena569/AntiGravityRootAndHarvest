@@ -22,6 +22,11 @@ export const metadata: Metadata = {
   description: "From Trusted Farms to Your Family. ROOT & HARVEST brings transparency, trust, premium quality, and authenticity back into every Indian kitchen. Founded by software engineers raised in farming families.",
   keywords: ["Root & Harvest", "Groundnut Oil", "Wood Pressed Oil", "Cold Pressed Oil", "Premium Indian Food", "Healthy Oils", "D2C food brand India"],
   authors: [{ name: "Root & Harvest Co-Founders" }],
+  icons: {
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+    apple: "/logo.jpg",
+  },
   openGraph: {
     title: "ROOT & HARVEST | Honest Food, Naturally Crafted",
     description: "Generations of agricultural values combined with modern engineering precision.",

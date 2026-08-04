@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import crypto from "crypto";
 import { EmailService } from "@/services/email.service";
 import { SmsService } from "@/services/sms.service";
+import { WhatsappMetaService } from "@/services/whatsapp-meta.service";
 
 export async function POST(req: Request) {
   try {
@@ -128,6 +129,13 @@ export async function POST(req: Request) {
       } catch (smsErr) {
         console.error("[SMS_NOTIFICATION_ERROR]", smsErr);
       }
+    }
+
+    // 2.5 Send WhatsApp notification
+    try {
+      await WhatsappMetaService.queueOrderPlacedNotification(updatedOrder.id);
+    } catch (waErr) {
+      console.error("[PAYMENT_WHATSAPP_NOTIFICATION_FAILED]", waErr);
     }
 
     // 3. Send email notifications to customer and admins (failsafe - will log but not crash the order completion)

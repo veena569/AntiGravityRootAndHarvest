@@ -28,11 +28,18 @@ export async function POST(req: Request) {
     });
 
     // Send code via Nodemailer
-    await EmailService.sendEmailOtp(normalizedEmail, code);
+    try {
+      await EmailService.sendEmailOtp(normalizedEmail, code);
+    } catch (emailErr) {
+      if (process.env.NODE_ENV === "production") {
+        throw emailErr;
+      }
+      console.warn("[SEND_EMAIL_OTP_WARNING] Nodemailer failed, but bypassing to allow local testing:", emailErr);
+    }
 
     return NextResponse.json({
       success: true,
-      message: "Verification code sent to your email address",
+      message: "Verification code sent to your email address (simulated)",
     });
   } catch (error: any) {
     if (error instanceof z.ZodError) {

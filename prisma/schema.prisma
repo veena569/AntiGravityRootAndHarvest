@@ -115,6 +115,31 @@ model Review {
   rating     Int
   comment    String
   isVerified Boolean  @default(false)
+  mediaUrl   String?
+  mediaType  String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 }
+
+model WhatsappConfig {
+  id                   String   @id @default("default")
+  businessNumber       String   @default("")
+  accessToken          String   @default("")
+  phoneNumberId        String   @default("")
+  enableCustomerAlerts Boolean  @default(true)
+  enableAdminAlerts    Boolean  @default(true)
+  updatedAt            DateTime @updatedAt
+}
+
+model WhatsappLog {
+  id           String   @id @default(cuid())
+  orderId      String?
+  recipient    String
+  messageType  String
+  status       String
+  metaResponse String?  @db.Text
+  errorMessage String?  @db.Text
+  retryCount   Int      @default(0)
+  createdAt    DateTime @default(now())
+}
+

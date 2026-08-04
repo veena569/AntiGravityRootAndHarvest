@@ -8,6 +8,7 @@ import { BrandBottle } from "@/components/ui/BrandBottle";
 import { Button } from "@/components/ui/Button";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
+import { Review } from "@/components/ui";
 
 // Scroll reveal hook
 function useScrollReveal() {
@@ -42,6 +43,9 @@ export default function HomePage() {
   const [submitLoading, setSubmitLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
+  const [mediaUrl, setMediaUrl] = useState("");
+  const [mediaType, setMediaType] = useState("");
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     async function fetchReviews() {
@@ -60,6 +64,42 @@ export default function HomePage() {
     fetchReviews();
   }, []);
 
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    setErrorMsg("");
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setMediaUrl(data.mediaUrl);
+        setMediaType(data.mediaType);
+      } else {
+        setErrorMsg(data.error || "Failed to upload file.");
+      }
+    } catch (err) {
+      console.error("[FILE_UPLOAD_FAILED]", err);
+      setErrorMsg("Failed to upload file due to network error.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleRemoveMedia = () => {
+    setMediaUrl("");
+    setMediaType("");
+  };
+
   const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
@@ -70,7 +110,7 @@ export default function HomePage() {
       const res = await fetch("/api/reviews", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rating, comment }),
+        body: JSON.stringify({ rating, comment, mediaUrl, mediaType }),
       });
 
       const data = await res.json();
@@ -78,6 +118,8 @@ export default function HomePage() {
         setSuccessMsg("Thank you! Your review has been submitted and published successfully.");
         setComment("");
         setRating(5);
+        setMediaUrl("");
+        setMediaType("");
         // Refresh reviews
         const updatedRes = await fetch("/api/reviews");
         if (updatedRes.ok) {
@@ -344,31 +386,62 @@ export default function HomePage() {
       </section>
 
       {/* ============================================================
-          5. TESTIMONIALS - Centered call to action to write reviews
+          5. TESTIMONIALS - Reviews Grid and Write Review
           ============================================================ */}
       <section className="py-20 bg-[#F8F5EF] relative overflow-hidden">
-        <div className="max-w-[1280px] mx-auto px-6 md:px-12 text-center">
-          <RevealSection className="max-w-md mx-auto space-y-6 bg-white border border-forest/10 p-10 shadow-sm rounded-sm">
-            <div className="flex items-center justify-center gap-2">
-              <span className="w-4 h-[1px] bg-gold" />
-              <span className="text-[10px] tracking-[0.25em] uppercase text-gold font-semibold">Verified Buyers</span>
-              <span className="w-4 h-[1px] bg-gold" />
-            </div>
+        <div className="max-w-[1280px] mx-auto px-6 md:px-12 space-y-12">
+          {/* Centered header, write button, and star rating */}
+          <div className="text-center flex flex-col items-center justify-center space-y-6 max-w-2xl mx-auto border-b border-forest/10 pb-10">
             <div className="space-y-2">
-              <h2 className="text-3xl font-serif text-forest tracking-tight">Share Your Experience</h2>
-              <p className="text-xs text-dark/60 leading-relaxed font-sans">
-                Your feedback helps us maintain our commitment to unrefined, wood-pressed purity. 
+              <div className="flex items-center justify-center gap-2">
+                <span className="w-4 h-[1px] bg-gold" />
+                <span className="text-[10px] tracking-[0.25em] uppercase text-gold font-semibold">Customer Voices</span>
+                <span className="w-4 h-[1px] bg-gold" />
+              </div>
+              <h2 className="text-3xl md:text-4xl lg:text-5xl font-serif text-forest tracking-tight">What Our Customers Say</h2>
+              <p className="text-sm text-dark/60 max-w-lg mx-auto leading-relaxed font-sans">
+                Real feedback from verified buyers. Your reviews help us maintain our commitment to unrefined, wood-pressed purity.
               </p>
             </div>
-            <div className="pt-2">
+            
+            <div className="flex flex-col items-center gap-3">
               <button
                 onClick={() => setShowReviewModal(true)}
-                className="px-8 py-4 bg-forest hover:bg-forest-light text-white uppercase tracking-widest text-xs font-semibold transition-all duration-300 shadow-md"
+                className="px-10 py-4 bg-forest hover:bg-forest-light text-white uppercase tracking-widest text-xs font-semibold transition-all duration-300 shadow-md"
               >
                 Write a Review
               </button>
+              
+              {/* 5 Stars below the button */}
+              <div className="flex items-center gap-1 text-gold pt-1">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} size={18} className="fill-current text-gold" />
+                ))}
+              </div>
             </div>
-          </RevealSection>
+          </div>
+
+          {/* Reviews Grid */}
+          {loadingReviews ? (
+            <div className="text-center py-12 text-sm text-dark/50">Loading customer reviews...</div>
+          ) : reviews.length === 0 ? (
+            <div className="text-center py-12 text-sm text-dark/50">No reviews yet. Be the first to share your experience!</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {reviews.map((r) => (
+                <Review
+                  key={r.id}
+                  author={r.name}
+                  rating={r.rating}
+                  date={r.createdAt}
+                  comment={r.comment}
+                  verified={r.isVerified}
+                  mediaUrl={r.mediaUrl}
+                  mediaType={r.mediaType}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -476,6 +549,49 @@ export default function HomePage() {
                     className="w-full text-xs p-3 border border-forest/10 focus:border-gold outline-none bg-brand-bg/20 resize-none"
                     placeholder="What did you think of our cold pressed oils?"
                   />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase tracking-widest text-forest/60 font-semibold block">Attach Photo or Video</label>
+                  
+                  {mediaUrl ? (
+                    <div className="relative border border-forest/10 p-2 rounded bg-brand-bg/10 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        {mediaType === "video" ? (
+                          <div className="w-12 h-12 bg-black rounded flex items-center justify-center text-[10px] text-white animate-pulse">Video</div>
+                        ) : (
+                          <img src={mediaUrl} alt="Thumbnail" className="w-12 h-12 object-cover rounded" />
+                        )}
+                        <span className="text-[10px] text-dark/70 truncate max-w-[180px]">Attachment ready</span>
+                      </div>
+                      <button 
+                        type="button" 
+                        onClick={handleRemoveMedia}
+                        className="text-red-500 hover:text-red-700 text-xs font-semibold"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="relative">
+                      <input
+                        type="file"
+                        accept="image/*,video/*"
+                        onChange={handleFileChange}
+                        disabled={uploading}
+                        className="hidden"
+                        id="review-media-upload"
+                      />
+                      <label
+                        htmlFor="review-media-upload"
+                        className={`w-full py-2.5 px-4 border border-dashed border-forest/20 hover:border-forest/50 bg-brand-bg/10 flex items-center justify-center gap-2 cursor-pointer text-xs text-dark/75 transition-all ${
+                          uploading ? "opacity-50 cursor-not-allowed" : ""
+                        }`}
+                      >
+                        {uploading ? "Uploading media..." : "Choose File (Image/Video)"}
+                      </label>
+                    </div>
+                  )}
                 </div>
                 
                 <button
