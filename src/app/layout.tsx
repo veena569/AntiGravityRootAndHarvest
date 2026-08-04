@@ -23,8 +23,8 @@ export const metadata: Metadata = {
   keywords: ["Root & Harvest", "Groundnut Oil", "Wood Pressed Oil", "Cold Pressed Oil", "Premium Indian Food", "Healthy Oils", "D2C food brand India"],
   authors: [{ name: "Root & Harvest Co-Founders" }],
   icons: {
-    icon: "/favicon.ico",
-    shortcut: "/favicon.ico",
+    icon: "/logo.jpg",
+    shortcut: "/logo.jpg",
     apple: "/logo.jpg",
   },
   openGraph: {
