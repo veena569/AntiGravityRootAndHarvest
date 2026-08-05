@@ -28,33 +28,33 @@ export async function POST(req: Request) {
     // Read file as buffer/arrayBuffer
     const buffer = await file.arrayBuffer();
 
-    const bucket = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
-    if (!bucket) {
-      return NextResponse.json({ error: "Storage bucket configuration is missing." }, { status: 500 });
-    }
+    const apiKey = process.env.INSFORGE_API_KEY || "ik_fb808e1ef4e0399e48c5f3b820aeffc5";
+    const ossHost = process.env.INSFORGE_OSS_HOST || "https://z77efabp.us-east.insforge.app";
 
-    // Upload to Firebase Storage via REST API (server-side, no CORS!)
-    const uploadUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o?uploadType=media&name=reviews/${uniqueFileName}`;
+    const uploadUrl = `${ossHost}/api/storage/buckets/reviews/objects/${encodeURIComponent(uniqueFileName)}`;
     
-    const firebaseRes = await fetch(uploadUrl, {
-      method: "POST",
+    const sendFormData = new FormData();
+    const blob = new Blob([buffer], { type: mime });
+    sendFormData.append("file", blob, uniqueFileName);
+
+    const insforgeRes = await fetch(uploadUrl, {
+      method: "PUT",
       headers: {
-        "Content-Type": mime,
+        "Authorization": `Bearer ${apiKey}`,
       },
-      body: buffer,
+      body: sendFormData,
     });
 
-    if (!firebaseRes.ok) {
-      const errorText = await firebaseRes.text();
-      console.error("[FIREBASE_REST_UPLOAD_FAILED]", errorText);
+    if (!insforgeRes.ok) {
+      const errorText = await insforgeRes.text();
+      console.error("[INSFORGE_STORAGE_UPLOAD_FAILED]", errorText);
       return NextResponse.json({ error: "Failed to upload file to storage." }, { status: 502 });
     }
 
-    const data = await firebaseRes.json();
+    const data = await insforgeRes.json();
     
-    // Construct the public download URL
-    const downloadToken = data.downloadTokens || "";
-    const publicUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/reviews%2F${uniqueFileName}?alt=media${downloadToken ? `&token=${downloadToken}` : ""}`;
+    // Construct the public download URL returned by InsForge
+    const publicUrl = data.url;
 
     return NextResponse.json({ 
       success: true, 
