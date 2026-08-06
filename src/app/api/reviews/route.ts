@@ -5,11 +5,14 @@ import { JwtService } from "@/services/jwt.service";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    // Fetch only verified reviews
+    const { searchParams } = new URL(req.url);
+    const productId = searchParams.get("productId");
+
+    // Fetch reviews
     const dbReviews = await prisma.review.findMany({
-      where: { isVerified: true },
+      where: productId ? { productId } : {},
       include: {
         user: {
           include: {
@@ -24,14 +27,14 @@ export async function GET() {
     });
 
     const formattedDbReviews = dbReviews.map((r) => {
-      const city = r.user.addresses[0]?.city || "Verified Buyer";
+      const city = r.user?.addresses[0]?.city || "Verified Reviewer";
       return {
         id: r.id,
         rating: r.rating,
         comment: r.comment,
         name: r.name,
         location: city,
-        isVerified: true,
+        isVerified: r.isVerified,
         mediaUrls: r.mediaUrls,
         mediaTypes: r.mediaTypes,
         createdAt: r.createdAt.toISOString(),
@@ -47,39 +50,10 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const token = cookies().get("rh_access_token")?.value;
-    if (!token) {
-      return NextResponse.json({ error: "Please log in to write a review." }, { status: 401 });
-    }
-
-    const decoded = await JwtService.verifyToken(token);
-    if (!decoded || !decoded.sub) {
-      return NextResponse.json({ error: "Invalid session. Please log in again." }, { status: 401 });
-    }
-
-    const userId = decoded.sub;
-
-    // Check if the user has a paid or cod order to be considered a verified buyer
-    const completedOrdersCount = await prisma.order.count({
-      where: {
-        userId,
-        paymentStatus: {
-          in: ["paid", "cod"]
-        },
-      },
-    });
-
-    const isVerifiedBuyer = completedOrdersCount > 0;
-
-    if (!isVerifiedBuyer) {
-      return NextResponse.json(
-        { error: "Only verified buyers who have completed a purchase can submit a review on our site." },
-        { status: 403 }
-      );
-    }
-
     const body = await req.json();
-    const { rating, comment, mediaUrls, mediaTypes } = body;
+    const { rating, comment, mediaUrls, mediaTypes, productId, name } = body;
+
+    const resolvedProductId = productId || "general";
 
     if (!rating || typeof rating !== "number" || rating < 1 || rating > 5) {
       return NextResponse.json({ error: "Please provide a valid rating between 1 and 5." }, { status: 400 });
@@ -89,23 +63,52 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Comment must be at least 5 characters long." }, { status: 400 });
     }
 
-    // Get user details
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-    });
+    // Check auth
+    const token = cookies().get("rh_access_token")?.value;
+    let userId: string | null = null;
+    let reviewerName = name?.trim() || "Guest Reviewer";
+    let isVerified = false;
 
-    if (!user) {
-      return NextResponse.json({ error: "User not found." }, { status: 404 });
+    if (token) {
+      try {
+        const decoded = await JwtService.verifyToken(token);
+        if (decoded && decoded.sub) {
+          userId = decoded.sub;
+
+          // Fetch user details
+          const user = await prisma.user.findUnique({
+            where: { id: userId },
+          });
+
+          if (user) {
+            reviewerName = user.name || reviewerName;
+
+            // Check if verified buyer (has paid or cod orders)
+            const completedOrdersCount = await prisma.order.count({
+              where: {
+                userId,
+                paymentStatus: {
+                  in: ["paid", "cod"]
+                },
+              },
+            });
+            isVerified = completedOrdersCount > 0;
+          }
+        }
+      } catch (authError) {
+        console.warn("[REVIEWS_POST_AUTH_WARN] Failed to verify JWT token, fallback to guest review", authError);
+      }
     }
 
     // Create the review
     const review = await prisma.review.create({
       data: {
+        productId: resolvedProductId,
         userId,
-        name: user.name || "Verified Buyer",
+        name: reviewerName,
         rating,
         comment: comment.trim(),
-        isVerified: true, // User is verified (has paid or cod orders)
+        isVerified,
         mediaUrls: mediaUrls || [],
         mediaTypes: mediaTypes || [],
       },

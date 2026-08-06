@@ -109,8 +109,9 @@ model OrderItem {
 
 model Review {
   id         String   @id @default(cuid())
-  userId     String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId  String   @default("groundnut-oil")
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   name       String
   rating     Int
   comment    String

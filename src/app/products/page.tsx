@@ -322,8 +322,11 @@ export default function ProductsPage() {
                   className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center opacity-90"
                 >
                   {/* Blurred image */}
-                  <div className={`relative aspect-[4/5] w-full bg-white border border-forest/10 overflow-hidden ${index % 2 !== 0 ? "lg:order-2" : "lg:order-1"}`}>
-                    <div className="absolute inset-0 p-6 flex items-center justify-center">
+                  <Link
+                    href={`/products/${teaser.id}`}
+                    className={`relative block aspect-[4/5] w-full bg-white border border-forest/10 overflow-hidden cursor-pointer group ${index % 2 !== 0 ? "lg:order-2" : "lg:order-1"}`}
+                  >
+                    <div className="absolute inset-0 p-6 flex items-center justify-center transition-transform group-hover:scale-105 duration-500">
                       {isOil ? (
                         <BrandBottle className="w-full h-full" />
                       ) : (
@@ -349,18 +352,29 @@ export default function ProductsPage() {
                         <p className="text-xs text-dark/40 mt-2 tracking-wider uppercase">Launching Soon</p>
                       </div>
                     </div>
-                  </div>
+                  </Link>
 
                   {/* Content */}
                   <div className={`space-y-6 max-w-lg ${index % 2 !== 0 ? "lg:order-1 ml-auto text-right" : "lg:order-2 text-left"}`}>
                     <div className="space-y-4">
                       {/* Name omitted, replaced with generic type indicator */}
-                      <h2 className="text-3xl md:text-5xl font-serif text-forest/50 leading-tight">
-                        {genericName}
+                      <h2 className="text-3xl md:text-5xl font-serif text-forest/50 leading-tight hover:text-gold transition-colors">
+                        <Link href={`/products/${teaser.id}`}>
+                          {genericName}
+                        </Link>
                       </h2>
                       <p className="text-lg text-dark/40 font-light leading-relaxed">
                         {genericTagline}
                       </p>
+                    </div>
+
+                    <div className="pt-4">
+                      <Link 
+                        href={`/products/${teaser.id}`}
+                        className="inline-block border border-forest/20 hover:border-forest hover:bg-forest/5 text-forest px-6 py-3 text-xs uppercase tracking-widest font-semibold transition-all"
+                      >
+                        View Details &amp; Reviews
+                      </Link>
                     </div>
 
                   </div>
