@@ -2,13 +2,14 @@
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, Leaf, ShieldCheck, Truck, CheckCircle2, Factory, Heart, Microscope, Star, Users, X } from "lucide-react";
+import { ArrowRight, Leaf, ShieldCheck, Truck, CheckCircle2, Factory, Heart, Microscope, Star, Users, X, Lock } from "lucide-react";
 import { useAuth } from "@/components/layout/AuthProvider";
 import { BrandBottle } from "@/components/ui/BrandBottle";
 import { Button } from "@/components/ui/Button";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Review } from "@/components/ui";
+import { INITIAL_PRODUCTS } from "@/data/products";
 
 // Scroll reveal hook
 function useScrollReveal() {
@@ -32,19 +33,9 @@ function RevealSection({ children, className = "" }: { children: React.ReactNode
 }
 
 export default function HomePage() {
-  const { user } = useAuth();
   const [reviews, setReviews] = useState<any[]>([]);
   const [loadingReviews, setLoadingReviews] = useState(true);
-
-  // Modal state
-  const [showReviewModal, setShowReviewModal] = useState(false);
-  const [rating, setRating] = useState(5);
-  const [comment, setComment] = useState("");
-  const [submitLoading, setSubmitLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
-  const [successMsg, setSuccessMsg] = useState("");
-  const [mediaFiles, setMediaFiles] = useState<{ url: string; type: string }[]>([]);
-  const [uploading, setUploading] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState("oils");
 
   useEffect(() => {
     async function fetchReviews() {
@@ -63,202 +54,60 @@ export default function HomePage() {
     fetchReviews();
   }, []);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (mediaFiles.length >= 2) {
-      setErrorMsg("You can only upload up to 2 files per review.");
-      return;
-    }
-
-    setUploading(true);
-    setErrorMsg("");
-
-    const formData = new FormData();
-    formData.append("file", file);
-
-    try {
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await res.json();
-      if (res.ok) {
-        setMediaFiles((prev) => [...prev, { url: data.mediaUrl, type: data.mediaType }]);
-      } else {
-        setErrorMsg(data.error || "Failed to upload file.");
-      }
-    } catch (err) {
-      console.error("[FILE_UPLOAD_FAILED]", err);
-      setErrorMsg("Failed to upload file due to network error.");
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const handleRemoveMedia = (indexToRemove: number) => {
-    setMediaFiles((prev) => prev.filter((_, idx) => idx !== indexToRemove));
-  };
-
-  const handleReviewSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorMsg("");
-    setSuccessMsg("");
-    setSubmitLoading(true);
-
-    try {
-      const res = await fetch("/api/reviews", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          rating, 
-          comment, 
-          mediaUrls: mediaFiles.map((f) => f.url), 
-          mediaTypes: mediaFiles.map((f) => f.type) 
-        }),
-      });
-
-      const data = await res.json();
-      if (res.ok) {
-        setSuccessMsg("Thank you! Your review has been submitted and published successfully.");
-        setComment("");
-        setRating(5);
-        setMediaFiles([]);
-        // Refresh reviews
-        const updatedRes = await fetch("/api/reviews");
-        if (updatedRes.ok) {
-          const updatedData = await updatedRes.json();
-          setReviews(updatedData.reviews || []);
-        }
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const cat = params.get("category");
+      if (cat === "grains") {
+        setSelectedCategory("grains");
         setTimeout(() => {
-          setShowReviewModal(false);
-          setSuccessMsg("");
-        }, 3000);
-      } else {
-        setErrorMsg(data.error || "Failed to submit review.");
+          const el = document.getElementById("explore-categories");
+          if (el) el.scrollIntoView({ behavior: "smooth" });
+        }, 100);
+      } else if (cat === "oils") {
+        setSelectedCategory("oils");
+        setTimeout(() => {
+          const el = document.getElementById("explore-categories");
+          if (el) el.scrollIntoView({ behavior: "smooth" });
+        }, 100);
       }
-    } catch (err) {
-      console.error("[SUBMIT_REVIEW_FAILED]", err);
-      setErrorMsg("Network error. Please try again.");
-    } finally {
-      setSubmitLoading(false);
     }
-  };
+  }, []);
 
   return (
     <div className="flex flex-col w-full selection:bg-gold/20 font-sans bg-brand-bg text-dark overflow-x-hidden font-light">
       <Navbar />
 
       {/* ============================================================
-          1. HERO — Warm cream split layout (not dark)
+          1. HERO — Brand Infographic Banner
           ============================================================ */}
-      <section className="relative w-full min-h-[92vh] flex items-center overflow-hidden bg-[#F2EDE4]">
-
-        {/* Warm grain texture overlay */}
-        <div className="absolute inset-0 opacity-40 pointer-events-none"
-          style={{backgroundImage:"url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E\")"}} />
-
-        {/* Forest green left accent strip */}
-        <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-forest/0 via-forest to-forest/0" />
-
-        <div className="relative z-10 w-full max-w-[1280px] mx-auto px-6 md:px-12 flex flex-col lg:flex-row items-center gap-12 py-16 lg:py-0 min-h-[92vh]">
-
-          {/* Left copy block */}
-          <div className="w-full lg:w-1/2 flex flex-col justify-center space-y-8 lg:pr-12">
-
-            {/* Eyebrow */}
-            <div className="animate-fade-in-up flex items-center gap-3">
-              <span className="w-8 h-[1px] bg-gold" />
-              <span className="text-xs tracking-[0.3em] uppercase text-gold font-semibold">
-                Premium Farm Heritage
-              </span>
-            </div>
-
-            {/* Headline */}
-            <h1 className="animate-fade-in-up animation-delay-100 font-serif text-forest leading-[1.1] tracking-tight">
-              <span className="block text-5xl md:text-6xl xl:text-7xl font-bold">Return to</span>
-              <span className="block text-5xl md:text-6xl xl:text-7xl shimmer-gold font-bold mt-1">Purity.</span>
-              <span className="block text-3xl md:text-4xl xl:text-5xl text-forest/50 font-light italic mt-3">Rooted in Trust.</span>
-            </h1>
-
-            {/* Body */}
-            <p className="animate-fade-in-up animation-delay-200 text-lg text-dark/60 max-w-[440px] leading-relaxed font-light">
-              Every bottle begins with carefully selected seeds and traditional wood pressing — bringing pure nourishment from our family to yours.
-            </p>
-
-            {/* Trust pills */}
-            <div className="animate-fade-in-up animation-delay-300 flex flex-wrap gap-2">
-              {["100% Natural", "No Chemicals", "Cold Pressed"].map((tag) => (
-                <span key={tag} className="px-3 py-1.5 text-xs tracking-widest uppercase font-semibold text-forest border border-forest/20 rounded-full bg-forest/5">
-                  {tag}
-                </span>
-              ))}
-            </div>
-
-            {/* CTAs */}
-            <div className="animate-fade-in-up animation-delay-400 flex flex-col sm:flex-row gap-4 pt-2">
-              <Link
-                href="/products"
-                className="group inline-flex items-center justify-center gap-2 bg-forest hover:bg-forest-light text-white font-bold uppercase tracking-widest text-sm h-14 px-8 transition-all duration-300 shadow-[0_8px_32px_rgba(30,61,43,0.25)] hover:shadow-[0_12px_40px_rgba(30,61,43,0.4)]"
-              >
-                Shop Our Collection
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </Link>
-              <Link
-                href="#our-story"
-                className="inline-flex items-center justify-center gap-2 text-forest hover:text-forest-light border border-forest/30 hover:border-forest font-medium uppercase tracking-widest text-sm h-14 px-8 transition-all duration-300"
-              >
-                Our Story
-              </Link>
-            </div>
-
-            {/* Spacing alignment placeholder */}
-            <div className="pt-2" />
-          </div>
-
-          {/* Right: Bottle image */}
-          <div className="w-full lg:w-1/2 flex items-center justify-center relative">
-            {/* Decorative soft rings */}
-            <div className="absolute w-[360px] h-[360px] md:w-[460px] md:h-[460px] rounded-full border border-forest/10 animate-float-slow" />
-            <div className="absolute w-[280px] h-[280px] md:w-[360px] md:h-[360px] rounded-full border border-gold/15" />
-            {/* Soft background glow */}
-            <div className="absolute w-[300px] h-[300px] rounded-full bg-gold/8 blur-3xl" />
-
-            {/* Bottle container */}
-            <div className="relative z-10 w-[240px] h-[380px] md:w-[300px] md:h-[460px] animate-float">
-              <BrandBottle className="w-full h-full" />
-            </div>
-
-            {/* Floating accent: natural badge */}
-            <div className="absolute top-[8%] right-[8%] animate-float animation-delay-200 z-20">
-              <div className="w-16 h-16 rounded-full bg-forest/8 border border-forest/20 flex flex-col items-center justify-center backdrop-blur-sm p-2">
-                <Leaf className="w-5 h-5 text-forest mb-0.5" />
-                <span className="text-forest text-[8px] font-bold tracking-wider text-center leading-none">100%<br/>NATURAL</span>
-              </div>
-            </div>
-
-            {/* Floating accent: wood pressed */}
-            <div className="absolute bottom-[18%] right-[2%] animate-float animation-delay-400 z-20">
-              <div className="bg-white border border-forest/10 px-3 py-2 shadow-md">
-                <p className="text-forest text-xs font-bold tracking-wider uppercase">Wood Pressed</p>
-                <p className="text-gold text-[10px] tracking-widest mt-0.5">Traditional Ghani</p>
-              </div>
-            </div>
-
-            {/* Floating accent: cold pressed */}
-            <div className="absolute top-[30%] left-[2%] animate-float animation-delay-300 z-20">
-              <div className="bg-white border border-forest/10 px-3 py-2 shadow-md">
-                <p className="text-forest text-xs font-bold tracking-wider uppercase">Cold Pressed</p>
-                <p className="text-gold text-[10px] tracking-widest mt-0.5">Below 38°C</p>
-              </div>
-            </div>
+      <section className="relative w-full bg-brand-bg flex flex-col items-center overflow-hidden">
+        <style dangerouslySetInnerHTML={{__html: `
+          @keyframes slideFromTop {
+            0% {
+              transform: translateY(-80px);
+              opacity: 0;
+            }
+            100% {
+              transform: translateY(0);
+              opacity: 1;
+            }
+          }
+          .animate-slide-from-top {
+            animation: slideFromTop 1.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          }
+        `}} />
+        <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 md:px-12 pt-8 pb-16 animate-slide-from-top">
+          <div className="relative w-full aspect-[3/2] border-4 border-forest shadow-lg overflow-hidden bg-white rounded-md">
+            <Image
+              src="/images/brand-banner.jpg"
+              alt="Root & Harvest Brand Infographic"
+              fill
+              className="object-contain"
+              priority
+            />
           </div>
         </div>
-
-        {/* Bottom fade */}
-        <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-brand-bg to-transparent pointer-events-none" />
       </section>
 
       {/* ============================================================
@@ -368,35 +217,216 @@ export default function HomePage() {
               </Button>
             </RevealSection>
 
-            {/* Right: Timeline */}
-            <RevealSection className="relative pl-8">
-              <div className="absolute left-0 top-4 bottom-4 w-[1px] bg-gradient-to-b from-gold via-forest/30 to-transparent" />
-              <div className="space-y-10">
-                {[
-                  { dot: "bg-gold", title: "Roots", sub: "Deeply connected to agricultural heritage and traditional Indian farming methods." },
-                  { dot: "bg-forest", title: "Partnership", sub: "Partnering directly with farmers across Andhra Pradesh and Telangana to bring pure ingredients to your family." },
-                  { dot: "bg-forest", title: "Precision", sub: "Engineering standards applied to natural cold-press extraction under 14 RPM." },
-                  { dot: "bg-forest", title: "Purity", sub: "Additive-free, exactly as nature intended. Nothing added." },
-                  { dot: "bg-forest", title: "Your Family", sub: "Delivering trust in a bottle — from our trusted farms to your kitchen." },
-                ].map((step, idx) => (
-                  <div key={idx} className="relative pl-8 group">
-                    <div className={`absolute w-3 h-3 ${step.dot} rounded-full -left-[6px] top-1.5 border-2 border-white shadow-sm group-hover:scale-125 transition-transform`} />
-                    <h3 className="text-sm font-serif text-forest font-semibold uppercase tracking-widest">{step.title}</h3>
-                    <p className="text-sm text-dark/55 mt-1 leading-relaxed">{step.sub}</p>
-                  </div>
-                ))}
-              </div>
+            {/* Right: Image */}
+            <RevealSection className="relative aspect-[4/5] w-full rounded-2xl overflow-hidden shadow-2xl lg:ml-auto">
+              <Image 
+                src="/images/family.jpg" 
+                alt="Root & Harvest Family" 
+                fill 
+                className="object-cover"
+              />
             </RevealSection>
           </div>
         </div>
       </section>
 
       {/* ============================================================
-          5. TESTIMONIALS - Reviews Grid and Write Review
+          4.5 CATEGORIES & PRODUCTS GRID
           ============================================================ */}
-      <section className="py-20 bg-[#F8F5EF] relative overflow-hidden">
+      <section id="explore-categories" className="py-24 bg-[#F8F5EF] relative overflow-hidden">
+        <div className="max-w-[1280px] mx-auto px-6 md:px-12">
+          
+          {/* Section Header */}
+          <RevealSection className="text-center max-w-2xl mx-auto space-y-4 mb-16">
+            <div className="flex items-center justify-center gap-3">
+              <span className="w-8 h-[1px] bg-gold" />
+              <span className="text-xs tracking-[0.3em] uppercase text-gold font-semibold">Our Clean Food Categories</span>
+              <span className="w-8 h-[1px] bg-gold" />
+            </div>
+            <h2 className="text-4xl md:text-5xl font-serif text-forest tracking-tight font-semibold uppercase">
+              Explore Our Farm Offerings
+            </h2>
+            <p className="text-sm text-dark/60 font-sans">
+              Select a category to discover raw, pure, farm-fresh ingredients.
+            </p>
+          </RevealSection>
+
+          {/* Category Selector Tabs */}
+          <RevealSection className="flex justify-center gap-6 mb-16 border-b border-forest/10 pb-4">
+            <button
+              onClick={() => setSelectedCategory("oils")}
+              className={`pb-4 px-6 text-xs uppercase tracking-widest font-semibold border-b-2 transition-all cursor-pointer ${
+                selectedCategory === "oils" 
+                  ? "border-forest text-forest scale-105" 
+                  : "border-transparent text-dark/40 hover:text-forest"
+              }`}
+            >
+              Wood Pressed Oils
+            </button>
+            <button
+              onClick={() => setSelectedCategory("grains")}
+              className={`pb-4 px-6 text-xs uppercase tracking-widest font-semibold border-b-2 transition-all cursor-pointer ${
+                selectedCategory === "grains" 
+                  ? "border-forest text-forest scale-105" 
+                  : "border-transparent text-dark/40 hover:text-forest"
+              }`}
+            >
+              Traditional Grains
+            </button>
+          </RevealSection>
+
+          {/* Render Active Category */}
+          <RevealSection>
+            {selectedCategory === "oils" ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                
+                {/* Active Oil: Groundnut Oil */}
+                <div className="bg-white border border-forest/5 p-6 hover:shadow-lg transition-all flex flex-col justify-between">
+                  <div className="space-y-4">
+                    <div className="relative aspect-[3/4] w-full bg-white border border-forest/10 flex items-center justify-center p-4">
+                      <Image src="/images/groundnut-oil-1l.jpg" alt="Wood Pressed Groundnut Oil" fill className="object-contain p-4" />
+                    </div>
+                    <h3 className="text-xl font-serif text-forest font-semibold mt-4">Wood Pressed Groundnut Oil</h3>
+                    <p className="text-xs text-dark/60 font-light leading-relaxed font-sans">
+                      100% natural, single-source bold groundnuts slowly wood-pressed. Perfect for everyday Indian deep frying.
+                    </p>
+                    <p className="font-serif text-lg text-forest font-semibold pt-2">From ₹249.00</p>
+                  </div>
+                  <div className="pt-6">
+                    <Link
+                      href="/products/groundnut-oil"
+                      className="block w-full py-3 bg-forest hover:bg-forest-light text-white text-center text-xs uppercase tracking-widest font-semibold transition-colors"
+                    >
+                      View Details &amp; Reviews
+                    </Link>
+                  </div>
+                </div>
+
+                {/* Coming Soon Oil: Sesame Oil */}
+                <div className="bg-white border border-forest/5 p-6 relative overflow-hidden flex flex-col justify-between opacity-80">
+                  <div className="space-y-4">
+                    <div className="relative aspect-[3/4] w-full bg-white border border-forest/10 flex items-center justify-center p-4">
+                      <Image src="/images/sesame-oil-1l.jpg" alt="Wood Pressed Sesame Oil" fill className="object-contain p-4 blur-[2px]" />
+                      <div className="absolute inset-0 bg-white/20 backdrop-blur-xs flex flex-col items-center justify-center gap-2">
+                        <Lock className="w-5 h-5 text-forest/40" />
+                        <span className="bg-forest text-white text-[10px] uppercase tracking-widest font-bold px-3 py-1.5 shadow">Coming Soon</span>
+                      </div>
+                    </div>
+                    <h3 className="text-xl font-serif text-forest/50 font-semibold mt-4">Wood Pressed Sesame Oil</h3>
+                    <p className="text-xs text-dark/40 font-light leading-relaxed font-sans">
+                      Slow-pressed rich sesame oil, unrefined, zero preservatives. Highly aromatic and ideal for nourishing health.
+                    </p>
+                    <p className="font-serif text-lg text-dark/40 font-semibold pt-2">Launching Soon</p>
+                  </div>
+                </div>
+
+                {/* Coming Soon Oil: Sunflower Oil */}
+                <div className="bg-white border border-forest/5 p-6 relative overflow-hidden flex flex-col justify-between opacity-80">
+                  <div className="space-y-4">
+                    <div className="relative aspect-[3/4] w-full bg-white border border-forest/10 flex items-center justify-center p-4">
+                      <Image src="/images/sunflower-oil-1l.jpg" alt="Wood Pressed Sunflower Oil" fill className="object-contain p-4 blur-[2px]" />
+                      <div className="absolute inset-0 bg-white/20 backdrop-blur-xs flex flex-col items-center justify-center gap-2">
+                        <Lock className="w-5 h-5 text-forest/40" />
+                        <span className="bg-forest text-white text-[10px] uppercase tracking-widest font-bold px-3 py-1.5 shadow">Coming Soon</span>
+                      </div>
+                    </div>
+                    <h3 className="text-xl font-serif text-forest/50 font-semibold mt-4">Wood Pressed Sunflower Oil</h3>
+                    <p className="text-xs text-dark/40 font-light leading-relaxed font-sans">
+                      Slow-pressed premium seeds, unrefined, lightweight and rich in Vitamin E. Perfect for daily cooking.
+                    </p>
+                    <p className="font-serif text-lg text-dark/40 font-semibold pt-2">Launching Soon</p>
+                  </div>
+                </div>
+
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {/* Active Grain: Organic Raw Groundnuts */}
+                <div className="bg-white border border-forest/5 p-6 hover:shadow-lg transition-all flex flex-col justify-between">
+                  <div className="space-y-4">
+                    <div className="relative aspect-[3/4] w-full bg-white border border-forest/10 flex items-center justify-center p-4">
+                      <Image src="/images/groundnuts.jpg" alt="Organic Raw Groundnuts" fill className="object-contain p-4" />
+                    </div>
+                    <h3 className="text-xl font-serif text-forest font-semibold mt-4">Organic Raw Groundnuts</h3>
+                    <p className="text-xs text-dark/60 font-light leading-relaxed font-sans">
+                      Premium, pesticide-free bold peanuts sourced directly from rain-fed family farms. Hand-shelled and sun-dried.
+                    </p>
+                    <p className="font-serif text-lg text-forest font-semibold pt-2">From ₹99.00</p>
+                  </div>
+                  <div className="pt-6">
+                    <Link
+                      href="/products/groundnuts"
+                      className="block w-full py-3 bg-forest hover:bg-forest-light text-white text-center text-xs uppercase tracking-widest font-semibold transition-colors"
+                    >
+                      View Details &amp; Reviews
+                    </Link>
+                  </div>
+                </div>
+
+                {/* Coming Soon Grain: Jai Sriram Unpolished Rice */}
+                <div className="bg-white border border-forest/5 p-6 relative overflow-hidden flex flex-col justify-between opacity-80">
+                  <div className="space-y-4">
+                    <div className="relative aspect-[3/4] w-full bg-white border border-forest/10 flex items-center justify-center p-4">
+                      <Image src="/images/jaisriram-unpolished-rice.jpg" alt="Jai Sriram Unpolished Rice" fill className="object-contain p-4 blur-[2px]" />
+                      <div className="absolute inset-0 bg-white/20 backdrop-blur-xs flex flex-col items-center justify-center gap-2">
+                        <Lock className="w-5 h-5 text-forest/40" />
+                        <span className="bg-forest text-white text-[10px] uppercase tracking-widest font-bold px-3 py-1.5 shadow">Coming Soon</span>
+                      </div>
+                    </div>
+                    <h3 className="text-xl font-serif text-forest/50 font-semibold mt-4">Jai Sriram Unpolished Rice</h3>
+                    <p className="text-xs text-dark/40 font-light leading-relaxed font-sans">
+                      Heritage unpolished Jai Sriram rice variety. High fiber, rich in vitamins, with authentic earthy flavor.
+                    </p>
+                    <p className="font-serif text-lg text-dark/40 font-semibold pt-2">Launching Soon</p>
+                  </div>
+                </div>
+
+                {/* Coming Soon Grain: Jai Sriram Polished Rice */}
+                <div className="bg-white border border-forest/5 p-6 relative overflow-hidden flex flex-col justify-between opacity-80">
+                  <div className="space-y-4">
+                    <div className="relative aspect-[3/4] w-full bg-white border border-forest/10 flex items-center justify-center p-4">
+                      <Image src="/images/jaisriram-polished-rice.jpg" alt="Jai Sriram Polished Rice" fill className="object-contain p-4 blur-[2px]" />
+                      <div className="absolute inset-0 bg-white/20 backdrop-blur-xs flex flex-col items-center justify-center gap-2">
+                        <Lock className="w-5 h-5 text-forest/40" />
+                        <span className="bg-forest text-white text-[10px] uppercase tracking-widest font-bold px-3 py-1.5 shadow">Coming Soon</span>
+                      </div>
+                    </div>
+                    <h3 className="text-xl font-serif text-forest/50 font-semibold mt-4">Jai Sriram Polished Rice</h3>
+                    <p className="text-xs text-dark/40 font-light leading-relaxed font-sans">
+                      Gently polished fine-grain premium rice variety. Sweet natural taste, cooks into light and fluffy grains.
+                    </p>
+                    <p className="font-serif text-lg text-dark/40 font-semibold pt-2">Launching Soon</p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </RevealSection>
+
+        </div>
+      </section>
+
+      {/* ============================================================
+          4.8 BRAND STORY BANNER — Farm Infographic
+          ============================================================ */}
+      <section className="py-12 bg-[#F8F5EF] flex flex-col items-center border-t border-forest/10">
+        <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 md:px-12">
+          <div className="relative w-full aspect-[1.85] border-4 border-forest shadow-md overflow-hidden bg-white rounded-md">
+            <Image
+              src="/images/brand-story-banner.png"
+              alt="Root & Harvest Brand Story Infographic"
+              fill
+              className="object-contain"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* ============================================================
+          5. TESTIMONIALS - Reviews Grid
+          ============================================================ */}
+      <section className="py-20 bg-white relative overflow-hidden border-t border-forest/5">
         <div className="max-w-[1280px] mx-auto px-6 md:px-12 space-y-12">
-          {/* Centered header, write button, and star rating */}
+          {/* Centered header and star rating */}
           <div className="text-center flex flex-col items-center justify-center space-y-6 max-w-2xl mx-auto border-b border-forest/10 pb-10">
             <div className="space-y-2">
               <div className="flex items-center justify-center gap-2">
@@ -404,21 +434,14 @@ export default function HomePage() {
                 <span className="text-[10px] tracking-[0.25em] uppercase text-gold font-semibold">Customer Voices</span>
                 <span className="w-4 h-[1px] bg-gold" />
               </div>
-              <h2 className="text-3xl md:text-4xl lg:text-5xl font-serif text-forest tracking-tight">What Our Customers Say</h2>
+              <h2 className="text-3xl md:text-4xl lg:text-5xl font-serif text-forest tracking-tight uppercase">What Our Customers Say</h2>
               <p className="text-sm text-dark/60 max-w-lg mx-auto leading-relaxed font-sans">
                 Real feedback from verified buyers. Your reviews help us maintain our commitment to unrefined, wood-pressed purity.
               </p>
             </div>
             
             <div className="flex flex-col items-center gap-3">
-              <button
-                onClick={() => setShowReviewModal(true)}
-                className="px-10 py-4 bg-forest hover:bg-forest-light text-white uppercase tracking-widest text-xs font-semibold transition-all duration-300 shadow-md"
-              >
-                Write a Review
-              </button>
-              
-              {/* 5 Stars below the button */}
+              {/* 5 Stars */}
               <div className="flex items-center gap-1 text-gold pt-1">
                 {[...Array(5)].map((_, i) => (
                   <Star key={i} size={18} className="fill-current text-gold" />
@@ -429,9 +452,9 @@ export default function HomePage() {
 
           {/* Reviews Grid */}
           {loadingReviews ? (
-            <div className="text-center py-12 text-sm text-dark/50">Loading customer reviews...</div>
+            <div className="text-center py-12 text-sm text-dark/50 font-sans">Loading customer reviews...</div>
           ) : reviews.length === 0 ? (
-            <div className="text-center py-12 text-sm text-dark/50">No reviews yet. Be the first to share your experience!</div>
+            <div className="text-center py-12 text-sm text-dark/50 font-sans">No reviews yet. Be the first to share your experience!</div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {reviews.map((r) => (
@@ -452,6 +475,70 @@ export default function HomePage() {
       </section>
 
       {/* ============================================================
+          5.5 TOP PICKS FOR YOU — In-stock products showcase
+          ============================================================ */}
+      <section className="py-24 bg-[#F8F5EF] relative overflow-hidden border-t border-forest/10">
+        <div className="max-w-[1280px] mx-auto px-6 md:px-12">
+          
+          {/* Section Header */}
+          <RevealSection className="text-center max-w-2xl mx-auto space-y-4 mb-16">
+            <div className="flex items-center justify-center gap-3">
+              <span className="w-8 h-[1px] bg-gold" />
+              <span className="text-xs tracking-[0.3em] uppercase text-gold font-semibold">Fresh In Stock</span>
+              <span className="w-8 h-[1px] bg-gold" />
+            </div>
+            <h2 className="text-4xl md:text-5xl font-serif text-forest tracking-tight font-semibold uppercase">
+              Top Picks For You
+            </h2>
+            <p className="text-sm text-dark/60 font-sans">
+              Handpicked premium products fresh from our Ghani, currently available in stock.
+            </p>
+          </RevealSection>
+
+          {/* Products Grid */}
+          <RevealSection className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 justify-center">
+            {INITIAL_PRODUCTS.filter(p => !p.isComingSoon).map((product) => (
+              <div 
+                key={product.id}
+                className="bg-white border border-forest/5 p-6 hover:shadow-lg transition-all flex flex-col justify-between group"
+              >
+                <div className="space-y-4">
+                  <div className="relative aspect-[3/4] w-full bg-white border border-forest/10 flex items-center justify-center p-4 overflow-hidden">
+                    <Image 
+                      src={product.image} 
+                      alt={product.name} 
+                      fill 
+                      className="object-contain p-4 group-hover:scale-105 transition-transform duration-500" 
+                    />
+                  </div>
+                  <div className="flex items-center gap-1.5 text-gold">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className="w-4 h-4 fill-current" />
+                    ))}
+                    <span className="text-xs text-dark/50 font-sans ml-1">({product.reviewsCount})</span>
+                  </div>
+                  <h3 className="text-xl font-serif text-forest font-semibold">{product.name}</h3>
+                  <p className="text-xs text-dark/65 font-light leading-relaxed font-sans line-clamp-2">
+                    {product.shortDescription}
+                  </p>
+                  <p className="font-serif text-lg text-forest font-semibold">From ₹{product.sizePrices ? Object.values(product.sizePrices)[0] : "249"}.00</p>
+                </div>
+                <div className="pt-6">
+                  <Link
+                    href={`/products/${product.id}`}
+                    className="block w-full py-3 bg-forest hover:bg-forest-light text-white text-center text-xs uppercase tracking-widest font-semibold transition-colors"
+                  >
+                    View Details &amp; Reviews
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </RevealSection>
+
+        </div>
+      </section>
+
+      {/* ============================================================
           6. CTA BANNER — Forest green (not pitch black)
           ============================================================ */}
       <section className="py-24 bg-forest relative overflow-hidden">
@@ -465,11 +552,11 @@ export default function HomePage() {
             <span className="text-xs tracking-[0.3em] uppercase text-gold font-semibold">Limited Batches</span>
             <span className="w-12 h-[1px] bg-gold/40" />
           </div>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-serif text-white tracking-tight leading-tight">
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-serif text-white tracking-tight leading-tight uppercase font-semibold">
             Taste the purity your<br />
             <span className="shimmer-gold">family deserves.</span>
           </h2>
-          <p className="text-white/60 text-lg max-w-md mx-auto leading-relaxed">
+          <p className="text-white/60 text-lg max-w-md mx-auto leading-relaxed font-sans">
             Switch to real, raw, wood-pressed goodness for your kitchen.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -483,141 +570,6 @@ export default function HomePage() {
           </div>
         </RevealSection>
       </section>
-
-      {/* Review Modal */}
-      {showReviewModal && (
-        <div className="fixed inset-0 bg-dark/45 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-forest/10 p-8 max-w-md w-full shadow-2xl relative space-y-6 rounded-sm">
-            <button 
-              onClick={() => {
-                setShowReviewModal(false);
-                setErrorMsg("");
-                setSuccessMsg("");
-              }}
-              className="absolute top-4 right-4 text-dark/40 hover:text-forest transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-            
-            {!user ? (
-              <div className="text-center space-y-4 py-4">
-                <h3 className="text-xl font-serif text-forest">Login Required</h3>
-                <p className="text-sm text-dark/75">Please log in to your account to verify your purchase and write a review.</p>
-                <div className="pt-2">
-                  <Link 
-                    href="/login?callbackUrl=/"
-                    className="inline-block px-6 py-3 bg-forest hover:bg-forest-light text-white text-xs uppercase tracking-widest font-semibold transition-colors"
-                  >
-                    Log In
-                  </Link>
-                </div>
-              </div>
-            ) : (
-              <form onSubmit={handleReviewSubmit} className="space-y-4">
-                <h3 className="text-xl font-serif text-forest border-b border-forest/5 pb-2">Share Your Experience</h3>
-                <p className="text-xs text-dark/60">Your review will be marked with a <span className="text-forest font-semibold">Verified Buyer</span> badge once submitted.</p>
-                
-                {errorMsg && (
-                  <div className="bg-red-50 text-red-600 text-xs p-3 border border-red-200">
-                    {errorMsg}
-                  </div>
-                )}
-                
-                {successMsg && (
-                  <div className="bg-green-50 text-forest text-xs p-3 border border-green-200">
-                    {successMsg}
-                  </div>
-                )}
-                
-                <div className="space-y-1">
-                  <label className="text-[10px] uppercase tracking-widest text-forest/60 font-semibold block">Rating</label>
-                  <div className="flex gap-1">
-                    {[1, 2, 3, 4, 5].map((val) => (
-                      <button
-                        key={val}
-                        type="button"
-                        onClick={() => setRating(val)}
-                        className="text-gold focus:outline-none"
-                      >
-                        <Star className={`w-6 h-6 ${val <= rating ? "fill-current" : "fill-transparent opacity-30"}`} />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                
-                <div className="space-y-1">
-                  <label className="text-[10px] uppercase tracking-widest text-forest/60 font-semibold block">Your Comment</label>
-                  <textarea
-                    required
-                    rows={4}
-                    value={comment}
-                    onChange={(e) => setComment(e.target.value)}
-                    className="w-full text-xs p-3 border border-forest/10 focus:border-gold outline-none bg-brand-bg/20 resize-none"
-                    placeholder="What did you think of our cold pressed oils?"
-                  />
-                </div>
-
-                 <div className="space-y-1">
-                  <label className="text-[10px] uppercase tracking-widest text-forest/60 font-semibold block">Attach Photos or Videos (Up to 2)</label>
-                  
-                  {mediaFiles.length > 0 && (
-                    <div className="space-y-2 mb-2">
-                      {mediaFiles.map((file, idx) => (
-                        <div key={idx} className="relative border border-forest/10 p-2 rounded bg-brand-bg/10 flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            {file.type === "video" ? (
-                              <div className="w-12 h-12 bg-black rounded flex items-center justify-center text-[10px] text-white">Video</div>
-                            ) : (
-                              <img src={file.url} alt={`Thumbnail ${idx + 1}`} className="w-12 h-12 object-cover rounded" />
-                            )}
-                            <span className="text-[10px] text-dark/70 truncate max-w-[180px]">Attachment {idx + 1} ready</span>
-                          </div>
-                           <button 
-                            type="button" 
-                            onClick={() => handleRemoveMedia(idx)}
-                            className="text-red-500 hover:text-red-700 text-xs font-semibold"
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {mediaFiles.length < 2 && (
-                    <div className="relative">
-                      <input
-                        type="file"
-                        accept="image/*,video/*"
-                        onChange={handleFileChange}
-                        disabled={uploading}
-                        className="hidden"
-                        id="review-media-upload"
-                      />
-                      <label
-                        htmlFor="review-media-upload"
-                        className={`w-full py-2.5 px-4 border border-dashed border-forest/20 hover:border-forest/50 bg-brand-bg/10 flex items-center justify-center gap-2 cursor-pointer text-xs text-dark/75 transition-all ${
-                          uploading ? "opacity-50 cursor-not-allowed" : ""
-                        }`}
-                      >
-                        {uploading ? "Uploading media..." : `Choose File ${mediaFiles.length + 1} (Image/Video)`}
-                      </label>
-                    </div>
-                  )}
-                </div>
-                
-                <button
-                  type="submit"
-                  disabled={submitLoading}
-                  className="w-full py-3 bg-forest hover:bg-forest-light text-white uppercase tracking-widest text-xs font-semibold shadow-md flex items-center justify-center gap-2 transition-all disabled:opacity-60"
-                >
-                  {submitLoading ? "Submitting..." : "Submit Review"}
-                </button>
-              </form>
-            )}
-          </div>
-        </div>
-      )}
 
       <Footer />
     </div>

@@ -28,12 +28,12 @@ export default function FAQPage() {
       title: "Agriculture & Sourcing",
       items: [
         {
-          q: "Where do you source your groundnuts and seeds?",
-          a: "We source our bold-variety groundnuts directly from small family farms. Sourcing from specific, mineral-rich soils gives our oil its signature sweet, rich taste."
+          q: "Where do you source your sunflower seeds and other oilseeds?",
+          a: "We source our premium oilseeds directly from small family farms. Sourcing from specific, mineral-rich soils gives our oils their signature light, nutrient-dense characteristics."
         },
         {
           q: "Are the crops organically grown?",
-          a: "Our partner farmers follow natural, chemical-free farming methodologies. We verify soil quality reports and test incoming peanut batches for pesticide residues before processing them in our mills."
+          a: "Our partner farmers follow natural, chemical-free farming methodologies. We verify soil quality reports and test incoming seed batches for pesticide residues before processing them in our mills."
         }
       ]
     },

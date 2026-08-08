@@ -51,7 +51,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { rating, comment, mediaUrls, mediaTypes, productId, name } = body;
+    const { rating, comment, mediaUrls, mediaTypes, productId, name, email } = body;
 
     const resolvedProductId = productId || "general";
 
@@ -68,6 +68,7 @@ export async function POST(req: Request) {
     let userId: string | null = null;
     let reviewerName = name?.trim() || "Guest Reviewer";
     let isVerified = false;
+    let reviewerEmail = email?.trim() || null;
 
     if (token) {
       try {
@@ -82,6 +83,7 @@ export async function POST(req: Request) {
 
           if (user) {
             reviewerName = user.name || reviewerName;
+            reviewerEmail = user.email || reviewerEmail;
 
             // Check if verified buyer (has paid or cod orders)
             const completedOrdersCount = await prisma.order.count({
@@ -106,6 +108,7 @@ export async function POST(req: Request) {
         productId: resolvedProductId,
         userId,
         name: reviewerName,
+        email: reviewerEmail,
         rating,
         comment: comment.trim(),
         isVerified,

@@ -1,37 +1,22 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useApp } from "@/context/AppContext";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/Button";
 import { BrandBottle } from "@/components/ui/BrandBottle";
-import { Lock, Heart, ChevronDown, Plus, Minus, ChevronLeft, ChevronRight } from "lucide-react";
+import { Lock, ChevronDown, Check } from "lucide-react";
 
-function ProductCard({ product, index, wishlist, toggleWishlist, addToCart }: {
-  product: any;
-  index: number;
-  wishlist: string[];
-  toggleWishlist: (id: string) => void;
-  addToCart: (product: any, size: string, quantity: number, bottleType?: string) => void;
-}) {
+function ProductCard({ product }: { product: any }) {
+  const { addToCart } = useApp();
+  const router = useRouter();
   const sizes = product.sizes || Object.keys(product.sizePrices);
-  const defaultSize = sizes.find((s: string) => s === "1 L" || s === "1L") || sizes[0] || "";
-  const [selectedSize, setSelectedSize] = useState(defaultSize);
-  const [quantity, setQuantity] = useState(1);
-  const [selectedBottleType, setSelectedBottleType] = useState("Lightweight Bottle");
-
-  const is2L = selectedSize.toLowerCase().includes("2");
-  const availableBottleTypes = is2L ? ["Lightweight Bottle"] : ["Lightweight Bottle", "Glass Bottle"];
-
-  useEffect(() => {
-    if (is2L) {
-      setSelectedBottleType("Lightweight Bottle");
-    }
-  }, [selectedSize, is2L]);
+  const [selectedSize, setSelectedSize] = useState(sizes[0] || "");
+  const [added, setAdded] = useState(false);
 
   const price = product.sizePrices[selectedSize] || Object.values(product.sizePrices)[0] || 0;
   const originalPrice = product.originalSizePrices?.[selectedSize] || null;
@@ -39,7 +24,7 @@ function ProductCard({ product, index, wishlist, toggleWishlist, addToCart }: {
   let finalPrice = price;
   let finalOriginalPrice = originalPrice;
 
-  if (selectedBottleType === "Lightweight Bottle") {
+  if (product.id.includes("oil")) {
     if (selectedSize === "500 ml") {
       finalPrice = 225;
       finalOriginalPrice = 250;
@@ -49,344 +34,286 @@ function ProductCard({ product, index, wishlist, toggleWishlist, addToCart }: {
     }
   }
 
-  const totalPrice = finalPrice * quantity;
-  const totalOriginalPrice = finalOriginalPrice ? finalOriginalPrice * quantity : null;
-  const isOil = product.id.includes("oil");
-  const router = useRouter();
+  const discountPct = finalOriginalPrice && finalOriginalPrice > finalPrice 
+    ? Math.round(((finalOriginalPrice - finalPrice) / finalOriginalPrice) * 100) 
+    : 0;
 
-  // If the product is groundnut-oil, we add the why-made and how-made slides.
-  const productSlides: Array<{ type: string; src?: string; alt?: string }> = [{ type: "main" }];
-  if (product.id === "groundnut-oil") {
-    productSlides.push({ type: "image", src: "/images/why-made.jpg", alt: "Why Root & Harvest?" });
-    productSlides.push({ type: "image", src: "/images/how-made.jpg", alt: "How Is It Made?" });
-  }
-
-  const [activeSlide, setActiveSlide] = useState(0);
-
-  const prevSlide = (e: React.MouseEvent) => {
+  const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
-    setActiveSlide((prev) => (prev === 0 ? productSlides.length - 1 : prev - 1));
-  };
-
-  const nextSlide = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setActiveSlide((prev) => (prev === productSlides.length - 1 ? 0 : prev + 1));
-  };
-
-  const handleAddToCart = () => {
-    if (!selectedSize) return;
-    addToCart(product, selectedSize, quantity, selectedBottleType);
-    router.push("/cart");
+    e.stopPropagation();
+    addToCart(product, selectedSize, 1, "Lightweight Bottle");
+    setAdded(true);
+    setTimeout(() => setAdded(false), 2000);
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center">
-      {/* Image Slider */}
-      <div className={`relative aspect-[4/5] w-full bg-white shadow-sm border border-forest/10 p-6 flex items-center justify-center group overflow-hidden ${index % 2 !== 0 ? "lg:order-2" : "lg:order-1"}`}>
-        
-        {/* Render Current Slide */}
-        {productSlides[activeSlide].type === "main" ? (
-          isOil ? (
-            <BrandBottle className="w-full h-full" />
-          ) : (
-            <Image
-              src={product.image}
-              alt={product.name}
-              fill
-              className="object-cover p-4"
-            />
-          )
-        ) : (
-          <Image
-            src={productSlides[activeSlide].src!}
-            alt={productSlides[activeSlide].alt!}
-            fill
-            className="object-contain p-2"
+    <div className="flex flex-col justify-between group">
+      <div className="space-y-3">
+        {/* Rounded Image Container */}
+        <Link href={`/products/${product.id}`} className="block relative aspect-square w-full bg-white rounded-2xl overflow-hidden border border-forest/10 shadow-xs group-hover:shadow-md transition-all">
+          <Image 
+            src={product.image} 
+            alt={product.name} 
+            fill 
+            className="object-contain p-4 group-hover:scale-105 transition-transform duration-500" 
           />
-        )}
+          {product.category && (
+            <span className="absolute top-3 right-3 bg-white/90 backdrop-blur-xs text-forest text-[10px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider shadow-sm border border-forest/10">
+              {product.category === "Oils" ? "Nutty" : "Heritage"}
+            </span>
+          )}
+        </Link>
 
-        {/* Left & Right Arrows (Only if multiple slides exist) */}
-        {productSlides.length > 1 && (
-          <>
-            <button
-              onClick={prevSlide}
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/95 hover:bg-forest hover:text-white border border-forest/10 flex items-center justify-center text-forest transition-all opacity-0 group-hover:opacity-100 shadow-sm z-20 cursor-pointer"
-              aria-label="Previous Slide"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <button
-              onClick={nextSlide}
-              className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/95 hover:bg-forest hover:text-white border border-forest/10 flex items-center justify-center text-forest transition-all opacity-0 group-hover:opacity-100 shadow-sm z-20 cursor-pointer"
-              aria-label="Next Slide"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
+        {/* Product Title */}
+        <Link 
+          href={`/products/${product.id}`}
+          className="font-serif text-lg font-bold text-forest hover:underline leading-snug line-clamp-1 block pt-1"
+        >
+          {product.name}
+        </Link>
 
-            {/* Slide Indicators */}
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
-              {productSlides.map((_, idx) => (
-                <button
-                  key={idx}
-                  onClick={(e) => { e.preventDefault(); setActiveSlide(idx); }}
-                  className={`w-2 h-2 rounded-full transition-all ${
-                    activeSlide === idx ? "bg-forest scale-110" : "bg-forest/20"
-                  }`}
-                  aria-label={`Go to slide ${idx + 1}`}
-                />
-              ))}
-            </div>
-          </>
-        )}
+        {/* Price & Strikethrough Discount Badge */}
+        <div className="flex flex-wrap items-center gap-2 font-sans pt-0.5">
+          <span className="text-base font-bold text-forest">Rs. {finalPrice}.00</span>
+          {finalOriginalPrice && finalOriginalPrice > finalPrice && (
+            <>
+              <span className="text-xs text-dark/40 line-through">Rs. {finalOriginalPrice}.00</span>
+              <span className="text-[10px] font-extrabold text-gold bg-gold/10 px-2 py-0.5 rounded border border-gold/20">
+                {discountPct}% OFF
+              </span>
+            </>
+          )}
+        </div>
+
+        {/* Size Selection Dropdown */}
+        <div className="relative pt-1">
+          <select
+            value={selectedSize}
+            onChange={(e) => setSelectedSize(e.target.value)}
+            className="w-full appearance-none rounded-xl border border-forest/30 bg-white px-4 py-2.5 text-xs font-medium text-forest focus:outline-none focus:border-forest shadow-xs transition-colors cursor-pointer"
+          >
+            {sizes.map((s: string) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+          <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-forest/50 pointer-events-none" />
+        </div>
       </div>
 
-      {/* Content */}
-      <div className={`space-y-8 max-w-lg ${index % 2 !== 0 ? "lg:order-1 ml-auto text-right" : "lg:order-2 text-left"}`}>
-        <div className="space-y-4">
-          <h2 className="text-3xl md:text-5xl font-serif text-forest leading-tight">
-            <Link href={`/products/${product.id}`} className="hover:text-gold transition-colors">
-              {product.name}
-            </Link>
-          </h2>
-          <p className="text-lg text-dark/65 font-light leading-relaxed">
-            {product.tagline}
-          </p>
-        </div>
-
-        {/* Size Selection, Quantity, TotalPrice and Buttons below product info */}
-        <div className="space-y-6 pt-4 border-t border-forest/10 text-left">
-          
-          {/* Size Select */}
-          <div className="space-y-2">
-            <label className="text-[10px] uppercase tracking-widest text-forest/50 font-semibold block">Select Size</label>
-            <div className="relative">
-              <select
-                value={selectedSize}
-                onChange={(e) => setSelectedSize(e.target.value)}
-                className="w-full appearance-none rounded-none border border-forest/20 bg-transparent px-6 py-3.5 text-xs uppercase tracking-widest text-forest focus:border-forest focus:outline-none transition-colors bg-white"
-              >
-                {sizes.map((size: string) => (
-                  <option key={size} value={size}>{size}</option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-forest/50 pointer-events-none" />
-            </div>
-          </div>
-
-          {/* Bottle Type Select */}
-          {isOil && (
-            <div className="space-y-2">
-              <label className="text-[10px] uppercase tracking-widest text-forest/50 font-semibold block">Bottle Type</label>
-              <div className="relative">
-                <select
-                  value={selectedBottleType}
-                  onChange={(e) => setSelectedBottleType(e.target.value)}
-                  className="w-full appearance-none rounded-none border border-forest/20 bg-transparent px-6 py-3.5 text-xs uppercase tracking-widest text-forest focus:border-forest focus:outline-none transition-colors bg-white"
-                >
-                  {availableBottleTypes.map((type) => (
-                    <option key={type} value={type}>{type}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-forest/50 pointer-events-none" />
-              </div>
-            </div>
-          )}
-
-          {/* Quantity & Total Price */}
-          <div className="flex items-center justify-between gap-6">
-            <div>
-              <span className="text-[10px] uppercase tracking-widest text-forest/50 font-semibold block mb-2">Quantity</span>
-              <div className="flex items-center border border-forest/15 bg-white">
-                <button
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="px-4 py-2 text-dark/50 hover:text-forest transition-colors"
-                >
-                  <Minus className="w-3.5 h-3.5" />
-                </button>
-                <span className="w-8 text-center font-serif text-sm text-black">{quantity}</span>
-                <button
-                  onClick={() => setQuantity(quantity + 1)}
-                  className="px-4 py-2 text-dark/50 hover:text-forest transition-colors"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-
-            <div className="text-right">
-              <span className="text-[10px] uppercase tracking-widest text-forest/50 font-semibold block mb-1">Total Price</span>
-              <div className="flex items-baseline justify-end gap-2">
-                {totalOriginalPrice && (
-                  <span className="font-serif text-sm text-dark/40 line-through">₹{totalOriginalPrice}</span>
-                )}
-                <span className="font-serif text-xl text-black font-semibold">₹{totalPrice}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Actions: Add to Cart and Wishlist Heart */}
-          <div className="flex gap-4 pt-2">
-            <Button
-              onClick={handleAddToCart}
-              variant="primary"
-              className="flex-1 h-12 text-xs uppercase tracking-widest"
-            >
-              Add To Cart
-            </Button>
-            
-            <button
-              onClick={() => toggleWishlist(product.id)}
-              className={`w-12 h-12 border flex items-center justify-center transition-all ${
-                wishlist?.includes(product.id)
-                  ? "border-gold bg-gold/10 text-gold"
-                  : "border-forest/20 text-forest hover:bg-forest/5"
-              }`}
-              aria-label="Toggle Wishlist"
-            >
-              <Heart className={`w-4 h-4 ${wishlist?.includes(product.id) ? "fill-current" : ""}`} />
-            </button>
-          </div>
-
-        </div>
+      {/* Full Width Dark Green Add To Cart Button */}
+      <div className="pt-4">
+        <button
+          onClick={handleAddToCart}
+          className="w-full py-3 bg-[#123025] hover:bg-[#1E4A3A] text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition-all shadow-sm active:scale-[0.98] cursor-pointer"
+        >
+          {added ? "ADDED TO CART ✓" : "ADD TO CART"}
+        </button>
       </div>
     </div>
   );
 }
 
-export default function ProductsPage() {
-  const { products, wishlist, toggleWishlist, addToCart } = useApp();
+function ProductsContent() {
+  const { products } = useApp();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const cat = searchParams.get("category");
 
-  const activeProducts = products.filter(p => !p.isComingSoon);
-  const comingSoonProducts = products.filter(p => p.isComingSoon);
+  const categoryFilter = cat 
+    ? cat.toLowerCase() === "oils" 
+      ? "Oils" 
+      : cat.toLowerCase() === "grains" 
+        ? "Grains" 
+        : null
+    : null;
+
+  const oilsActive = products.filter(p => p.category === "Oils" && !p.isComingSoon && (!categoryFilter || p.category === categoryFilter));
+  const oilsSoon = products.filter(p => p.category === "Oils" && p.isComingSoon && (!categoryFilter || p.category === categoryFilter));
+  
+  const grainsActive = products.filter(p => p.category === "Grains" && !p.isComingSoon && (!categoryFilter || p.category === categoryFilter));
+  const grainsSoon = products.filter(p => p.category === "Grains" && p.isComingSoon && (!categoryFilter || p.category === categoryFilter));
+
+  const showOils = !categoryFilter || categoryFilter === "Oils";
+  const showGrains = !categoryFilter || categoryFilter === "Grains";
+
+  const pageTitle = categoryFilter === "Oils" 
+    ? "Wood Pressed Oils" 
+    : categoryFilter === "Grains" 
+      ? "Traditional Grains" 
+      : "Our Collection";
+
+  const pageTagline = categoryFilter === "Oils"
+    ? "100% natural, unrefined, single-source cold-pressed Ghani oils."
+    : categoryFilter === "Grains"
+      ? "Pesticide-free heritage grains, raw groundnuts, and traditional rice."
+      : "Purity isn't what we add. It's what we leave out.";
 
   return (
     <div className="bg-brand-bg text-dark font-sans font-light selection:bg-gold/30 min-h-screen">
       <Navbar />
 
-      <main className="py-20 px-6">
-        <div className="max-w-[1280px] mx-auto space-y-20">
+      <main className="py-16 px-6">
+        <div className="max-w-[1280px] mx-auto space-y-16">
+
+          {/* Category Filter Pills Bar */}
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <button
+              onClick={() => router.push("/products?category=oils")}
+              className={`px-6 py-2.5 rounded-full text-xs font-bold tracking-wider uppercase transition-all cursor-pointer ${
+                showOils && !showGrains 
+                  ? "bg-[#123025] text-white shadow-md scale-105" 
+                  : "bg-[#E5E285] text-forest hover:opacity-90 shadow-xs"
+              }`}
+            >
+              Cold Pressed Oils
+            </button>
+            <button
+              onClick={() => router.push("/products?category=grains")}
+              className={`px-6 py-2.5 rounded-full text-xs font-bold tracking-wider uppercase transition-all cursor-pointer ${
+                showGrains && !showOils 
+                  ? "bg-[#123025] text-white shadow-md scale-105" 
+                  : "bg-[#E5E285] text-forest hover:opacity-90 shadow-xs"
+              }`}
+            >
+              Traditional Grains
+            </button>
+            {categoryFilter && (
+              <button
+                onClick={() => router.push("/products")}
+                className="px-5 py-2.5 rounded-full text-xs font-bold tracking-wider uppercase bg-white border border-forest/20 text-forest/60 hover:text-forest transition-all cursor-pointer"
+              >
+                All Products
+              </button>
+            )}
+          </div>
 
           {/* Page Header */}
-          <div className="text-center max-w-2xl mx-auto space-y-4 mb-16">
-            <div className="flex items-center justify-center gap-3">
-              <span className="w-8 h-[1px] bg-gold" />
-              <span className="text-xs tracking-[0.3em] uppercase text-gold font-semibold">Curated Selection</span>
-              <span className="w-8 h-[1px] bg-gold" />
-            </div>
-            <h1 className="text-5xl font-serif text-forest tracking-tight font-semibold">
-              Our Collection
+          <div className="text-center max-w-2xl mx-auto space-y-3 mb-12">
+            <h1 className="text-4xl md:text-5xl font-serif text-forest tracking-tight font-semibold uppercase">
+              {pageTitle}
             </h1>
-            <p className="text-lg text-dark/65 font-light">
-              Purity isn't what we add. It's what we leave out.
+            <p className="text-base text-dark/65 font-light">
+              {pageTagline}
             </p>
           </div>
 
-          {/* Active Products */}
-          <div className="space-y-32">
-            {activeProducts.map((product, index) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                index={index}
-                wishlist={wishlist}
-                toggleWishlist={toggleWishlist}
-                addToCart={addToCart}
-              />
-            ))}
-          </div>
-
-          {/* ── Coming Soon Divider ── */}
-          <div className="flex items-center gap-6 py-4">
-            <div className="flex-1 h-[1px] bg-forest/10" />
-            <div className="flex items-center gap-2 text-xs tracking-[0.3em] uppercase text-gold font-semibold">
-              <Lock className="w-3.5 h-3.5" />
-              Coming Soon
-            </div>
-            <div className="flex-1 h-[1px] bg-forest/10" />
-          </div>
-
-          {/* Coming Soon Teasers (Omit product names completely) */}
-          <div className="space-y-32">
-            {comingSoonProducts.map((teaser, index) => {
-              const isOil = teaser.id.includes("oil");
+          {/* Categories rendering */}
+          {showOils && (
+            <div className="space-y-12">
+              {!categoryFilter && (
+                <div className="border-b border-forest/10 pb-4 mb-6">
+                  <h2 className="text-2xl font-serif text-forest font-semibold uppercase tracking-wider">Wood Pressed Oils</h2>
+                </div>
+              )}
               
-              // Omit the exact product names, use generalized category names
-              const genericName = isOil ? "Wood Pressed Oil" : "Raw Forest Honey";
-              const genericTagline = isOil 
-                ? "A pure, unrefined addition to our wood pressed oils. Sourced from organic growers." 
-                : "Wildflower forest nectar harvested from altitude valleys. Unfiltered and unheated.";
+              {/* Oils Active Products Grid (4 Columns like Image 1) */}
+              {oilsActive.length > 0 && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
+                  {oilsActive.map((product) => (
+                    <ProductCard key={product.id} product={product} />
+                  ))}
+                </div>
+              )}
 
-              return (
-                <div
-                  key={teaser.id}
-                  className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center opacity-90"
-                >
-                  {/* Blurred image */}
-                  <Link
-                    href={`/products/${teaser.id}`}
-                    className={`relative block aspect-[4/5] w-full bg-white border border-forest/10 overflow-hidden cursor-pointer group ${index % 2 !== 0 ? "lg:order-2" : "lg:order-1"}`}
-                  >
-                    <div className="absolute inset-0 p-6 flex items-center justify-center transition-transform group-hover:scale-105 duration-500">
-                      {isOil ? (
-                        <BrandBottle className="w-full h-full" />
-                      ) : (
-                        <Image
-                          src={teaser.image}
-                          alt="Coming Soon"
-                          fill
-                          className="object-cover p-6"
-                        />
-                      )}
+              {/* Oils Coming Soon */}
+              {oilsSoon.length > 0 && (
+                <div className="space-y-8 pt-6">
+                  <div className="flex items-center gap-6 py-2">
+                    <div className="flex-1 h-[1px] bg-forest/10" />
+                    <div className="flex items-center gap-2 text-xs tracking-[0.3em] uppercase text-gold font-semibold">
+                      <Lock className="w-3.5 h-3.5" />
+                      Upcoming Oils
                     </div>
-                    {/* Blur + overlay */}
-                    <div className="absolute inset-0 backdrop-blur-md bg-white/40" />
-                    {/* Coming soon badge */}
-                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
-                      <div className="w-14 h-14 rounded-full bg-forest/8 border border-forest/20 flex items-center justify-center">
-                        <Lock className="w-6 h-6 text-forest/50" />
+                    <div className="flex-1 h-[1px] bg-forest/10" />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
+                    {oilsSoon.map((teaser) => (
+                      <div key={teaser.id} className="bg-white border border-forest/5 p-5 rounded-2xl relative overflow-hidden flex flex-col justify-between opacity-80 shadow-xs">
+                        <div className="space-y-3">
+                          <div className="relative aspect-square w-full bg-white rounded-xl border border-forest/10 flex items-center justify-center p-4">
+                            <Image src={teaser.image} alt={teaser.name} fill className="object-contain p-4 blur-[2px]" />
+                            <div className="absolute inset-0 bg-white/20 backdrop-blur-xs flex flex-col items-center justify-center gap-2">
+                              <Lock className="w-5 h-5 text-forest/40" />
+                              <span className="bg-forest text-white text-[10px] uppercase tracking-widest font-bold px-3 py-1.5 rounded-full shadow">Coming Soon</span>
+                            </div>
+                          </div>
+                          <h3 className="text-base font-serif text-forest/50 font-semibold line-clamp-1">{teaser.name}</h3>
+                          <p className="text-xs text-dark/40 font-light leading-relaxed font-sans line-clamp-2">{teaser.tagline}</p>
+                          <p className="font-serif text-sm text-dark/40 font-semibold pt-1">Launching Soon</p>
+                        </div>
                       </div>
-                      <div className="text-center">
-                        <span className="block px-6 py-3 bg-forest text-white text-xs uppercase tracking-[0.3em] font-bold shadow-lg">
-                          Coming Soon
-                        </span>
-                        <p className="text-xs text-dark/40 mt-2 tracking-wider uppercase">Launching Soon</p>
-                      </div>
-                    </div>
-                  </Link>
-
-                  {/* Content */}
-                  <div className={`space-y-6 max-w-lg ${index % 2 !== 0 ? "lg:order-1 ml-auto text-right" : "lg:order-2 text-left"}`}>
-                    <div className="space-y-4">
-                      {/* Name omitted, replaced with generic type indicator */}
-                      <h2 className="text-3xl md:text-5xl font-serif text-forest/50 leading-tight hover:text-gold transition-colors">
-                        <Link href={`/products/${teaser.id}`}>
-                          {genericName}
-                        </Link>
-                      </h2>
-                      <p className="text-lg text-dark/40 font-light leading-relaxed">
-                        {genericTagline}
-                      </p>
-                    </div>
-
-                    <div className="pt-4">
-                      <Link 
-                        href={`/products/${teaser.id}`}
-                        className="inline-block border border-forest/20 hover:border-forest hover:bg-forest/5 text-forest px-6 py-3 text-xs uppercase tracking-widest font-semibold transition-all"
-                      >
-                        View Details &amp; Reviews
-                      </Link>
-                    </div>
-
+                    ))}
                   </div>
                 </div>
-              );
-            })}
-          </div>
+              )}
+            </div>
+          )}
+
+          {showGrains && (
+            <div className={`space-y-12 ${!categoryFilter ? "pt-16 border-t border-forest/10" : ""}`}>
+              {!categoryFilter && (
+                <div className="border-b border-forest/10 pb-4 mb-6">
+                  <h2 className="text-2xl font-serif text-forest font-semibold uppercase tracking-wider">Traditional Grains</h2>
+                </div>
+              )}
+              
+              {/* Grains Active Products Grid (4 Columns like Image 1) */}
+              {grainsActive.length > 0 && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
+                  {grainsActive.map((product) => (
+                    <ProductCard key={product.id} product={product} />
+                  ))}
+                </div>
+              )}
+
+              {/* Grains Coming Soon */}
+              {grainsSoon.length > 0 && (
+                <div className="space-y-8 pt-6">
+                  <div className="flex items-center gap-6 py-2">
+                    <div className="flex-1 h-[1px] bg-forest/10" />
+                    <div className="flex items-center gap-2 text-xs tracking-[0.3em] uppercase text-gold font-semibold">
+                      <Lock className="w-3.5 h-3.5" />
+                      Upcoming Grains
+                    </div>
+                    <div className="flex-1 h-[1px] bg-forest/10" />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
+                    {grainsSoon.map((teaser) => (
+                      <div key={teaser.id} className="bg-white border border-forest/5 p-5 rounded-2xl relative overflow-hidden flex flex-col justify-between opacity-80 shadow-xs">
+                        <div className="space-y-3">
+                          <div className="relative aspect-square w-full bg-white rounded-xl border border-forest/10 flex items-center justify-center p-4">
+                            <Image src={teaser.image} alt={teaser.name} fill className="object-contain p-4 blur-[2px]" />
+                            <div className="absolute inset-0 bg-white/20 backdrop-blur-xs flex flex-col items-center justify-center gap-2">
+                              <Lock className="w-5 h-5 text-forest/40" />
+                              <span className="bg-forest text-white text-[10px] uppercase tracking-widest font-bold px-3 py-1.5 rounded-full shadow">Coming Soon</span>
+                            </div>
+                          </div>
+                          <h3 className="text-base font-serif text-forest/50 font-semibold line-clamp-1">{teaser.name}</h3>
+                          <p className="text-xs text-dark/40 font-light leading-relaxed font-sans line-clamp-2">{teaser.tagline}</p>
+                          <p className="font-serif text-sm text-dark/40 font-semibold pt-1">Launching Soon</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
         </div>
       </main>
 
       <Footer />
     </div>
+  );
+}
+
+export default function ProductsPage() {
+  return (
+    <Suspense fallback={<div className="bg-brand-bg min-h-screen flex items-center justify-center"><p className="text-forest tracking-widest text-xs uppercase font-semibold">Loading Collection...</p></div>}>
+      <ProductsContent />
+    </Suspense>
   );
 }

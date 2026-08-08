@@ -20,7 +20,8 @@ export const COLORS = {
 };
 
 export const NAVIGATION_LINKS = [
-  { name: "Shop Oils", href: "/products" },
+  { name: "Wood Pressed Oils", href: "/products?category=oils" },
+  { name: "Traditional Grains", href: "/products?category=grains" },
   { name: "Our Story", href: "/about" },
 ];
 

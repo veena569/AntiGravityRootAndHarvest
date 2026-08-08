@@ -18,11 +18,12 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
   const { products, addToCart, wishlist, toggleWishlist } = useApp();
   const product = products.find((p) => p.id === params.id);
 
-  if (!product) {
+  if (!product || product.isComingSoon) {
     notFound();
     return null;
   }
 
+  const [selectedImage, setSelectedImage] = useState(product.image);
   const router = useRouter();
   const defaultSize = product.sizes.find((s: string) => s === "1 L" || s === "1L") || product.sizes[0] || "";
   const [selectedSize, setSelectedSize] = useState(defaultSize);
@@ -39,11 +40,19 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
   const [reviewerName, setReviewerName] = useState("");
+  const [reviewerEmail, setReviewerEmail] = useState("");
   const [submitLoading, setSubmitLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
   const [mediaFiles, setMediaFiles] = useState<{ url: string; type: string }[]>([]);
   const [uploading, setUploading] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setReviewerName(user.name || "");
+      setReviewerEmail(user.email || "");
+    }
+  }, [user]);
 
   useEffect(() => {
     if (!product) return;
@@ -116,7 +125,8 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
           productId: product!.id,
           rating,
           comment,
-          name: reviewerName,
+          name: reviewerName || "Anonymous Guest",
+          email: reviewerEmail || null,
           mediaUrls: mediaFiles.map((f) => f.url),
           mediaTypes: mediaFiles.map((f) => f.type)
         }),
@@ -128,6 +138,7 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
         setComment("");
         setRating(5);
         setReviewerName("");
+        setReviewerEmail("");
         setMediaFiles([]);
         
         // Refresh reviews
@@ -151,14 +162,22 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
     }
   };
 
+  const is5L = selectedSize.toLowerCase().includes("5");
   const is2L = selectedSize.toLowerCase().includes("2");
-  const availableBottleTypes = is2L ? ["Lightweight Bottle"] : ["Lightweight Bottle", "Glass Bottle"];
+
+  const availableBottleTypes = is5L 
+    ? ["Plastic Bottle"] 
+    : is2L 
+      ? ["Plastic Bottle"] 
+      : ["Plastic Bottle", "Glass Bottle"];
 
   useEffect(() => {
-    if (selectedSize && is2L) {
-      setSelectedBottleType("Lightweight Bottle");
+    if (selectedSize) {
+      if (is5L || is2L) {
+        setSelectedBottleType("Plastic Bottle");
+      }
     }
-  }, [selectedSize, is2L]);
+  }, [selectedSize, is5L, is2L]);
 
   const currentPriceRaw = selectedSize ? product.sizePrices[selectedSize] : Object.values(product.sizePrices)[0];
   const currentOriginalPriceRaw = selectedSize 
@@ -168,7 +187,7 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
   let currentPrice = currentPriceRaw;
   let currentOriginalPrice = currentOriginalPriceRaw;
 
-  if (selectedBottleType === "Lightweight Bottle") {
+  if (selectedBottleType === "Plastic Bottle" || selectedBottleType === "Lightweight Bottle") {
     if (selectedSize === "500 ml") {
       currentPrice = 225;
       currentOriginalPrice = 250;
@@ -197,37 +216,112 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
           </Link>
         </div>
 
-        {/* Product Hero Area (Extremely Simple) */}
+        {/* Product Hero Area */}
         <div className="max-w-[1280px] mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 py-20">
           
-          {/* Huge Photography */}
-          <div className="relative aspect-[4/5] bg-white w-full border border-forest/10 p-8 shadow-sm">
-            {product.id.includes("oil") ? (
-              <BrandBottle className="w-full h-full absolute inset-0" />
-            ) : (
-              <Image
-                src={product.image}
-                alt={product.name}
-                fill
-                className={`object-cover p-4 ${product.isComingSoon ? "blur-md opacity-70 grayscale" : ""}`}
-                priority
-              />
-            )}
+          {/* Photography & Gallery */}
+          <div className="space-y-4">
+            {/* Scrollable Main Hero Viewer Box */}
+            <div className="relative w-full h-[600px] md:h-[750px] bg-white border border-forest/10 p-4 shadow-sm overflow-y-auto rounded-xl scrollbar-thin scrollbar-thumb-forest/30 scrollbar-track-transparent">
+              {selectedImage !== product.image && (
+                <div className="sticky top-2 right-2 z-10 flex justify-end pointer-events-none mb-2">
+                  <span className="bg-forest/90 text-white text-[10px] uppercase font-bold tracking-widest px-3 py-1.5 rounded-full shadow backdrop-blur-xs">
+                    ↕ Scroll to view full image
+                  </span>
+                </div>
+              )}
+              <div className="relative w-full flex justify-center items-start min-h-full">
+                {selectedImage === product.image ? (
+                  <div className="relative w-full h-full min-h-[550px] md:min-h-[700px]">
+                    <Image
+                      src={selectedImage}
+                      alt={product.name}
+                      fill
+                      className="object-contain p-2"
+                      priority
+                    />
+                  </div>
+                ) : (
+                  <img
+                    src={selectedImage}
+                    alt={product.name}
+                    className="w-full h-auto object-contain rounded"
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* Gallery Thumbnails (Scrollable Horizontal Row) */}
+            <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-forest/20">
+              {[
+                { src: product.image, label: "Product Bottle" },
+                { src: "/images/why-made.jpg", label: "Why Us" },
+                { src: "/images/how-made.jpg", label: "How Made" },
+                { src: "/images/journey.jpg", label: "Journey" },
+              ].map((img, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setSelectedImage(img.src)}
+                  className={`relative w-24 h-24 shrink-0 rounded-lg border overflow-hidden p-1 bg-white transition-all cursor-pointer ${
+                    selectedImage === img.src ? "border-forest ring-2 ring-forest shadow-sm scale-105" : "border-forest/15 opacity-70 hover:opacity-100"
+                  }`}
+                  aria-label={img.label}
+                >
+                  <Image src={img.src} alt={img.label} fill className="object-contain p-1" />
+                  <span className="absolute bottom-0 inset-x-0 bg-forest/85 text-white text-[8px] font-bold text-center py-0.5 uppercase tracking-wider">
+                    {img.label}
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Core Info & Cart Actions */}
           <div className="flex flex-col justify-center space-y-8">
             <div className="space-y-4">
-              <h1 className="text-5xl font-serif text-forest tracking-tight leading-tight uppercase font-semibold">
+              <h1 className="text-4xl md:text-5xl font-serif text-forest tracking-tight leading-tight uppercase font-semibold">
                 {product.name}
               </h1>
-              <p className="text-lg text-dark/70 font-light leading-relaxed">
-                {product.tagline}
+
+              {/* Price Display */}
+              <div className="text-2xl font-serif text-forest font-semibold pt-1">
+                ₹{currentPrice}
+              </div>
+
+              {/* Ratings Display (Stars + Count in brackets) */}
+              {(() => {
+                const mockReviewsFormatted = (product.reviews || []).map((r: any) => ({
+                  rating: r.rating
+                }));
+                const allReviews = [...dbReviews, ...mockReviewsFormatted];
+                const totalReviewsCount = allReviews.length;
+                const averageRating = totalReviewsCount > 0 
+                  ? (allReviews.reduce((sum, r) => sum + r.rating, 0) / totalReviewsCount).toFixed(1) 
+                  : "5.0";
+
+                return (
+                  <div className="flex items-center gap-2 text-gold">
+                    <div className="flex gap-0.5">
+                      {[...Array(5)].map((_, i) => (
+                        <Star key={i} className={`w-5 h-5 ${i < Math.round(Number(averageRating)) ? "fill-gold text-gold" : "fill-transparent text-dark/20"}`} />
+                      ))}
+                    </div>
+                    <span className="text-sm text-dark/65 font-semibold">({totalReviewsCount})</span>
+                  </div>
+                );
+              })()}
+
+              {/* Tagline / Subtitle */}
+              <p className="text-sm uppercase tracking-widest text-gold font-bold font-serif pt-1">
+                Trusted Farms To Your Kitchen
               </p>
             </div>
 
             <div className="space-y-4">
               <p className="text-base text-dark/80 font-light leading-relaxed">
+                {product.tagline}
+              </p>
+              <p className="text-base text-dark/70 font-light leading-relaxed">
                 {product.description}
               </p>
             </div>
@@ -303,9 +397,14 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
                   <div className="w-full">
                     <div className="flex items-center justify-between mb-4 px-2">
                       <span className="text-xs uppercase tracking-widest text-forest/50 font-semibold">Total Price</span>
-                      <div className="flex items-baseline gap-2">
+                      <div className="flex items-center gap-3">
                         {currentOriginalPrice && (
-                          <span className="font-serif text-lg text-dark/40 line-through">₹{currentOriginalPrice * quantity}</span>
+                          <>
+                            <span className="font-serif text-lg text-dark/40 line-through">₹{currentOriginalPrice * quantity}</span>
+                            <span className="text-xs font-semibold text-gold bg-gold/10 px-2.5 py-1 rounded-sm border border-gold/10">
+                              Approx {Math.round(((currentOriginalPrice - currentPrice) / currentOriginalPrice) * 100)}% OFF
+                            </span>
+                          </>
                         )}
                         <span className="font-serif text-2xl text-black font-semibold">₹{currentPrice * quantity}</span>
                       </div>
@@ -410,10 +509,6 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
                   <div className="text-center space-y-4">
                     <h2 className="text-4xl font-serif text-forest uppercase tracking-wider font-semibold">Customer Perspectives</h2>
                     <div className="flex flex-col items-center justify-center gap-2">
-                      <div className="flex items-center gap-3 text-lg font-serif text-forest">
-                        <Star className="w-5 h-5 fill-gold text-gold" />
-                        {averageRating} / 5 based on {totalReviewsCount} reviews
-                      </div>
                       <div className="pt-4">
                         <button
                           onClick={() => setShowReviewModal(true)}
@@ -529,19 +624,27 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
                     </div>
                   )}
                   
-                  {!user && (
-                    <div className="space-y-1">
-                      <label className="text-[10px] uppercase tracking-widest text-forest/60 font-semibold block">Your Name</label>
-                      <input
-                        required
-                        type="text"
-                        value={reviewerName}
-                        onChange={(e) => setReviewerName(e.target.value)}
-                        className="w-full text-xs p-3 border border-forest/10 focus:border-gold outline-none bg-brand-bg/20"
-                        placeholder="Enter your name"
-                      />
-                    </div>
-                  )}
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase tracking-widest text-forest/60 font-semibold block">Name (Optional)</label>
+                    <input
+                      type="text"
+                      value={reviewerName}
+                      onChange={(e) => setReviewerName(e.target.value)}
+                      className="w-full text-xs p-3 border border-forest/10 focus:border-gold outline-none bg-brand-bg/20"
+                      placeholder="Anonymous Guest"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase tracking-widest text-forest/60 font-semibold block">Email ID (Optional)</label>
+                    <input
+                      type="email"
+                      value={reviewerEmail}
+                      onChange={(e) => setReviewerEmail(e.target.value)}
+                      className="w-full text-xs p-3 border border-forest/10 focus:border-gold outline-none bg-brand-bg/20"
+                      placeholder="yourname@example.com"
+                    />
+                  </div>
 
                   <div className="space-y-1">
                     <label className="text-[10px] uppercase tracking-widest text-forest/60 font-semibold block">Rating</label>
@@ -633,6 +736,118 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
             </div>
           )}
         </AnimatePresence>
+
+        {/* Comparison Section (What Makes Us Different) */}
+        <section className="bg-[#E2EDE2] py-20 px-6 border-t border-forest/10 flex flex-col items-center">
+          <div className="max-w-xl w-full bg-white p-8 md:p-12 rounded-2xl shadow-md border border-forest/5 text-dark relative overflow-hidden">
+            <h2 className="text-3xl font-serif text-forest text-center font-bold mb-10 tracking-tight uppercase">
+              What Makes Us Different?
+            </h2>
+            
+            <div className="overflow-x-auto relative">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-forest/10">
+                    <th className="py-4 text-xs uppercase tracking-widest text-forest/60 font-bold w-[45%]">Feature</th>
+                    <th className="py-4 px-4 text-xs uppercase tracking-widest text-white font-bold text-center bg-gold/90 w-[27.5%] relative z-10">
+                      Root &amp; Harvest
+                    </th>
+                    <th className="py-4 text-xs uppercase tracking-widest text-forest/40 font-bold text-center w-[27.5%]">Others</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-forest/5 text-sm">
+                  {[
+                    { feature: "Farmer-Owned", rh: true, others: false },
+                    { feature: "Made in Micro-Units", rh: true, others: false },
+                    { feature: "No Factory", rh: true, others: false },
+                    { feature: "Traditional Extraction", rh: true, others: false },
+                    { feature: "Freshly Made", rh: true, others: false },
+                  ].map((row, idx) => (
+                    <tr key={idx} className="hover:bg-forest/5 transition-colors">
+                      <td className="py-4 text-forest font-semibold">{row.feature}</td>
+                      <td className="py-4 px-4 text-center bg-gold/10 font-bold text-lg">
+                        {row.rh ? (
+                          <span className="text-emerald-600 font-extrabold font-sans">✓</span>
+                        ) : (
+                          <span className="text-red-500 font-extrabold font-sans">✗</span>
+                        )}
+                      </td>
+                      <td className="py-4 text-center font-bold text-lg">
+                        {row.others ? (
+                          <span className="text-emerald-600 font-extrabold font-sans">✓</span>
+                        ) : (
+                          <span className="text-red-500 font-extrabold font-sans">✗</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        {/* All 3 Infographic Process & Quality Sections */}
+        <section className="py-20 px-6 bg-white border-t border-forest/10 flex flex-col items-center space-y-24">
+          
+          {/* 1. Why Root & Harvest */}
+          <div className="max-w-5xl w-full text-center space-y-6">
+            <span className="text-xs uppercase tracking-[0.3em] font-semibold text-gold">UNCOMPROMISED PURITY</span>
+            <h2 className="text-3xl md:text-4xl font-serif text-forest uppercase tracking-wider font-semibold">
+              Why Root &amp; Harvest?
+            </h2>
+            <p className="text-sm text-dark/65 max-w-lg mx-auto leading-relaxed">
+              Discover why traditional wood-pressed oils are essential for your family's health and everyday cooking.
+            </p>
+            <div className="relative w-full aspect-[16/10] border border-forest/10 shadow-md bg-brand-bg/10 overflow-hidden rounded-sm">
+              <Image
+                src="/images/why-made.jpg"
+                alt="Why Root & Harvest?"
+                fill
+                className="object-contain"
+              />
+            </div>
+          </div>
+
+          {/* 2. How We Process Our Oils */}
+          <div className="max-w-5xl w-full text-center space-y-6 pt-12 border-t border-forest/10">
+            <span className="text-xs uppercase tracking-[0.3em] font-semibold text-gold">TRADITIONAL LAKDI GHANI</span>
+            <h2 className="text-3xl md:text-4xl font-serif text-forest uppercase tracking-wider font-semibold">
+              How We Process Our Oils
+            </h2>
+            <p className="text-sm text-dark/65 max-w-lg mx-auto leading-relaxed">
+              Extracted slowly in Vagai wood pestles at speeds under 14 RPM to preserve all delicate nutrients and natural flavors.
+            </p>
+            <div className="relative w-full aspect-[16/10] border border-forest/10 shadow-md bg-brand-bg/10 overflow-hidden rounded-sm">
+              <Image
+                src="/images/how-made.jpg"
+                alt="How Root & Harvest Process Oils"
+                fill
+                className="object-contain"
+              />
+            </div>
+          </div>
+
+          {/* 3. Our Journey — Soil to Spoon */}
+          <div className="max-w-5xl w-full text-center space-y-6 pt-12 border-t border-forest/10">
+            <span className="text-xs uppercase tracking-[0.3em] font-semibold text-gold">FARM TO TABLE TRACEABILITY</span>
+            <h2 className="text-3xl md:text-4xl font-serif text-forest uppercase tracking-wider font-semibold">
+              Our Journey — Soil to Spoon
+            </h2>
+            <p className="text-sm text-dark/65 max-w-lg mx-auto leading-relaxed">
+              We trace every bottle from our trusted heritage farms directly to your kitchen.
+            </p>
+            <div className="relative w-full aspect-[16/10] border border-forest/10 shadow-md bg-brand-bg/10 overflow-hidden rounded-sm">
+              <Image
+                src="/images/journey.jpg"
+                alt="Root & Harvest Soil to Spoon Journey"
+                fill
+                className="object-contain"
+              />
+            </div>
+          </div>
+
+        </section>
 
         {/* Minimal FAQ */}
         <section className="py-20 px-6 bg-white border-t border-forest/10">

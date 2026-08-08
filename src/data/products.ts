@@ -52,16 +52,18 @@ export const INITIAL_PRODUCTS: Product[] = [
       "/images/groundnut-oil-farm.jpg",
       "/images/groundnut-oil-press.jpg"
     ],
-    sizes: ["500 ml", "1 L", "2 L"],
+    sizes: ["500 ml", "1 L", "2 L", "5 L"],
     sizePrices: {
       "500 ml": 249,
       "1 L": 499,
-      "2 L": 900
+      "2 L": 900,
+      "5 L": 2300
     },
     originalSizePrices: {
       "500 ml": 275,
       "1 L": 550,
-      "2 L": 1000
+      "2 L": 1000,
+      "5 L": 2555
     },
     benefits: [
       "Rich in Monounsaturated Fatty Acids (MUFA) which support healthy cholesterol levels.",
@@ -86,31 +88,23 @@ export const INITIAL_PRODUCTS: Product[] = [
     packedOn: "June 26, 2026",
     bestBefore: "December 23, 2026 (6 Months from Packing)",
     batchNumber: "RH-GNT-2606A",
-    rating: 4.9,
-    reviewsCount: 142,
+    rating: 5.0,
+    reviewsCount: 2,
     reviews: [
+      {
+        author: "Thanvika Reddy",
+        rating: 5,
+        date: "2026-06-29",
+        title: "Absolutely Pure and Natural",
+        comment: "I have been looking for an honest wood pressed groundnut oil for cooking everyday meals. This is clean, doesn't smell chemically at all. Very pleased with the quality!",
+        verified: true
+      },
       {
         author: "Ananya Sharma",
         rating: 5,
         date: "2026-06-28",
-        title: "Smells like my childhood",
-        comment: "This groundnut oil took me back to my grandmother's kitchen. It has that authentic sweet nutty aroma that you simply cannot get from modern refined oils. Excellent for frying pooris!",
-        verified: true
-      },
-      {
-        author: "Dr. Rajesh Iyer",
-        rating: 5,
-        date: "2026-06-27",
-        title: "Pure and Unadulterated",
-        comment: "As a health professional, I am highly selective about cooking fats. Root & Harvest delivers what they promise. You can see the slight cloudiness at the bottom, which proves it is unrefined and raw. Highly recommended.",
-        verified: true
-      },
-      {
-        author: "Devendra Patel",
-        rating: 4,
-        date: "2026-06-25",
-        title: "Very Premium Packing",
-        comment: "Tastes premium, and the bottle design is gorgeous. Minimalist and luxury packaging. The 5L container has an excellent spout that doesn't drip.",
+        title: "Highly recommended for families",
+        comment: "Switching to Root & Harvest has been the best decision for our family's health. The sunflower oil is light, clean, and tastes incredibly pure in all our traditional dishes.",
         verified: true
       }
     ],
@@ -192,40 +186,159 @@ export const INITIAL_PRODUCTS: Product[] = [
     isComingSoon: true
   },
   {
-    id: "coconut-oil",
-    name: "Cold Pressed Coconut Oil",
-    tagline: "Pure virgin coconut oil from Kerala's coastal farms.",
-    description: "Our pure cold pressed coconut oil is made from select coconuts sourced directly from organic coastal farms in Kerala. Extracted slowly to retain natural MCTs, vitamins, and a fresh tropical aroma. Zero heat, chemical bleaching, or mineral oils.",
-    shortDescription: "100% natural, single-source cold pressed coconut oil, unrefined and nutrient-rich.",
-    image: "/images/coconut-oil-1l.jpg",
-    gallery: ["/images/coconut-oil-1l.jpg"],
+    id: "sunflower-oil",
+    name: "Wood Pressed Sunflower Oil",
+    tagline: "Slow-pressed in vagai wood, keeping nutrients pristine.",
+    description: "Our signature oil is made from premium sunflower seeds sourced from trusted rain-fed farms. Cold pressed using traditional wood-pressing (Lakdi Ghani) methods in seasoned Vagai wood pestles, crushing seeds gently to retain natural antioxidants and vitamin E.",
+    shortDescription: "Traditional wood-pressed sunflower oil. 100% natural, single-source sunflower seeds, unrefined, zero preservatives.",
+    image: "/images/sunflower-oil-1l.jpg",
+    gallery: ["/images/sunflower-oil-1l.jpg"],
     sizes: ["500 ml", "1 L"],
     sizePrices: {
       "500 ml": 1,
-      "1 L": 520
+      "1 L": 499
     },
     benefits: [
-      "Rich in medium-chain triglycerides (MCTs) which provide instant energy.",
-      "Excellent source of healthy fats for cooking and hair/skin nourishment.",
-      "Naturally high smoke point makes it highly stable for daily cooking."
+      "Naturally high in Vitamin E, a powerful antioxidant.",
+      "Rich in unsaturated fats which support heart health.",
+      "Excellent high smoke point makes it highly stable for daily cooking."
     ],
-    ingredients: "100% Pure Cold Pressed Coconut Oil.",
+    ingredients: "100% Pure Cold Pressed Sunflower Oil.",
     storage: "Store in a cool dry place. Keep airtight.",
     nutrition: [
       { label: "Energy", value: "898 kcal" },
       { label: "Total Fat", value: "99.8 g" },
-      { label: "Saturated Fat", value: "86.5 g" },
-      { label: "MCTs", value: "Present" }
+      { label: "Saturated Fat", value: "10.3 g" },
+      { label: "Vitamin E", value: "41.1 mg" }
     ],
     pressedOn: "N/A",
     packedOn: "N/A",
     bestBefore: "6 Months from Packing",
-    batchNumber: "RH-CCN-MOCK",
+    batchNumber: "RH-SFL-MOCK",
     rating: 5.0,
     reviewsCount: 0,
     reviews: [],
     faqs: [],
     category: "Oils",
+    isComingSoon: true
+  },
+  {
+    id: "groundnuts",
+    name: "Organic Raw Groundnuts",
+    tagline: "Bold variety farm-fresh organic peanuts.",
+    description: "Sourced directly from rain-fed family farms in Andhra Pradesh and Telangana. Hand-shelled, sun-dried, and pesticide-free peanuts of premium quality.",
+    shortDescription: "Organic raw groundnuts. Hand-shelled, pesticide-free, rich in protein and healthy fats.",
+    image: "/images/groundnuts.jpg",
+    gallery: ["/images/groundnuts.jpg"],
+    sizes: ["500 g", "1 kg", "2 kg", "5 kg"],
+    sizePrices: {
+      "500 g": 99,
+      "1 kg": 199,
+      "2 kg": 399,
+      "5 kg": 999
+    },
+    originalSizePrices: {
+      "500 g": 120,
+      "1 kg": 240,
+      "2 kg": 480,
+      "5 kg": 1199
+    },
+    benefits: [
+      "Excellent plant-based source of protein.",
+      "Rich in heart-healthy monounsaturated fats.",
+      "Contains key vitamins and minerals like biotin, copper, and vitamin E."
+    ],
+    ingredients: "100% Organic Raw Peanuts / Groundnuts.",
+    storage: "Store in an airtight container in a cool, dry place.",
+    nutrition: [
+      { label: "Energy", value: "567 kcal" },
+      { label: "Protein", value: "25.8 g" },
+      { label: "Total Fat", value: "49.2 g" },
+      { label: "Carbohydrates", value: "16.1 g" }
+    ],
+    pressedOn: "N/A",
+    packedOn: "N/A",
+    bestBefore: "6 Months from Packing",
+    batchNumber: "RH-GNT-RAW",
+    rating: 5.0,
+    reviewsCount: 0,
+    reviews: [],
+    faqs: [],
+    category: "Grains",
+    isComingSoon: false
+  },
+  {
+    id: "jaisriram-unpolished-rice",
+    name: "Jai Sriram Unpolished Rice",
+    tagline: "Heritage premium unpolished rice variety.",
+    description: "Premium heritage Jai Sriram rice variety, unpolished to retain its highly nutritious bran layer, fiber content, and natural rich earthy flavor.",
+    shortDescription: "Jai Sriram traditional unpolished rice. High fiber, rich in vitamins and minerals.",
+    image: "/images/jaisriram-unpolished-rice.jpg",
+    gallery: ["/images/jaisriram-unpolished-rice.jpg"],
+    sizes: ["1 kg", "5 kg"],
+    sizePrices: {
+      "1 kg": 1,
+      "5 kg": 450
+    },
+    benefits: [
+      "High dietary fiber supports digestive health.",
+      "Slow digest rate keeps blood sugar levels stable.",
+      "Bran layer retains natural B-complex vitamins."
+    ],
+    ingredients: "100% Raw Jai Sriram Unpolished Rice.",
+    storage: "Store in a cool dry place. Keep airtight.",
+    nutrition: [
+      { label: "Energy", value: "354 kcal" },
+      { label: "Protein", value: "7.5 g" },
+      { label: "Total Fat", value: "1.8 g" },
+      { label: "Carbohydrates", value: "77.2 g" }
+    ],
+    pressedOn: "N/A",
+    packedOn: "N/A",
+    bestBefore: "12 Months from Packing",
+    batchNumber: "RH-JSR-UNP",
+    rating: 5.0,
+    reviewsCount: 0,
+    reviews: [],
+    faqs: [],
+    category: "Grains",
+    isComingSoon: true
+  },
+  {
+    id: "jaisriram-polished-rice",
+    name: "Jai Sriram Polished Rice",
+    tagline: "Fine-grain premium polished white rice.",
+    description: "Premium fine-grain Jai Sriram rice, polished gently to produce a beautiful long grain with excellent texture, sweet natural taste, and soft finish.",
+    shortDescription: "Premium Jai Sriram polished white rice. Fluffy, fragrant, and highly digestible.",
+    image: "/images/jaisriram-polished-rice.jpg",
+    gallery: ["/images/jaisriram-polished-rice.jpg"],
+    sizes: ["1 kg", "5 kg"],
+    sizePrices: {
+      "1 kg": 1,
+      "5 kg": 420
+    },
+    benefits: [
+      "Highly digestible starch source.",
+      "Cooks into beautifully separate, fluffy grains.",
+      "Perfect for premium daily meals and special traditional rice dishes."
+    ],
+    ingredients: "100% Raw Jai Sriram Polished Rice.",
+    storage: "Store in a cool dry place. Keep airtight.",
+    nutrition: [
+      { label: "Energy", value: "351 kcal" },
+      { label: "Protein", value: "6.8 g" },
+      { label: "Total Fat", value: "0.4 g" },
+      { label: "Carbohydrates", value: "80.0 g" }
+    ],
+    pressedOn: "N/A",
+    packedOn: "N/A",
+    bestBefore: "12 Months from Packing",
+    batchNumber: "RH-JSR-POL",
+    rating: 5.0,
+    reviewsCount: 0,
+    reviews: [],
+    faqs: [],
+    category: "Grains",
     isComingSoon: true
   }
 ];

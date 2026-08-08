@@ -210,7 +210,7 @@ export default function WhatsappAdminPage() {
                         required
                         value={config.businessNumber}
                         onChange={(e) => setConfig({ ...config, businessNumber: e.target.value })}
-                        placeholder="e.g. 9666913832, 8008076707"
+                        placeholder="e.g. 9666913832, 9121603832"
                         className="w-full p-3 border border-forest/15 bg-brand-bg/5 text-xs focus:border-forest focus:outline-none"
                       />
                       <span className="text-[9px] text-dark/50 block">Comma-separated numbers that receive admin order notifications.</span>

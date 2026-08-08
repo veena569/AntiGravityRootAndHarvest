@@ -97,8 +97,8 @@ export default function ContactPage() {
                     </div>
                     <div className="space-y-1">
                       <span className="text-forest/60 font-semibold uppercase tracking-wider block">Direct Phone</span>
-                      <a href="tel:+918008076707" className="text-sm font-semibold text-forest hover:text-gold transition-colors">
-                        +91 8008076707
+                      <a href="tel:+919121603832" className="text-sm font-semibold text-forest hover:text-gold transition-colors">
+                        +91 9121603832
                       </a>
                       <p className="text-[10px] text-dark/50">Mon to Sat, 10 AM to 6 PM IST</p>
                     </div>
@@ -114,7 +114,7 @@ export default function ContactPage() {
                     <div className="space-y-2">
                       <span className="text-forest/60 font-semibold uppercase tracking-wider block">WhatsApp Connect</span>
                       <a 
-                        href="https://wa.me/918008076707"
+                        href="https://wa.me/919121603832"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center justify-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-xs uppercase tracking-widest font-semibold transition-colors"

@@ -63,8 +63,8 @@ export default function AdminPage() {
 
   // Mock inventories
   const [inventoryList, setInventoryList] = useState([
-    { name: "Wood Pressed Groundnut Oil (1 L)", sku: "RH-GNT-1L", stock: 124, limit: 20 },
-    { name: "Wood Pressed Groundnut Oil (5 L)", sku: "RH-GNT-5L", stock: 18, limit: 10 },
+    { name: "Wood Pressed Sunflower Oil (1 L)", sku: "RH-SFL-1L", stock: 124, limit: 20 },
+    { name: "Wood Pressed Sunflower Oil (5 L)", sku: "RH-SFL-5L", stock: 18, limit: 10 },
     { name: "Raw Himalayan Honey (500 g)", sku: "RH-HNY-500G", stock: 45, limit: 15 }
   ]);
 

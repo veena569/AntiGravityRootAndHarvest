@@ -20,7 +20,7 @@ export default function TermsPage() {
 
           <div className="space-y-6 text-sm text-dark/85 font-light leading-relaxed">
             <p>
-              Welcome to **ROOT & HARVEST**. By accessing our web pages, purchasing our unrefined groundnut oils, and using our digital services, you agree to comply with and be bound by the following terms.
+              Welcome to **ROOT & HARVEST**. By accessing our web pages, purchasing our unrefined sunflower oils, and using our digital services, you agree to comply with and be bound by the following terms.
             </p>
 
             <h3 className="text-base font-serif font-semibold text-forest uppercase tracking-wider pt-4">1. Product Information & Disclaimers</h3>
@@ -30,7 +30,7 @@ export default function TermsPage() {
 
             <h3 className="text-base font-serif font-semibold text-forest uppercase tracking-wider pt-4">2. Pricing & Payments</h3>
             <p>
-              All prices listed on the site are in Indian Rupees (INR), inclusive of GST, and exclusive of shipping costs (which are currently offered free as a promotional premium signal). We reserve the right to alter size pricing structure depending on agricultural market pricing of groundnut peanuts without prior notice.
+              All prices listed on the site are in Indian Rupees (INR), inclusive of GST, and exclusive of shipping costs (which are currently offered free as a promotional premium signal). We reserve the right to alter size pricing structure depending on agricultural market pricing of sunflower seeds without prior notice.
             </p>
 
             <h3 className="text-base font-serif font-semibold text-forest uppercase tracking-wider pt-4">3. Intellectual Property</h3>

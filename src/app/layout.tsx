@@ -20,11 +20,14 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "ROOT & HARVEST | Premium Wood Pressed Oils & Farm Fresh Foods",
   description: "From Trusted Farms to Your Family. ROOT & HARVEST brings transparency, trust, premium quality, and authenticity back into every Indian kitchen. Founded by software engineers raised in farming families.",
-  keywords: ["Root & Harvest", "Groundnut Oil", "Wood Pressed Oil", "Cold Pressed Oil", "Premium Indian Food", "Healthy Oils", "D2C food brand India"],
+  keywords: ["Root & Harvest", "Sunflower Oil", "Wood Pressed Oil", "Cold Pressed Oil", "Premium Indian Food", "Healthy Oils", "D2C food brand India"],
   authors: [{ name: "Root & Harvest Co-Founders" }],
   icons: {
-    icon: "/logo.jpg",
-    shortcut: "/logo.jpg",
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/logo.jpg", type: "image/jpeg" },
+    ],
+    shortcut: "/favicon.ico",
     apple: "/logo.jpg",
   },
   openGraph: {

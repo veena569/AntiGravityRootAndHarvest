@@ -630,7 +630,7 @@ function SecureCheckoutContent() {
               <div className="w-24 h-24 bg-brand-bg rounded-none relative shrink-0 overflow-hidden border border-forest/10">
                 <div className="absolute inset-0 flex items-center justify-center bg-forest/5 text-forest/40">
                   <Image
-                    src="/groundnut-oil-bottle.png"
+                    src="/images/sunflower-oil-1l.jpg"
                     alt="Premium Product"
                     fill
                     className="object-cover transition-transform duration-700 group-hover:scale-110"

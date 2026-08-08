@@ -146,7 +146,7 @@ export default function AboutPage() {
               </h3>
               <div className="pt-4 space-y-1">
                 <span className="text-xs uppercase tracking-widest font-semibold block">Root & Harvest Founders</span>
-                <span className="text-[10px] text-brand-bg/60">Farming Farmers & Software Architects</span>
+                <span className="text-[10px] text-brand-bg/60">Farming Sons & Software Architects</span>
               </div>
               <div className="pt-6">
                 <Link
