@@ -1,5 +1,5 @@
 import { MetadataRoute } from "next";
-import { products } from "@/data/products";
+import { INITIAL_PRODUCTS } from "@/data/products";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = "https://www.rootandharvest.in";
@@ -61,7 +61,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
   ];
 
-  const productPages: MetadataRoute.Sitemap = products.map((p) => ({
+  const productPages: MetadataRoute.Sitemap = INITIAL_PRODUCTS.map((p) => ({
     url: `${baseUrl}/products/${p.id}`,
     lastModified: new Date(),
     changeFrequency: "weekly",
