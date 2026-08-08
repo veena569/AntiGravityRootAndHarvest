@@ -82,6 +82,7 @@ export default function HomePage() {
           1. HERO — Brand Infographic Banner
           ============================================================ */}
       <section className="relative w-full bg-brand-bg flex flex-col items-center overflow-hidden">
+        <h1 className="sr-only">ROOT &amp; HARVEST | Premium Wood Pressed Oils &amp; Farm Fresh Foods</h1>
         <style dangerouslySetInnerHTML={{__html: `
           @keyframes slideFromTop {
             0% {

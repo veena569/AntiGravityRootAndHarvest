@@ -19,7 +19,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "ROOT & HARVEST | Premium Wood Pressed Oils & Farm Fresh Foods",
-  description: "From Trusted Farms to Your Family. ROOT & HARVEST brings transparency, trust, premium quality, and authenticity back into every Indian kitchen. Founded by software engineers raised in farming families.",
+  description: "From trusted farms to your family. ROOT & HARVEST brings 100% pure, traditional wood-pressed oils and authentic farm-fresh foods to every Indian kitchen.",
   keywords: ["Root & Harvest", "Sunflower Oil", "Wood Pressed Oil", "Cold Pressed Oil", "Premium Indian Food", "Healthy Oils", "D2C food brand India"],
   authors: [{ name: "Root & Harvest Co-Founders" }],
   icons: {
