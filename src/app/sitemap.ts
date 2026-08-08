@@ -1,9 +1,10 @@
 import { MetadataRoute } from "next";
+import { products } from "@/data/products";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = "https://www.rootandharvest.in";
 
-  return [
+  const staticPages: MetadataRoute.Sitemap = [
     {
       url: baseUrl,
       lastModified: new Date(),
@@ -59,4 +60,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.4,
     },
   ];
+
+  const productPages: MetadataRoute.Sitemap = products.map((p) => ({
+    url: `${baseUrl}/products/${p.id}`,
+    lastModified: new Date(),
+    changeFrequency: "weekly",
+    priority: 0.8,
+  }));
+
+  return [...staticPages, ...productPages];
 }
