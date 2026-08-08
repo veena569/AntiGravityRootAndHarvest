@@ -43,8 +43,68 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://www.rootandharvest.in/#organization",
+        "name": "Root & Harvest",
+        "url": "https://www.rootandharvest.in",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://www.rootandharvest.in/logo.jpg",
+          "caption": "Root & Harvest Logo"
+        },
+        "image": "https://www.rootandharvest.in/logo.jpg",
+        "sameAs": [
+          "https://www.instagram.com/rootandharvest.in",
+          "https://www.youtube.com/@rootandharvest"
+        ]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://www.rootandharvest.in/#website",
+        "url": "https://www.rootandharvest.in",
+        "name": "ROOT & HARVEST",
+        "description": "From Trusted Farms to Your Family. Premium Wood Pressed Oils.",
+        "publisher": {
+          "@id": "https://www.rootandharvest.in/#organization"
+        },
+        "hasPart": [
+          {
+            "@type": "WebPage",
+            "name": "Our Products",
+            "url": "https://www.rootandharvest.in/products"
+          },
+          {
+            "@type": "WebPage",
+            "name": "About Us",
+            "url": "https://www.rootandharvest.in/about"
+          },
+          {
+            "@type": "WebPage",
+            "name": "Contact Us",
+            "url": "https://www.rootandharvest.in/contact"
+          },
+          {
+            "@type": "WebPage",
+            "name": "FAQ",
+            "url": "https://www.rootandharvest.in/faq"
+          }
+        ]
+      }
+    ]
+  };
+
   return (
     <html lang="en" className="scroll-smooth">
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
       <body
         className={`${cormorant.variable} ${inter.variable} font-sans antialiased bg-brand-bg text-dark min-h-screen flex flex-col`}
       >
