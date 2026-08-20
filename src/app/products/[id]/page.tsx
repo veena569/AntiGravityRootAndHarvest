@@ -60,6 +60,20 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
   // Build combined Variant Matrix matching reference design (Size + Bottle + Price Card)
   const isOil = product.id.includes("oil");
 
+  const p1L = product.sizePrices["1 L"] || 500;
+  const p1LOrig = product.originalSizePrices?.["1 L"] || Math.round(p1L * 1.15);
+
+  const p500 = product.sizePrices["500 ml"] || Math.round(p1L * 0.52);
+  const p500Orig = product.originalSizePrices?.["500 ml"] || Math.round(p500 * 1.15);
+
+  const p2L = product.sizePrices["2 L"] || Math.round(p1L * 1.95);
+  const p2LOrig = product.originalSizePrices?.["2 L"] || Math.round(p2L * 1.15);
+
+  const p5L = product.sizePrices["5 L"] || Math.round(p1L * 4.65);
+  const p5LOrig = product.originalSizePrices?.["5 L"] || Math.round(p5L * 1.15);
+
+  const glassDiff = 50; // ₹50 difference for premium glass bottle
+
   const variants: VariantOption[] = isOil
     ? [
         {
@@ -67,18 +81,18 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
           size: "1 L",
           bottleType: "Glass Bottle",
           label: "1L Glass Bottle",
-          price: 499,
-          originalPrice: 599,
-          unitPriceText: "Rs. 499.00 / L",
+          price: p1L + glassDiff,
+          originalPrice: p1LOrig + glassDiff,
+          unitPriceText: `Rs. ${p1L + glassDiff}.00 / L`,
         },
         {
           id: "1l-plastic",
           size: "1 L",
           bottleType: "Plastic Bottle",
           label: "1L Plastic Bottle",
-          price: 449,
-          originalPrice: 529,
-          unitPriceText: "Rs. 449.00 / L",
+          price: p1L,
+          originalPrice: p1LOrig,
+          unitPriceText: `Rs. ${p1L}.00 / L`,
           tag: "BESTSELLER",
         },
         {
@@ -86,18 +100,18 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
           size: "2 L",
           bottleType: "Plastic Bottle",
           label: "2L Can",
-          price: 900,
-          originalPrice: 1050,
-          unitPriceText: "Rs. 450.00 / L",
+          price: p2L,
+          originalPrice: p2LOrig,
+          unitPriceText: `Rs. ${Math.round(p2L / 2)}.00 / L`,
         },
         {
           id: "5l-can",
           size: "5 L",
           bottleType: "Plastic Bottle",
           label: "5L Can",
-          price: 2200,
-          originalPrice: 2499,
-          unitPriceText: "Rs. 440.00 / L",
+          price: p5L,
+          originalPrice: p5LOrig,
+          unitPriceText: `Rs. ${Math.round(p5L / 5)}.00 / L`,
           tag: "BEST VALUE",
         },
         {
@@ -105,9 +119,9 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
           size: "500 ml",
           bottleType: "Plastic Bottle",
           label: "500mL PET Bottle",
-          price: 225,
-          originalPrice: 250,
-          unitPriceText: "Rs. 450.00 / L",
+          price: p500,
+          originalPrice: p500Orig,
+          unitPriceText: `Rs. ${p500 * 2}.00 / L`,
         },
       ]
     : product.sizes.map((s) => ({

@@ -129,16 +129,16 @@ export const INITIAL_PRODUCTS: Product[] = [
     ],
     sizes: ["500 ml", "1 L", "2 L", "5 L"],
     sizePrices: {
-      "500 ml": 255,
-      "1 L": 490,
-      "2 L": 960,
-      "5 L": 2350
+      "500 ml": 319,
+      "1 L": 599,
+      "2 L": 1149,
+      "5 L": 2799
     },
     originalSizePrices: {
-      "500 ml": 280,
-      "1 L": 540,
-      "2 L": 1050,
-      "5 L": 2600
+      "500 ml": 355,
+      "1 L": 665,
+      "2 L": 1275,
+      "5 L": 3100
     },
     benefits: [
       "Rich in powerful antioxidants (sesamol and sesamolin) that support heart health.",
@@ -222,7 +222,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     reviews: [],
     faqs: [],
     category: "Oils",
-    isComingSoon: false
+    isComingSoon: true
   },
   {
     id: "groundnuts",
