@@ -25,7 +25,7 @@ export default function ShippingPage() {
 
             <h3 className="text-base font-serif font-semibold text-forest uppercase tracking-wider pt-4">1. Shipping Charges</h3>
             <p>
-              ROOT & HARVEST currently delivers **only within Hyderabad**. We offer **Free Delivery** on all orders. We believe transparency should extend to fulfillment; the price listed on the page is the final price you pay.
+              We offer **Free Shipping on all orders within Hyderabad**. For orders delivered outside Hyderabad across India, a flat shipping fee of **₹100** applies. We believe transparency should extend to fulfillment; all charges are clearly displayed before payment.
             </p>
 
             <h3 className="text-base font-serif font-semibold text-forest uppercase tracking-wider pt-4">2. Processing Time</h3>
@@ -35,7 +35,7 @@ export default function ShippingPage() {
 
             <h3 className="text-base font-serif font-semibold text-forest uppercase tracking-wider pt-4">3. Estimated Delivery Window</h3>
             <p>
-              The estimated delivery time is **4 to 5 business days** only in Hyderabad.
+              Estimated delivery is **2 to 3 business days within Hyderabad** and **3 to 5 business days for other cities across India**.
             </p>
 
             <h3 className="text-base font-serif font-semibold text-forest uppercase tracking-wider pt-4">4. Transit Issues & Leakages</h3>

@@ -12,104 +12,47 @@ import { BrandBottle } from "@/components/ui/BrandBottle";
 import { Lock, ChevronDown, Check } from "lucide-react";
 
 function ProductCard({ product }: { product: any }) {
-  const { addToCart } = useApp();
-  const router = useRouter();
-  const sizes = product.sizes || Object.keys(product.sizePrices);
-  const [selectedSize, setSelectedSize] = useState(sizes[0] || "");
-  const [added, setAdded] = useState(false);
-
-  const price = product.sizePrices[selectedSize] || Object.values(product.sizePrices)[0] || 0;
-  const originalPrice = product.originalSizePrices?.[selectedSize] || null;
-
-  let finalPrice = price;
-  let finalOriginalPrice = originalPrice;
-
-  if (product.id.includes("oil")) {
-    if (selectedSize === "500 ml") {
-      finalPrice = 225;
-      finalOriginalPrice = 250;
-    } else if (selectedSize === "1 L") {
-      finalPrice = Math.max(0, price - 50);
-      finalOriginalPrice = originalPrice ? Math.max(0, originalPrice - 50) : null;
-    }
-  }
-
-  const discountPct = finalOriginalPrice && finalOriginalPrice > finalPrice 
-    ? Math.round(((finalOriginalPrice - finalPrice) / finalOriginalPrice) * 100) 
-    : 0;
-
-  const handleAddToCart = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    addToCart(product, selectedSize, 1, "Lightweight Bottle");
-    setAdded(true);
-    setTimeout(() => setAdded(false), 2000);
-  };
+  const prices = Object.values(product.sizePrices) as number[];
+  const lowestPrice = Math.min(...prices);
 
   return (
-    <div className="flex flex-col justify-between group">
-      <div className="space-y-3">
-        {/* Rounded Image Container */}
-        <Link href={`/products/${product.id}`} className="block relative aspect-square w-full bg-white rounded-2xl overflow-hidden border border-forest/10 shadow-xs group-hover:shadow-md transition-all">
+    <Link 
+      href={`/products/${product.id}`}
+      className="flex flex-col justify-between group bg-white rounded-2xl border border-forest/10 p-4 shadow-xs hover:shadow-md hover:border-forest/30 transition-all duration-300"
+    >
+      <div className="space-y-4">
+        {/* Enlarged Product Image Container */}
+        <div className="relative aspect-[4/5] w-full min-h-[300px] sm:min-h-[340px] bg-brand-bg/30 rounded-xl overflow-hidden p-2 flex items-center justify-center">
           <Image 
             src={product.image} 
             alt={product.name} 
             fill 
-            className="object-contain p-4 group-hover:scale-105 transition-transform duration-500" 
+            className="object-contain p-2 group-hover:scale-105 transition-transform duration-500" 
           />
           {product.category && (
-            <span className="absolute top-3 right-3 bg-white/90 backdrop-blur-xs text-forest text-[10px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider shadow-sm border border-forest/10">
-              {product.category === "Oils" ? "Nutty" : "Heritage"}
+            <span className="absolute top-3 right-3 bg-white/95 backdrop-blur-xs text-forest text-[10px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider shadow-xs border border-forest/10">
+              {product.category === "Oils" ? "Cold Pressed" : "Farm Fresh"}
             </span>
           )}
-        </Link>
+        </div>
 
         {/* Product Title */}
-        <Link 
-          href={`/products/${product.id}`}
-          className="font-serif text-lg font-bold text-forest hover:underline leading-snug line-clamp-1 block pt-1"
-        >
+        <h3 className="font-serif text-xl font-bold text-forest group-hover:text-gold transition-colors leading-snug line-clamp-1 pt-1">
           {product.name}
-        </Link>
+        </h3>
 
-        {/* Price & Strikethrough Discount Badge */}
-        <div className="flex flex-wrap items-center gap-2 font-sans pt-0.5">
-          <span className="text-base font-bold text-forest">Rs. {finalPrice}.00</span>
-          {finalOriginalPrice && finalOriginalPrice > finalPrice && (
-            <>
-              <span className="text-xs text-dark/40 line-through">Rs. {finalOriginalPrice}.00</span>
-              <span className="text-[10px] font-extrabold text-gold bg-gold/10 px-2 py-0.5 rounded border border-gold/20">
-                {discountPct}% OFF
-              </span>
-            </>
-          )}
-        </div>
+        {/* Subtitle / Tagline */}
+        <p className="text-xs text-dark/60 font-light line-clamp-1">
+          {product.tagline}
+        </p>
 
-        {/* Size Selection Dropdown */}
-        <div className="relative pt-1">
-          <select
-            value={selectedSize}
-            onChange={(e) => setSelectedSize(e.target.value)}
-            className="w-full appearance-none rounded-xl border border-forest/30 bg-white px-4 py-2.5 text-xs font-medium text-forest focus:outline-none focus:border-forest shadow-xs transition-colors cursor-pointer"
-          >
-            {sizes.map((s: string) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
-          <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-forest/50 pointer-events-none" />
+        {/* Price Display (225 Onwards) */}
+        <div className="flex items-center gap-2 pt-1 font-serif">
+          <span className="text-lg font-bold text-forest">Rs. {lowestPrice}.00</span>
+          <span className="text-xs text-gold font-extrabold uppercase tracking-wider">onwards</span>
         </div>
       </div>
-
-      {/* Full Width Dark Green Add To Cart Button */}
-      <div className="pt-4">
-        <button
-          onClick={handleAddToCart}
-          className="w-full py-3 bg-[#123025] hover:bg-[#1E4A3A] text-white text-center text-xs font-bold uppercase tracking-widest rounded-xl transition-all shadow-sm active:scale-[0.98] cursor-pointer"
-        >
-          {added ? "ADDED TO CART ✓" : "ADD TO CART"}
-        </button>
-      </div>
-    </div>
+    </Link>
   );
 }
 

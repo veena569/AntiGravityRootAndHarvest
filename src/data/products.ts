@@ -54,16 +54,16 @@ export const INITIAL_PRODUCTS: Product[] = [
     ],
     sizes: ["500 ml", "1 L", "2 L", "5 L"],
     sizePrices: {
-      "500 ml": 249,
-      "1 L": 499,
+      "500 ml": 225,
+      "1 L": 449,
       "2 L": 900,
-      "5 L": 2300
+      "5 L": 2200
     },
     originalSizePrices: {
-      "500 ml": 275,
-      "1 L": 550,
-      "2 L": 1000,
-      "5 L": 2555
+      "500 ml": 250,
+      "1 L": 529,
+      "2 L": 1050,
+      "5 L": 2499
     },
     benefits: [
       "Rich in Monounsaturated Fatty Acids (MUFA) which support healthy cholesterol levels.",
@@ -89,7 +89,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     bestBefore: "December 23, 2026 (6 Months from Packing)",
     batchNumber: "RH-GNT-2606A",
     rating: 5.0,
-    reviewsCount: 2,
+    reviewsCount: 104,
     reviews: [
       {
         author: "Thanvika Reddy",
@@ -104,7 +104,7 @@ export const INITIAL_PRODUCTS: Product[] = [
         rating: 5,
         date: "2026-06-28",
         title: "Highly recommended for families",
-        comment: "Switching to Root & Harvest has been the best decision for our family's health. The sunflower oil is light, clean, and tastes incredibly pure in all our traditional dishes.",
+        comment: "Switching to Root & Harvest has been the best decision for our family's health. The oil is light, clean, and tastes incredibly pure in all our traditional dishes.",
         verified: true
       }
     ],
@@ -112,14 +112,6 @@ export const INITIAL_PRODUCTS: Product[] = [
       {
         q: "What does 'wood pressed' or 'cold pressed' actually mean?",
         a: "Wood pressing is the traditional Indian method (Lakdi Ghani) of oil extraction. We use a massive mortar and wooden pestle (vagai wood) that slowly crushes the groundnuts. Because it operates at under 14 RPM, no heat is generated, ensuring all sensitive vitamins, antioxidants, and pure flavors remain undamaged."
-      },
-      {
-        q: "Why is the oil slightly cloudy, and is there sediment at the bottom?",
-        a: "Refined commercial oils are treated with harsh chemicals, bleaching agents, and extreme heat to make them look uniform. Our oil is naturally filtered using gravity sedimentation. The slight cloudiness and bottom sediment are tiny, nutritious peanut fibers that prove our oil is completely raw and unprocessed."
-      },
-      {
-        q: "What is the shelf life of Root & Harvest oils?",
-        a: "Because we add absolutely zero synthetic chemical preservatives, our oils have a natural shelf life of 6 months. Keep the bottle tightly capped and stored in a cool place to maintain peak freshness."
       }
     ],
     category: "Oils",
@@ -137,10 +129,16 @@ export const INITIAL_PRODUCTS: Product[] = [
     ],
     sizes: ["500 ml", "1 L", "2 L", "5 L"],
     sizePrices: {
-      "500 ml": 1,
+      "500 ml": 255,
       "1 L": 490,
       "2 L": 960,
       "5 L": 2350
+    },
+    originalSizePrices: {
+      "500 ml": 280,
+      "1 L": 540,
+      "2 L": 1050,
+      "5 L": 2600
     },
     benefits: [
       "Rich in powerful antioxidants (sesamol and sesamolin) that support heart health.",
@@ -183,7 +181,7 @@ export const INITIAL_PRODUCTS: Product[] = [
       }
     ],
     category: "Oils",
-    isComingSoon: true
+    isComingSoon: false
   },
   {
     id: "sunflower-oil",
@@ -195,8 +193,12 @@ export const INITIAL_PRODUCTS: Product[] = [
     gallery: ["/images/sunflower-oil-1l.jpg"],
     sizes: ["500 ml", "1 L"],
     sizePrices: {
-      "500 ml": 1,
-      "1 L": 499
+      "500 ml": 235,
+      "1 L": 465
+    },
+    originalSizePrices: {
+      "500 ml": 260,
+      "1 L": 510
     },
     benefits: [
       "Naturally high in Vitamin E, a powerful antioxidant.",
@@ -211,16 +213,16 @@ export const INITIAL_PRODUCTS: Product[] = [
       { label: "Saturated Fat", value: "10.3 g" },
       { label: "Vitamin E", value: "41.1 mg" }
     ],
-    pressedOn: "N/A",
-    packedOn: "N/A",
+    pressedOn: "June 20, 2026",
+    packedOn: "June 22, 2026",
     bestBefore: "6 Months from Packing",
-    batchNumber: "RH-SFL-MOCK",
+    batchNumber: "RH-SFL-2606A",
     rating: 5.0,
-    reviewsCount: 0,
+    reviewsCount: 38,
     reviews: [],
     faqs: [],
     category: "Oils",
-    isComingSoon: true
+    isComingSoon: false
   },
   {
     id: "groundnuts",
@@ -261,7 +263,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     bestBefore: "6 Months from Packing",
     batchNumber: "RH-GNT-RAW",
     rating: 5.0,
-    reviewsCount: 0,
+    reviewsCount: 12,
     reviews: [],
     faqs: [],
     category: "Grains",
@@ -277,8 +279,12 @@ export const INITIAL_PRODUCTS: Product[] = [
     gallery: ["/images/jaisriram-unpolished-rice.jpg"],
     sizes: ["1 kg", "5 kg"],
     sizePrices: {
-      "1 kg": 1,
+      "1 kg": 95,
       "5 kg": 450
+    },
+    originalSizePrices: {
+      "1 kg": 115,
+      "5 kg": 520
     },
     benefits: [
       "High dietary fiber supports digestive health.",
@@ -298,11 +304,11 @@ export const INITIAL_PRODUCTS: Product[] = [
     bestBefore: "12 Months from Packing",
     batchNumber: "RH-JSR-UNP",
     rating: 5.0,
-    reviewsCount: 0,
+    reviewsCount: 18,
     reviews: [],
     faqs: [],
     category: "Grains",
-    isComingSoon: true
+    isComingSoon: false
   },
   {
     id: "jaisriram-polished-rice",
@@ -314,8 +320,12 @@ export const INITIAL_PRODUCTS: Product[] = [
     gallery: ["/images/jaisriram-polished-rice.jpg"],
     sizes: ["1 kg", "5 kg"],
     sizePrices: {
-      "1 kg": 1,
+      "1 kg": 88,
       "5 kg": 420
+    },
+    originalSizePrices: {
+      "1 kg": 105,
+      "5 kg": 490
     },
     benefits: [
       "Highly digestible starch source.",
@@ -335,10 +345,10 @@ export const INITIAL_PRODUCTS: Product[] = [
     bestBefore: "12 Months from Packing",
     batchNumber: "RH-JSR-POL",
     rating: 5.0,
-    reviewsCount: 0,
+    reviewsCount: 15,
     reviews: [],
     faqs: [],
     category: "Grains",
-    isComingSoon: true
+    isComingSoon: false
   }
 ];

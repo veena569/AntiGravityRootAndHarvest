@@ -308,11 +308,15 @@ export default function CheckoutPage() {
     setCurrentStep("payment");
     setPaymentStatus("processing");
     setShowPaymentModal(true);
+    const isHyd = (shippingData?.city || "").toLowerCase().includes("hyderabad");
+    const shippingCharge = isHyd ? 0 : 100;
+    const totalToPay = subtotal + shippingCharge;
+
     try {
       const response = await fetch("/api/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: subtotal, cartItems: cart, shippingData, paymentMethod }),
+        body: JSON.stringify({ amount: totalToPay, cartItems: cart, shippingData, paymentMethod }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error);
@@ -710,18 +714,29 @@ export default function CheckoutPage() {
                       <p className="text-dark/70 font-light">+91 {shippingData?.phone}</p>
                     </div>
 
-                    <div className="space-y-4 pt-4 text-sm font-light">
-                      <div className="flex justify-between text-dark/80">
-                        <span>Subtotal</span><span>₹{subtotal}</span>
-                      </div>
-                      <div className="flex justify-between text-dark/80">
-                        <span>Shipping</span><span className="text-forest font-medium">Complimentary</span>
-                      </div>
-                      <div className="flex justify-between items-end border-t border-forest/10 pt-4">
-                        <span className="text-[10px] uppercase tracking-widest text-dark/50 font-semibold">Total to Pay</span>
-                        <span className="text-3xl font-serif text-black tracking-tight">₹{subtotal}</span>
-                      </div>
-                    </div>
+                    {(() => {
+                      const isHyd = (shippingData?.city || "").toLowerCase().includes("hyderabad");
+                      const shippingCharge = isHyd ? 0 : 100;
+                      const totalToPay = subtotal + shippingCharge;
+
+                      return (
+                        <div className="space-y-4 pt-4 text-sm font-light">
+                          <div className="flex justify-between text-dark/80">
+                            <span>Subtotal</span><span>₹{subtotal}</span>
+                          </div>
+                          <div className="flex justify-between text-dark/80">
+                            <span>Shipping</span>
+                            <span className="text-forest font-medium">
+                              {isHyd ? "Free Delivery (Hyderabad)" : "₹100 (Outside Hyderabad)"}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-end border-t border-forest/10 pt-4">
+                            <span className="text-[10px] uppercase tracking-widest text-dark/50 font-semibold">Total to Pay</span>
+                            <span className="text-3xl font-serif text-black tracking-tight">₹{totalToPay}</span>
+                          </div>
+                        </div>
+                      );
+                    })()}
 
                     {/* Payment Method Selector */}
                     {process.env.NODE_ENV !== "production" && (
