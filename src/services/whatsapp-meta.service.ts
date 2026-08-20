@@ -83,7 +83,11 @@ export class WhatsappMetaService {
           let parsedError = responseText;
           try {
             const errJson = JSON.parse(responseText);
-            parsedError = errJson?.error?.message || responseText;
+            if (errJson?.error?.code === 190) {
+              parsedError = "Meta Access Token Expired (OAuthException 190). Please update the WhatsApp Access Token in Admin Portal (/admin/whatsapp).";
+            } else {
+              parsedError = errJson?.error?.message || responseText;
+            }
           } catch (e) {}
           throw new Error(parsedError);
         }
