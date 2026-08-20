@@ -4,15 +4,25 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound, useRouter } from "next/navigation";
-import { ArrowLeft, Plus, Minus, Star, ChevronDown, ChevronUp, Check, Heart, X } from "lucide-react";
+import { ArrowLeft, Plus, Minus, Star, ChevronDown, ChevronUp, Check, Heart, X, Truck, ShieldCheck, CreditCard, Award, Sparkles } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/components/layout/AuthProvider";
 import { Product } from "@/data/products";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { motion, AnimatePresence } from "framer-motion";
-import { BrandBottle } from "@/components/ui/BrandBottle";
 import { Button } from "@/components/ui/Button";
+
+interface VariantOption {
+  id: string;
+  size: string;
+  bottleType: string;
+  label: string;
+  price: number;
+  originalPrice?: number;
+  unitPriceText: string;
+  tag?: string;
+}
 
 export default function ProductDetailsPage({ params }: { params: { id: string } }) {
   const { products, addToCart, wishlist, toggleWishlist } = useApp();
@@ -23,19 +33,19 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
     return null;
   }
 
-  const [selectedImage, setSelectedImage] = useState(product.image);
   const router = useRouter();
-  const defaultSize = product.sizes.find((s: string) => s === "1 L" || s === "1L") || product.sizes[0] || "";
-  const [selectedSize, setSelectedSize] = useState(defaultSize);
+  const [selectedImage, setSelectedImage] = useState(product.image);
   const [quantity, setQuantity] = useState(1);
-  const [selectedBottleType, setSelectedBottleType] = useState("Plastic Bottle");
-  const [activeFaq, setActiveFaq] = useState<number | null>(null);
 
+  // Accordion open/close states
+  const [openAccordion, setOpenAccordion] = useState<string | null>("why-better");
+
+  // Reviews & Auth state
   const { user } = useAuth();
   const [dbReviews, setDbReviews] = useState<any[]>([]);
   const [loadingReviews, setLoadingReviews] = useState(true);
 
-  // Modal state
+  // Review modal state
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
@@ -46,6 +56,73 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
   const [successMsg, setSuccessMsg] = useState("");
   const [mediaFiles, setMediaFiles] = useState<{ url: string; type: string }[]>([]);
   const [uploading, setUploading] = useState(false);
+
+  // Build combined Variant Matrix matching reference design (Size + Bottle + Price Card)
+  const isOil = product.id.includes("oil");
+
+  const variants: VariantOption[] = isOil
+    ? [
+        {
+          id: "1l-glass",
+          size: "1 L",
+          bottleType: "Glass Bottle",
+          label: "1L Glass Bottle",
+          price: 499,
+          originalPrice: 599,
+          unitPriceText: "Rs. 499.00 / L",
+        },
+        {
+          id: "1l-plastic",
+          size: "1 L",
+          bottleType: "Plastic Bottle",
+          label: "1L Plastic Bottle",
+          price: 449,
+          originalPrice: 529,
+          unitPriceText: "Rs. 449.00 / L",
+          tag: "BESTSELLER",
+        },
+        {
+          id: "2l-can",
+          size: "2 L",
+          bottleType: "Plastic Bottle",
+          label: "2L Can",
+          price: 900,
+          originalPrice: 1050,
+          unitPriceText: "Rs. 450.00 / L",
+        },
+        {
+          id: "5l-can",
+          size: "5 L",
+          bottleType: "Plastic Bottle",
+          label: "5L Can",
+          price: 2200,
+          originalPrice: 2499,
+          unitPriceText: "Rs. 440.00 / L",
+          tag: "BEST VALUE",
+        },
+        {
+          id: "500ml-pet",
+          size: "500 ml",
+          bottleType: "Plastic Bottle",
+          label: "500mL PET Bottle",
+          price: 225,
+          originalPrice: 250,
+          unitPriceText: "Rs. 450.00 / L",
+        },
+      ]
+    : product.sizes.map((s) => ({
+        id: s.toLowerCase().replace(/\s+/g, "-"),
+        size: s,
+        bottleType: "Pack",
+        label: s,
+        price: product.sizePrices[s] || Object.values(product.sizePrices)[0] || 200,
+        originalPrice: product.originalSizePrices?.[s] || undefined,
+        unitPriceText: `${s} pack`,
+      }));
+
+  const [selectedVariant, setSelectedVariant] = useState<VariantOption>(
+    variants.find((v) => v.tag === "BESTSELLER") || variants[0]
+  );
 
   useEffect(() => {
     if (user) {
@@ -113,22 +190,24 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
 
   const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!comment) return;
+
+    setSubmitLoading(true);
     setErrorMsg("");
     setSuccessMsg("");
-    setSubmitLoading(true);
 
     try {
       const res = await fetch("/api/reviews", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          productId: product!.id,
           rating,
           comment,
-          name: reviewerName || "Anonymous Guest",
-          email: reviewerEmail || null,
+          name: reviewerName || undefined,
+          email: reviewerEmail || undefined,
+          productId: product.id,
           mediaUrls: mediaFiles.map((f) => f.url),
-          mediaTypes: mediaFiles.map((f) => f.type)
+          mediaTypes: mediaFiles.map((f) => f.type),
         }),
       });
 
@@ -137,12 +216,8 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
         setSuccessMsg("Thank you! Your review has been submitted and published successfully.");
         setComment("");
         setRating(5);
-        setReviewerName("");
-        setReviewerEmail("");
         setMediaFiles([]);
-        
-        // Refresh reviews
-        const updatedRes = await fetch(`/api/reviews?productId=${product!.id}`);
+        const updatedRes = await fetch(`/api/reviews?productId=${product.id}`);
         if (updatedRes.ok) {
           const updatedData = await updatedRes.json();
           setDbReviews(updatedData.reviews || []);
@@ -162,292 +237,323 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
     }
   };
 
-  const is5L = selectedSize.toLowerCase().includes("5");
-  const is2L = selectedSize.toLowerCase().includes("2");
-
-  const availableBottleTypes = is5L 
-    ? ["Plastic Bottle"] 
-    : is2L 
-      ? ["Plastic Bottle"] 
-      : ["Plastic Bottle", "Glass Bottle"];
-
-  useEffect(() => {
-    if (selectedSize) {
-      if (is5L || is2L) {
-        setSelectedBottleType("Plastic Bottle");
-      }
-    }
-  }, [selectedSize, is5L, is2L]);
-
-  const currentPriceRaw = selectedSize ? product.sizePrices[selectedSize] : Object.values(product.sizePrices)[0];
-  const currentOriginalPriceRaw = selectedSize 
-    ? (product.originalSizePrices?.[selectedSize] || null) 
-    : (product.originalSizePrices ? Object.values(product.originalSizePrices)[0] : null);
-
-  let currentPrice = currentPriceRaw;
-  let currentOriginalPrice = currentOriginalPriceRaw;
-
-  if (selectedBottleType === "Plastic Bottle" || selectedBottleType === "Lightweight Bottle") {
-    if (selectedSize === "500 ml") {
-      currentPrice = 225;
-      currentOriginalPrice = 250;
-    } else if (selectedSize === "1 L") {
-      currentPrice = Math.max(0, currentPriceRaw - 50);
-      currentOriginalPrice = currentOriginalPriceRaw ? Math.max(0, currentOriginalPriceRaw - 50) : null;
-    }
-  }
-
   const handleAddToCart = () => {
-    if (product.isComingSoon || !selectedSize) return;
-    addToCart(product, selectedSize, quantity, selectedBottleType);
-    router.push("/cart");
+    if (product.isComingSoon) return;
+    addToCart(product, selectedVariant.size, quantity, selectedVariant.bottleType);
   };
+
+  const handleBuyNow = () => {
+    if (product.isComingSoon) return;
+    addToCart(product, selectedVariant.size, quantity, selectedVariant.bottleType);
+    router.push("/checkout");
+  };
+
+  // Calculated ratings
+  const mockReviewsFormatted = (product.reviews || []).map((r: any) => ({ rating: r.rating }));
+  const allReviews = [...dbReviews, ...mockReviewsFormatted];
+  const totalReviewsCount = allReviews.length;
+  const averageRating = totalReviewsCount > 0 
+    ? (allReviews.reduce((sum, r) => sum + r.rating, 0) / totalReviewsCount).toFixed(1) 
+    : "5.0";
 
   return (
     <div className="bg-brand-bg text-dark font-sans font-light selection:bg-gold/30 min-h-screen">
       <Navbar />
 
-      <main>
+      <main className="pt-24 pb-20">
         {/* Navigation Breadcrumb */}
-        <div className="pt-32 pb-8 px-6 max-w-7xl mx-auto">
-          <Link href="/products" className="inline-flex items-center gap-3 text-xs uppercase tracking-[0.2em] text-dark/50 hover:text-forest transition-colors">
+        <div className="max-w-[1280px] mx-auto px-6 py-4">
+          <Link href="/products" className="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-dark/60 hover:text-forest transition-colors">
             <ArrowLeft className="w-4 h-4" />
-            Back to Collection
+            Back to Products Collection
           </Link>
         </div>
 
-        {/* Product Hero Area */}
-        <div className="max-w-[1280px] mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 py-20">
+        {/* Product Details Hero Grid */}
+        <div className="max-w-[1280px] mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 py-4">
           
-          {/* Photography & Gallery */}
-          <div className="space-y-4">
-            {/* Scrollable Main Hero Viewer Box */}
-            <div className="relative w-full h-[600px] md:h-[750px] bg-white border border-forest/10 p-4 shadow-sm overflow-y-auto rounded-xl scrollbar-thin scrollbar-thumb-forest/30 scrollbar-track-transparent">
-              {selectedImage !== product.image && (
-                <div className="sticky top-2 right-2 z-10 flex justify-end pointer-events-none mb-2">
-                  <span className="bg-forest/90 text-white text-[10px] uppercase font-bold tracking-widest px-3 py-1.5 rounded-full shadow backdrop-blur-xs">
-                    ↕ Scroll to view full image
-                  </span>
-                </div>
-              )}
-              <div className="relative w-full flex justify-center items-start min-h-full">
-                {selectedImage === product.image ? (
-                  <div className="relative w-full h-full min-h-[550px] md:min-h-[700px]">
-                    <Image
-                      src={selectedImage}
-                      alt={product.name}
-                      fill
-                      className="object-contain p-2"
-                      priority
-                    />
-                  </div>
-                ) : (
-                  <img
-                    src={selectedImage}
-                    alt={product.name}
-                    className="w-full h-auto object-contain rounded"
-                  />
-                )}
-              </div>
+          {/* LEFT COLUMN: Main Hero Image + 2x2 Infographics Grid */}
+          <div className="lg:col-span-6 space-y-6">
+            {/* Main Product Viewer Card */}
+            <div className="relative w-full aspect-[4/5] bg-white border border-forest/10 rounded-2xl p-6 shadow-sm overflow-hidden flex items-center justify-center">
+              <Image
+                src={selectedImage}
+                alt={product.name}
+                fill
+                className="object-contain p-4"
+                priority
+              />
             </div>
 
-            {/* Gallery Thumbnails (Scrollable Horizontal Row) */}
-            <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-forest/20">
+            {/* 2x2 Infographics & Gallery Cards (Matching Image 1) */}
+            <div className="grid grid-cols-2 gap-4">
               {[
-                { src: product.image, label: "Product Bottle" },
-                { src: "/images/why-made.jpg", label: "Why Us" },
-                { src: "/images/how-made.jpg", label: "How Made" },
-                { src: "/images/journey.jpg", label: "Journey" },
-              ].map((img, idx) => (
+                { src: "/images/why-made.jpg", label: "WHY CHOOSE US?" },
+                { src: "/images/how-made.jpg", label: "FARM TO DOORSTEP" },
+                { src: "/images/journey.jpg", label: "HOW IT'S MADE" },
+                { src: "/images/family.jpg", label: "OUR HERITAGE" },
+              ].map((item, idx) => (
                 <button
                   key={idx}
-                  onClick={() => setSelectedImage(img.src)}
-                  className={`relative w-24 h-24 shrink-0 rounded-lg border overflow-hidden p-1 bg-white transition-all cursor-pointer ${
-                    selectedImage === img.src ? "border-forest ring-2 ring-forest shadow-sm scale-105" : "border-forest/15 opacity-70 hover:opacity-100"
+                  onClick={() => setSelectedImage(item.src)}
+                  className={`relative aspect-square w-full rounded-xl overflow-hidden border transition-all cursor-pointer bg-white group ${
+                    selectedImage === item.src ? "border-forest ring-2 ring-forest shadow-md" : "border-forest/10 opacity-85 hover:opacity-100"
                   }`}
-                  aria-label={img.label}
                 >
-                  <Image src={img.src} alt={img.label} fill className="object-contain p-1" />
-                  <span className="absolute bottom-0 inset-x-0 bg-forest/85 text-white text-[8px] font-bold text-center py-0.5 uppercase tracking-wider">
-                    {img.label}
-                  </span>
+                  <Image src={item.src} alt={item.label} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-forest/90 via-forest/60 to-transparent p-2 text-center">
+                    <span className="text-[10px] font-bold text-white uppercase tracking-wider">{item.label}</span>
+                  </div>
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Core Info & Cart Actions */}
-          <div className="flex flex-col justify-center space-y-8">
-            <div className="space-y-4">
-              <h1 className="text-4xl md:text-5xl font-serif text-forest tracking-tight leading-tight uppercase font-semibold">
+          {/* RIGHT COLUMN: Price, Combined Variant Cards, Buy Actions, Trust Badges & Accordions */}
+          <div className="lg:col-span-6 space-y-6">
+            
+            {/* Header Badge, Title & Rating Stamp Row */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="px-3 py-1 bg-red-100 text-red-700 text-[11px] font-bold rounded-full uppercase tracking-wider inline-block">
+                  {isOil ? "Cold Pressed" : "Farm Fresh"}
+                </span>
+
+                {/* Circular Quality Stamp (Matching Image 1) */}
+                <div className="w-12 h-12 rounded-full border-2 border-forest/30 bg-[#F2F7F2] flex items-center justify-center p-1 shadow-xs text-forest" title="100% Purity Certified">
+                  <Award className="w-6 h-6 text-forest" />
+                </div>
+              </div>
+
+              <h1 className="text-3xl md:text-4xl font-serif text-forest font-bold tracking-tight">
                 {product.name}
               </h1>
 
-              {/* Price Display */}
-              <div className="text-2xl font-serif text-forest font-semibold pt-1">
-                ₹{currentPrice}
-              </div>
-
-              {/* Ratings Display (Stars + Count in brackets) */}
-              {(() => {
-                const mockReviewsFormatted = (product.reviews || []).map((r: any) => ({
-                  rating: r.rating
-                }));
-                const allReviews = [...dbReviews, ...mockReviewsFormatted];
-                const totalReviewsCount = allReviews.length;
-                const averageRating = totalReviewsCount > 0 
-                  ? (allReviews.reduce((sum, r) => sum + r.rating, 0) / totalReviewsCount).toFixed(1) 
-                  : "5.0";
-
-                return (
-                  <div className="flex items-center gap-2 text-gold">
-                    <div className="flex gap-0.5">
-                      {[...Array(5)].map((_, i) => (
-                        <Star key={i} className={`w-5 h-5 ${i < Math.round(Number(averageRating)) ? "fill-gold text-gold" : "fill-transparent text-dark/20"}`} />
-                      ))}
-                    </div>
-                    <span className="text-sm text-dark/65 font-semibold">({totalReviewsCount})</span>
-                  </div>
-                );
-              })()}
-
-              {/* Tagline / Subtitle */}
-              <p className="text-sm uppercase tracking-widest text-gold font-bold font-serif pt-1">
-                Trusted Farms To Your Kitchen
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              <p className="text-base text-dark/80 font-light leading-relaxed">
-                {product.tagline}
-              </p>
-              <p className="text-base text-dark/70 font-light leading-relaxed">
-                {product.description}
-              </p>
-            </div>
-
-            {/* If product is coming soon, just show a label, else show cart actions */}
-            {product.isComingSoon ? (
-              <div className="pt-8 border-t border-forest/10">
-                <p className="text-xs uppercase tracking-[0.3em] font-semibold text-gold">Launching Soon</p>
-              </div>
-            ) : (
-              <div className="space-y-12 pt-8 border-t border-forest/10">
-                
-                {/* Size Selection */}
-                <div className="space-y-6">
-                  <label htmlFor="size-select" className="text-xs uppercase tracking-widest text-forest/50 font-semibold block">Select Size (Mandatory)</label>
-                  <div className="relative">
-                    <select
-                      id="size-select"
-                      value={selectedSize}
-                      onChange={(e) => setSelectedSize(e.target.value)}
-                      className="w-full appearance-none rounded-none border border-forest/20 bg-transparent px-8 py-4 text-sm uppercase tracking-widest text-forest focus:border-forest focus:outline-none transition-colors"
-                    >
-                      <option value="" disabled>Choose a size</option>
-                      {product.sizes.filter(size => ['250ml', '500ml', '1000ml', '250 ml', '500 ml', '1 L', '1L'].includes(size.toLowerCase()) || true).map((size) => (
-                        <option key={size} value={size}>{size}</option>
-                      ))}
-                    </select>
-                    <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 w-5 h-5 text-forest/50 pointer-events-none" />
-                  </div>
+              {/* Price & Membership Badge */}
+              <div className="flex flex-wrap items-center gap-3 pt-1">
+                <div className="text-2xl md:text-3xl font-bold text-forest font-serif">
+                  Rs. {selectedVariant.price}.00
                 </div>
 
-                {/* Bottle Type Selection */}
-                {selectedSize && product.id.includes("oil") && (
-                  <div className="space-y-3">
-                    <span className="text-xs uppercase tracking-widest text-forest/60 font-semibold block">
-                      Packaging Option
-                    </span>
-                    <div className="flex flex-wrap gap-3">
-                      {availableBottleTypes.map((type) => {
-                        const isSelected = selectedBottleType === type;
-                        return (
-                          <button
-                            key={type}
-                            type="button"
-                            onClick={() => setSelectedBottleType(type)}
-                            className={`px-6 py-3 rounded-md text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer border ${
-                              isSelected
-                                ? "bg-forest text-white border-forest shadow-sm"
-                                : "bg-white text-forest/80 border-forest/20 hover:border-forest/50"
-                            }`}
-                          >
-                            {type}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
+                {selectedVariant.originalPrice && (
+                  <span className="text-base text-dark/40 line-through font-serif">
+                    Rs. {selectedVariant.originalPrice}.00
+                  </span>
                 )}
 
-                {/* Add to Cart Line */}
-                <div className="flex flex-col sm:flex-row items-end gap-6">
-                  <div className="w-full sm:w-auto">
-                    <span className="text-xs uppercase tracking-widest text-forest/50 font-semibold block mb-4">Quantity</span>
-                    <div className="flex items-center border border-forest/10">
-                      <button
-                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                        className="px-6 py-4 text-dark/50 hover:text-forest transition-colors"
-                      >
-                        <Minus className="w-4 h-4" />
-                      </button>
-                      <span className="w-12 text-center font-serif text-lg text-black">{quantity}</span>
-                      <button
-                        onClick={() => setQuantity(quantity + 1)}
-                        className="px-6 py-4 text-dark/50 hover:text-forest transition-colors"
-                      >
-                        <Plus className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
+                <div className="px-3 py-1 bg-[#E8F3EB] border border-forest/20 rounded-full text-xs text-[#123025] font-semibold flex items-center gap-1">
+                  <span>Members Price Rs. {Math.round(selectedVariant.price * 0.88)}</span>
+                  <span className="text-gold font-bold underline cursor-pointer ml-1">Join Membership</span>
+                </div>
+              </div>
 
-                  <div className="w-full">
-                    <div className="flex items-center justify-between mb-4 px-2">
-                      <span className="text-xs uppercase tracking-widest text-forest/50 font-semibold">Total Price</span>
-                      <div className="flex items-center gap-3">
-                        {currentOriginalPrice && (
-                          <>
-                            <span className="font-serif text-lg text-dark/40 line-through">₹{currentOriginalPrice * quantity}</span>
-                            <span className="text-xs font-semibold text-gold bg-gold/10 px-2.5 py-1 rounded-sm border border-gold/10">
-                              Approx {Math.round(((currentOriginalPrice - currentPrice) / currentOriginalPrice) * 100)}% OFF
-                            </span>
-                          </>
-                        )}
-                        <span className="font-serif text-2xl text-black font-semibold">₹{currentPrice * quantity}</span>
-                      </div>
-                    </div>
-                    <div className="flex gap-4">
-                      <Button
-                        onClick={handleAddToCart}
-                        disabled={!selectedSize}
-                        variant="primary"
-                        className="w-full h-14"
-                      >
-                        {selectedSize ? "Add To Cart" : "Select Size"}
-                      </Button>
-                      <button
-                        onClick={() => toggleWishlist(product.id)}
-                        className={`w-14 h-14 border flex items-center justify-center shrink-0 transition-all ${
-                          wishlist?.includes(product.id)
-                            ? "border-gold bg-gold/10 text-gold"
-                            : "border-forest/20 text-forest hover:bg-forest/5"
-                        }`}
-                        aria-label="Toggle Wishlist"
-                      >
-                        <Heart className={`w-5 h-5 ${wishlist?.includes(product.id) ? "fill-current" : ""}`} />
-                      </button>
-                    </div>
-                  </div>
+              {/* Rating Stars */}
+              <div className="flex items-center gap-2 pt-1 text-gold">
+                <div className="flex gap-0.5">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className={`w-4 h-4 ${i < Math.round(Number(averageRating)) ? "fill-gold text-gold" : "fill-transparent text-dark/20"}`} />
+                  ))}
+                </div>
+                <span className="text-xs text-dark/65 font-semibold">({totalReviewsCount})</span>
+              </div>
+            </div>
+
+            {/* COMBINED VARIANT MATRIX CARDS (3 Columns Grid matching Image 1) */}
+            <div className="space-y-3 pt-2">
+              <span className="text-xs uppercase tracking-widest text-forest/70 font-semibold block">
+                Select Option (Size & Packaging)
+              </span>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {variants.map((v) => {
+                  const isSelected = selectedVariant.id === v.id;
+                  return (
+                    <button
+                      key={v.id}
+                      type="button"
+                      onClick={() => setSelectedVariant(v)}
+                      className={`relative flex flex-col items-center justify-center p-3 rounded-xl transition-all cursor-pointer text-center min-h-[90px] border ${
+                        isSelected
+                          ? "bg-[#F2F7F2] border-2 border-[#123025] shadow-sm"
+                          : "bg-white border-forest/15 hover:border-forest/40"
+                      }`}
+                    >
+                      {/* Top Badge (BESTSELLER / BEST VALUE) */}
+                      {v.tag && (
+                        <span className={`absolute -top-2.5 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded-full text-white shadow-xs ${
+                          v.tag === "BESTSELLER" ? "bg-[#123025]" : "bg-gold"
+                        }`}>
+                          {v.tag}
+                        </span>
+                      )}
+
+                      <span className="text-xs font-bold text-forest uppercase tracking-tight mb-1">
+                        {v.label}
+                      </span>
+                      <span className="text-xs font-extrabold text-dark mb-0.5">
+                        Rs. {v.price}
+                      </span>
+                      <span className="text-[10px] text-dark/50 font-medium">
+                        {v.unitPriceText}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* QUANTITY + ADD TO CART + BUY NOW ACTION BUTTONS */}
+            <div className="space-y-3 pt-4 border-t border-forest/10">
+              {/* Row 1: Quantity + Add To Cart */}
+              <div className="flex gap-3">
+                {/* Quantity Stepper */}
+                <div className="flex items-center border border-forest/20 rounded-lg bg-white shrink-0 px-2 h-12">
+                  <button
+                    type="button"
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    className="p-2 text-dark/60 hover:text-forest transition-colors cursor-pointer"
+                  >
+                    <Minus className="w-4 h-4" />
+                  </button>
+                  <span className="w-8 text-center font-bold text-sm text-black">{quantity}</span>
+                  <button
+                    type="button"
+                    onClick={() => setQuantity(quantity + 1)}
+                    className="p-2 text-dark/60 hover:text-forest transition-colors cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
                 </div>
 
+                {/* ADD TO CART Button */}
+                <button
+                  type="button"
+                  onClick={handleAddToCart}
+                  className="w-full h-12 border-2 border-[#123025] bg-white text-[#123025] font-bold text-xs uppercase tracking-widest rounded-lg hover:bg-forest/5 transition-colors cursor-pointer shadow-xs"
+                >
+                  ADD TO CART
+                </button>
               </div>
-            )}
+
+              {/* Row 2: BUY NOW Button with Payment Logos */}
+              <button
+                type="button"
+                onClick={handleBuyNow}
+                className="w-full h-14 bg-[#123025] hover:bg-forest text-white font-bold text-xs uppercase tracking-widest rounded-lg flex items-center justify-center gap-3 transition-colors cursor-pointer shadow-md"
+              >
+                <span>BUY NOW</span>
+                <span className="flex items-center gap-1.5 bg-white/10 px-3 py-1 rounded-md text-[10px] font-normal tracking-normal">
+                  <span>GPay</span> • <span>PhonePe</span> • <span>UPI</span>
+                </span>
+              </button>
+            </div>
+
+            {/* TRUST & DELIVERY HIGHLIGHTS BANNER (Matching Image 1) */}
+            <div className="bg-[#FDFBF7] border border-forest/10 rounded-xl p-4 grid grid-cols-3 gap-2 text-center">
+              <div className="flex flex-col items-center space-y-1">
+                <Truck className="w-5 h-5 text-gold" />
+                <span className="text-[10px] font-bold text-forest uppercase tracking-tight">Free Shipping</span>
+                <span className="text-[9px] text-dark/50">Above ₹999</span>
+              </div>
+              <div className="flex flex-col items-center space-y-1 border-x border-forest/10 px-2">
+                <ShieldCheck className="w-5 h-5 text-gold" />
+                <span className="text-[10px] font-bold text-forest uppercase tracking-tight">Secure Payments</span>
+                <span className="text-[9px] text-dark/50">256-Bit SSL</span>
+              </div>
+              <div className="flex flex-col items-center space-y-1">
+                <CreditCard className="w-5 h-5 text-gold" />
+                <span className="text-[10px] font-bold text-forest uppercase tracking-tight">COD Available</span>
+                <span className="text-[9px] text-dark/50">Pay at Doorstep</span>
+              </div>
+            </div>
+
+            {/* KEY FEATURES BULLET LIST (Matching Image 1) */}
+            <div className="space-y-2 pt-2 border-t border-forest/10">
+              <ul className="space-y-2 text-xs md:text-sm text-dark/80 font-light leading-relaxed">
+                <li className="flex items-start gap-2.5">
+                  <span className="text-gold font-bold">•</span>
+                  <span>Fresh, cold-pressed oil extracted in small batches</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <span className="text-gold font-bold">•</span>
+                  <span>Gently extracted using a traditional slow stone kolhu (wooden Ghani)</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <span className="text-gold font-bold">•</span>
+                  <span>Light on the stomach and easy to digest</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <span className="text-gold font-bold">•</span>
+                  <span>Rich, authentic natural nut aroma</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <span className="text-gold font-bold">•</span>
+                  <span>Ideal for crisp, clean frying and daily homestyle cooking</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <span className="text-gold font-bold">•</span>
+                  <span>100% pure, unrefined, zero chemical solvents or artificial additives</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* EXPANDABLE COLLAPSIBLE ACCORDIONS (Matching Image 1) */}
+            <div className="space-y-3 pt-4 border-t border-forest/10">
+              {[
+                {
+                  id: "why-better",
+                  title: "WHY IT TASTES BETTER",
+                  content: "Our wood pressing mills run under 14 RPM in seasoned Vagai wooden Ghanis. By keeping extraction temperatures strictly under 38°C, zero nutrients or natural aromas are lost, resulting in authentic, rich homestyle flavor."
+                },
+                {
+                  id: "whats-inside",
+                  title: "WHAT'S INSIDE",
+                  content: "100% pure single-origin bold seeds sourced directly from rain-fed family farms. 0% mineral oil, 0% preservatives, 0% added chemical solvents."
+                },
+                {
+                  id: "how-made",
+                  title: "HOW IT'S MADE",
+                  content: "Sun-dried oilseeds are slowly crushed in traditional wooden Ghani, gravity-filtered for 48 hours without chemical bleaching, and packed fresh upon order."
+                },
+                {
+                  id: "results-notice",
+                  title: "RESULTS YOU'LL NOTICE",
+                  content: "Lighter stomach feeling after meals, authentic traditional aroma in your kitchen, reduced oil absorption during frying, and pure unadulterated nourishment for your family."
+                }
+              ].map((acc) => {
+                const isOpen = openAccordion === acc.id;
+                return (
+                  <div key={acc.id} className="border-b border-forest/10 pb-3">
+                    <button
+                      type="button"
+                      onClick={() => setOpenAccordion(isOpen ? null : acc.id)}
+                      className="w-full flex items-center justify-between text-xs font-bold text-forest uppercase tracking-wider py-2 cursor-pointer hover:text-gold transition-colors"
+                    >
+                      <span>{acc.title}</span>
+                      {isOpen ? <ChevronUp className="w-4 h-4 text-gold" /> : <ChevronDown className="w-4 h-4 text-forest/60" />}
+                    </button>
+                    <AnimatePresence>
+                      {isOpen && (
+                        <motion.p
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="text-xs text-dark/75 font-light leading-relaxed pt-2"
+                        >
+                          {acc.content}
+                        </motion.p>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                );
+              })}
+            </div>
+
           </div>
         </div>
 
         {/* Minimal Details Grid (Benefits, Nutrition, Storage) */}
-        <section className="bg-white py-20 px-6 border-y border-forest/10">
+        <section className="bg-white py-20 px-6 border-y border-forest/10 mt-16">
           <div className="max-w-[1280px] mx-auto grid grid-cols-1 md:grid-cols-3 gap-16 md:gap-8">
             
             <div className="space-y-6">
@@ -488,103 +594,74 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
           </div>
         </section>
 
-        {/* Minimal Customer Reviews */}
+        {/* Customer Reviews Section */}
         <section className="py-20 px-6 bg-brand-bg">
           <div className="max-w-4xl mx-auto space-y-16">
             
-            {/* Headers & Overall Rating */}
-            {(() => {
-              const mockReviewsFormatted = (product.reviews || []).map((r: any) => ({
-                id: `mock-${r.author}-${r.date}`,
-                rating: r.rating,
-                comment: r.comment,
-                name: r.author,
-                location: "Verified Buyer",
-                isVerified: r.verified,
-                mediaUrls: [],
-                mediaTypes: [],
-                createdAt: r.date
-              }));
-              
-              const allReviews = [...dbReviews, ...mockReviewsFormatted];
-              const totalReviewsCount = allReviews.length;
-              const averageRating = totalReviewsCount > 0 
-                ? (allReviews.reduce((sum, r) => sum + r.rating, 0) / totalReviewsCount).toFixed(1) 
-                : "5.0";
+            <div className="text-center space-y-4">
+              <h2 className="text-3xl md:text-4xl font-serif text-forest uppercase tracking-wider font-semibold">Customer Reviews</h2>
+              <div className="flex flex-col items-center justify-center gap-2">
+                <button
+                  onClick={() => setShowReviewModal(true)}
+                  className="px-6 py-3 bg-forest hover:bg-forest-light text-white text-xs uppercase tracking-widest font-semibold transition-colors"
+                >
+                  Write a Review
+                </button>
+              </div>
+            </div>
 
-              return (
-                <>
-                  <div className="text-center space-y-4">
-                    <h2 className="text-4xl font-serif text-forest uppercase tracking-wider font-semibold">Customer Perspectives</h2>
-                    <div className="flex flex-col items-center justify-center gap-2">
-                      <div className="pt-4">
-                        <button
-                          onClick={() => setShowReviewModal(true)}
-                          className="px-6 py-3 bg-forest hover:bg-forest-light text-white text-xs uppercase tracking-widest font-semibold transition-colors"
-                        >
-                          Write a Review
-                        </button>
+            {loadingReviews ? (
+              <div className="text-center text-xs uppercase tracking-wider text-dark/40 py-8">
+                Loading Customer Reviews...
+              </div>
+            ) : allReviews.length === 0 ? (
+              <div className="text-center text-xs uppercase tracking-wider text-dark/40 py-8">
+                No reviews yet. Be the first to share your experience!
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {allReviews.map((r) => (
+                  <div key={r.id} className="space-y-4 bg-white p-6 border border-forest/10 shadow-xs rounded-xl">
+                    <div className="flex items-center justify-between">
+                      <div className="flex gap-1">
+                        {[...Array(5)].map((_, i) => (
+                          <Star key={i} className={`w-4 h-4 ${i < r.rating ? 'fill-gold text-gold' : 'fill-transparent text-dark/20'}`} />
+                        ))}
                       </div>
+                      <span className="text-[10px] text-dark/40">{new Date(r.createdAt).toLocaleDateString()}</span>
+                    </div>
+                    
+                    {r.title && <h4 className="text-base font-serif text-forest font-semibold">"{r.title}"</h4>}
+                    <p className="text-xs text-dark/70 font-light leading-relaxed whitespace-pre-line">
+                      {r.comment}
+                    </p>
+
+                    {r.mediaUrls && r.mediaUrls.length > 0 && (
+                      <div className="flex gap-2 pt-2">
+                        {r.mediaUrls.map((url: string, index: number) => {
+                          const isVideo = r.mediaTypes?.[index] === "video";
+                          return (
+                            <div key={index} className="relative w-14 h-14 border border-forest/10 rounded overflow-hidden bg-brand-bg/10">
+                              {isVideo ? (
+                                <video src={url} className="w-full h-full object-cover" controls />
+                              ) : (
+                                <img src={url} alt="Review attachment" className="w-full h-full object-cover cursor-pointer" onClick={() => window.open(url, '_blank')} />
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-3 pt-2 text-[10px] uppercase tracking-widest border-t border-forest/5">
+                      <span className="font-semibold text-forest">{r.name}</span>
+                      <span className="text-dark/40">({r.location})</span>
+                      {r.isVerified && <span className="text-gold flex items-center gap-1"><Check className="w-3 h-3" /> Verified Buyer</span>}
                     </div>
                   </div>
-
-                  {/* Reviews List */}
-                  {loadingReviews ? (
-                    <div className="text-center text-xs uppercase tracking-wider text-dark/40 py-8">
-                      Loading Customer Reviews...
-                    </div>
-                  ) : allReviews.length === 0 ? (
-                    <div className="text-center text-xs uppercase tracking-wider text-dark/40 py-8">
-                      No reviews yet. Be the first to share your experience!
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-24">
-                      {allReviews.map((r) => (
-                        <div key={r.id} className="space-y-6 bg-white p-6 border border-forest/5 shadow-sm">
-                          <div className="flex items-center justify-between">
-                            <div className="flex gap-1">
-                              {[...Array(5)].map((_, i) => (
-                                <Star key={i} className={`w-4 h-4 ${i < r.rating ? 'fill-gold text-gold' : 'fill-transparent text-dark/20'}`} />
-                              ))}
-                            </div>
-                            <span className="text-[10px] text-dark/40">{new Date(r.createdAt).toLocaleDateString()}</span>
-                          </div>
-                          
-                          {r.title && <h4 className="text-lg font-serif text-forest leading-tight">"{r.title}"</h4>}
-                          <p className="text-xs text-dark/70 font-light leading-relaxed whitespace-pre-line">
-                            {r.comment}
-                          </p>
-
-                          {/* Media attachments */}
-                          {r.mediaUrls && r.mediaUrls.length > 0 && (
-                            <div className="flex gap-2 pt-2">
-                              {r.mediaUrls.map((url: string, index: number) => {
-                                const isVideo = r.mediaTypes?.[index] === "video";
-                                return (
-                                  <div key={index} className="relative w-16 h-16 border border-forest/10 rounded overflow-hidden bg-brand-bg/10">
-                                    {isVideo ? (
-                                      <video src={url} className="w-full h-full object-cover" controls />
-                                    ) : (
-                                      <img src={url} alt="Review attachment" className="w-full h-full object-cover cursor-pointer" onClick={() => window.open(url, '_blank')} />
-                                    )}
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          )}
-
-                          <div className="flex items-center gap-3 pt-2 text-[10px] uppercase tracking-widest border-t border-forest/5">
-                            <span className="font-semibold text-forest">{r.name}</span>
-                            <span className="text-dark/40">({r.location})</span>
-                            {r.isVerified && <span className="text-gold flex items-center gap-1"><Check className="w-3 h-3" /> Verified Buyer</span>}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </>
-              );
-            })()}
+                ))}
+              </div>
+            )}
 
           </div>
         </section>
@@ -593,83 +670,67 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
         <AnimatePresence>
           {showReviewModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-              {/* Overlay */}
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setShowReviewModal(false)}
-                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                className="fixed inset-0 bg-dark/40 backdrop-blur-xs"
               />
-              
-              {/* Modal Box */}
+
               <motion.div
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                className="relative bg-white w-full max-w-lg p-8 md:p-10 shadow-2xl border border-forest/10 z-10 max-h-[90vh] overflow-y-auto"
+                className="relative w-full max-w-lg bg-brand-bg border border-forest/10 p-8 shadow-2xl z-10 space-y-6 max-h-[90vh] overflow-y-auto rounded-2xl"
               >
-                <button 
+                <button
                   onClick={() => setShowReviewModal(false)}
-                  className="absolute right-6 top-6 text-dark/40 hover:text-forest transition-colors"
-                  aria-label="Close modal"
+                  className="absolute top-6 right-6 text-dark/40 hover:text-forest transition-colors"
                 >
-                  <X className="w-6 h-6" />
+                  <X className="w-5 h-5" />
                 </button>
-                
+
+                <div className="space-y-2 border-b border-forest/10 pb-4">
+                  <h3 className="text-2xl font-serif text-forest font-semibold">Share Your Experience</h3>
+                  <p className="text-xs text-dark/60">
+                    Your review will be marked with a <span className="font-semibold text-forest">Verified Buyer</span> badge once submitted.
+                  </p>
+                </div>
+
+                {errorMsg && (
+                  <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded">
+                    {errorMsg}
+                  </div>
+                )}
+
+                {successMsg && (
+                  <div className="p-3 bg-green-50 border border-green-200 text-green-700 text-xs rounded">
+                    {successMsg}
+                  </div>
+                )}
+
                 <form onSubmit={handleReviewSubmit} className="space-y-4">
-                  <h3 className="text-2xl font-serif text-forest border-b border-forest/5 pb-3 uppercase tracking-wider font-semibold">Share Your Experience</h3>
-                  
-                  {errorMsg && (
-                    <div className="bg-red-50 text-red-600 text-xs p-3 border border-red-200">
-                      {errorMsg}
-                    </div>
-                  )}
-                  
-                  {successMsg && (
-                    <div className="bg-green-50 text-forest text-xs p-3 border border-green-200">
-                      {successMsg}
-                    </div>
-                  )}
-                  
-                  <div className="space-y-1">
-                    <label className="text-[10px] uppercase tracking-widest text-forest/60 font-semibold block">Name (Optional)</label>
-                    <input
-                      type="text"
-                      value={reviewerName}
-                      onChange={(e) => setReviewerName(e.target.value)}
-                      className="w-full text-xs p-3 border border-forest/10 focus:border-gold outline-none bg-brand-bg/20"
-                      placeholder="Anonymous Guest"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[10px] uppercase tracking-widest text-forest/60 font-semibold block">Email ID (Optional)</label>
-                    <input
-                      type="email"
-                      value={reviewerEmail}
-                      onChange={(e) => setReviewerEmail(e.target.value)}
-                      className="w-full text-xs p-3 border border-forest/10 focus:border-gold outline-none bg-brand-bg/20"
-                      placeholder="yourname@example.com"
-                    />
-                  </div>
-
                   <div className="space-y-1">
                     <label className="text-[10px] uppercase tracking-widest text-forest/60 font-semibold block">Rating</label>
-                    <div className="flex gap-1">
-                      {[1, 2, 3, 4, 5].map((val) => (
+                    <div className="flex gap-2">
+                      {[1, 2, 3, 4, 5].map((star) => (
                         <button
-                          key={val}
                           type="button"
-                          onClick={() => setRating(val)}
-                          className="text-gold focus:outline-none"
+                          key={star}
+                          onClick={() => setRating(star)}
+                          className="focus:outline-none transition-transform hover:scale-110"
                         >
-                          <Star className={`w-6 h-6 ${val <= rating ? "fill-current" : "fill-transparent opacity-30"}`} />
+                          <Star
+                            className={`w-6 h-6 ${
+                              star <= rating ? "fill-gold text-gold" : "fill-transparent text-dark/20"
+                            }`}
+                          />
                         </button>
                       ))}
                     </div>
                   </div>
-                  
+
                   <div className="space-y-1">
                     <label className="text-[10px] uppercase tracking-widest text-forest/60 font-semibold block">Your Comment</label>
                     <textarea
@@ -677,8 +738,8 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
                       rows={4}
                       value={comment}
                       onChange={(e) => setComment(e.target.value)}
-                      className="w-full text-xs p-3 border border-forest/10 focus:border-gold outline-none bg-brand-bg/20 resize-none"
-                      placeholder={`What did you think of our ${product.name}?`}
+                      placeholder="What did you think of our cold pressed oils?"
+                      className="w-full p-3 bg-white border border-forest/10 text-xs focus:border-forest outline-none rounded"
                     />
                   </div>
 
@@ -688,7 +749,7 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
                     {mediaFiles.length > 0 && (
                       <div className="space-y-2 mb-2">
                         {mediaFiles.map((file, idx) => (
-                          <div key={idx} className="relative border border-forest/10 p-2 rounded bg-brand-bg/10 flex items-center justify-between">
+                          <div key={idx} className="relative border border-forest/10 p-2 rounded bg-white flex items-center justify-between">
                             <div className="flex items-center gap-2">
                               {file.type === "video" ? (
                                 <div className="w-12 h-12 bg-black rounded flex items-center justify-center text-[10px] text-white">Video</div>
@@ -717,15 +778,15 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
                           onChange={handleFileChange}
                           disabled={uploading}
                           className="hidden"
-                          id="product-review-media-upload"
+                          id="review-media-upload"
                         />
                         <label
-                          htmlFor="product-review-media-upload"
-                          className={`w-full py-2.5 px-4 border border-dashed border-forest/20 hover:border-forest/50 bg-brand-bg/10 flex items-center justify-center gap-2 cursor-pointer text-xs text-dark/75 transition-all ${
+                          htmlFor="review-media-upload"
+                          className={`w-full py-2.5 px-4 border border-dashed border-forest/20 hover:border-forest/50 bg-white flex items-center justify-center gap-2 cursor-pointer text-xs text-dark/75 transition-all ${
                             uploading ? "opacity-50 cursor-not-allowed" : ""
                           }`}
                         >
-                          {uploading ? "Uploading..." : "Choose File (Image/Video)"}
+                          {uploading ? "Uploading media..." : `Choose File ${mediaFiles.length + 1} (Image/Video)`}
                         </label>
                       </div>
                     )}
@@ -733,170 +794,16 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
 
                   <Button
                     type="submit"
-                    variant="primary"
                     disabled={submitLoading || uploading}
-                    className="w-full h-12 text-xs uppercase tracking-widest mt-4"
+                    className="w-full py-3"
                   >
-                    {submitLoading ? "Submitting Review..." : "Submit Review"}
+                    {submitLoading ? "Submitting..." : "Submit Review"}
                   </Button>
                 </form>
               </motion.div>
             </div>
           )}
         </AnimatePresence>
-
-        {/* Comparison Section (What Makes Us Different) */}
-        <section className="bg-[#E2EDE2] py-20 px-6 border-t border-forest/10 flex flex-col items-center">
-          <div className="max-w-xl w-full bg-white p-8 md:p-12 rounded-2xl shadow-md border border-forest/5 text-dark relative overflow-hidden">
-            <h2 className="text-3xl font-serif text-forest text-center font-bold mb-10 tracking-tight uppercase">
-              What Makes Us Different?
-            </h2>
-            
-            <div className="overflow-x-auto relative">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-forest/10">
-                    <th className="py-4 text-xs uppercase tracking-widest text-forest/60 font-bold w-[45%]">Feature</th>
-                    <th className="py-4 px-4 text-xs uppercase tracking-widest text-white font-bold text-center bg-gold/90 w-[27.5%] relative z-10">
-                      Root &amp; Harvest
-                    </th>
-                    <th className="py-4 text-xs uppercase tracking-widest text-forest/40 font-bold text-center w-[27.5%]">Others</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-forest/5 text-sm">
-                  {[
-                    { feature: "Farmer-Owned", rh: true, others: false },
-                    { feature: "Made in Micro-Units", rh: true, others: false },
-                    { feature: "No Factory", rh: true, others: false },
-                    { feature: "Traditional Extraction", rh: true, others: false },
-                    { feature: "Freshly Made", rh: true, others: false },
-                  ].map((row, idx) => (
-                    <tr key={idx} className="hover:bg-forest/5 transition-colors">
-                      <td className="py-4 text-forest font-semibold">{row.feature}</td>
-                      <td className="py-4 px-4 text-center bg-gold/10 font-bold text-lg">
-                        {row.rh ? (
-                          <span className="text-emerald-600 font-extrabold font-sans">✓</span>
-                        ) : (
-                          <span className="text-red-500 font-extrabold font-sans">✗</span>
-                        )}
-                      </td>
-                      <td className="py-4 text-center font-bold text-lg">
-                        {row.others ? (
-                          <span className="text-emerald-600 font-extrabold font-sans">✓</span>
-                        ) : (
-                          <span className="text-red-500 font-extrabold font-sans">✗</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </section>
-
-        {/* All 3 Infographic Process & Quality Sections */}
-        <section className="py-20 px-6 bg-white border-t border-forest/10 flex flex-col items-center space-y-24">
-          
-          {/* 1. Why Root & Harvest */}
-          <div className="max-w-5xl w-full text-center space-y-6">
-            <span className="text-xs uppercase tracking-[0.3em] font-semibold text-gold">UNCOMPROMISED PURITY</span>
-            <h2 className="text-3xl md:text-4xl font-serif text-forest uppercase tracking-wider font-semibold">
-              Why Root &amp; Harvest?
-            </h2>
-            <p className="text-sm text-dark/65 max-w-lg mx-auto leading-relaxed">
-              Discover why traditional wood-pressed oils are essential for your family's health and everyday cooking.
-            </p>
-            <div className="relative w-full aspect-[16/10] border border-forest/10 shadow-md bg-brand-bg/10 overflow-hidden rounded-sm">
-              <Image
-                src="/images/why-made.jpg"
-                alt="Why Root & Harvest?"
-                fill
-                className="object-contain"
-              />
-            </div>
-          </div>
-
-          {/* 2. How We Process Our Oils */}
-          <div className="max-w-5xl w-full text-center space-y-6 pt-12 border-t border-forest/10">
-            <span className="text-xs uppercase tracking-[0.3em] font-semibold text-gold">TRADITIONAL LAKDI GHANI</span>
-            <h2 className="text-3xl md:text-4xl font-serif text-forest uppercase tracking-wider font-semibold">
-              How We Process Our Oils
-            </h2>
-            <p className="text-sm text-dark/65 max-w-lg mx-auto leading-relaxed">
-              Extracted slowly in Vagai wood pestles at speeds under 14 RPM to preserve all delicate nutrients and natural flavors.
-            </p>
-            <div className="relative w-full aspect-[16/10] border border-forest/10 shadow-md bg-brand-bg/10 overflow-hidden rounded-sm">
-              <Image
-                src="/images/how-made.jpg"
-                alt="How Root & Harvest Process Oils"
-                fill
-                className="object-contain"
-              />
-            </div>
-          </div>
-
-          {/* 3. Our Journey — Soil to Spoon */}
-          <div className="max-w-5xl w-full text-center space-y-6 pt-12 border-t border-forest/10">
-            <span className="text-xs uppercase tracking-[0.3em] font-semibold text-gold">FARM TO TABLE TRACEABILITY</span>
-            <h2 className="text-3xl md:text-4xl font-serif text-forest uppercase tracking-wider font-semibold">
-              Our Journey — Soil to Spoon
-            </h2>
-            <p className="text-sm text-dark/65 max-w-lg mx-auto leading-relaxed">
-              We trace every bottle from our trusted heritage farms directly to your kitchen.
-            </p>
-            <div className="relative w-full aspect-[16/10] border border-forest/10 shadow-md bg-brand-bg/10 overflow-hidden rounded-sm">
-              <Image
-                src="/images/journey.jpg"
-                alt="Root & Harvest Soil to Spoon Journey"
-                fill
-                className="object-contain"
-              />
-            </div>
-          </div>
-
-        </section>
-
-        {/* Minimal FAQ */}
-        <section className="py-20 px-6 bg-white border-t border-forest/10">
-          <div className="max-w-3xl mx-auto space-y-12">
-            <div className="text-center">
-              <h2 className="text-4xl font-serif text-forest uppercase tracking-wider font-semibold">Common Queries</h2>
-            </div>
-            
-            <div className="divide-y divide-forest/10 border-t border-b border-forest/10">
-              {product.faqs.map((faq, idx) => (
-                <div key={idx} className="py-8">
-                  <button 
-                    onClick={() => setActiveFaq(activeFaq === idx ? null : idx)}
-                    className="w-full flex items-center justify-between text-left group"
-                  >
-                    <span className="text-lg font-serif text-forest pr-8 group-hover:text-gold transition-colors">{faq.q}</span>
-                    {activeFaq === idx ? (
-                      <ChevronUp className="w-5 h-5 text-gold shrink-0" />
-                    ) : (
-                      <ChevronDown className="w-5 h-5 text-forest/40 group-hover:text-gold transition-colors shrink-0" />
-                    )}
-                  </button>
-                  <AnimatePresence>
-                    {activeFaq === idx && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        className="overflow-hidden"
-                      >
-                        <p className="pt-6 text-sm text-dark/70 font-light leading-relaxed pr-12">
-                          {faq.a}
-                        </p>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
 
       </main>
 
