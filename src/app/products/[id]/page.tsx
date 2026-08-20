@@ -28,7 +28,7 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
   const defaultSize = product.sizes.find((s: string) => s === "1 L" || s === "1L") || product.sizes[0] || "";
   const [selectedSize, setSelectedSize] = useState(defaultSize);
   const [quantity, setQuantity] = useState(1);
-  const [selectedBottleType, setSelectedBottleType] = useState("Lightweight Bottle");
+  const [selectedBottleType, setSelectedBottleType] = useState("Plastic Bottle");
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
 
   const { user } = useAuth();
@@ -355,20 +355,28 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
 
                 {/* Bottle Type Selection */}
                 {selectedSize && product.id.includes("oil") && (
-                  <div className="space-y-6">
-                    <label htmlFor="bottle-select" className="text-xs uppercase tracking-widest text-forest/50 font-semibold block">Select Bottle Type</label>
-                    <div className="relative">
-                      <select
-                        id="bottle-select"
-                        value={selectedBottleType}
-                        onChange={(e) => setSelectedBottleType(e.target.value)}
-                        className="w-full appearance-none rounded-none border border-forest/20 bg-transparent px-8 py-4 text-sm uppercase tracking-widest text-forest focus:border-forest focus:outline-none transition-colors bg-white"
-                      >
-                        {availableBottleTypes.map((type) => (
-                          <option key={type} value={type}>{type}</option>
-                        ))}
-                      </select>
-                      <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 w-5 h-5 text-forest/50 pointer-events-none" />
+                  <div className="space-y-3">
+                    <span className="text-xs uppercase tracking-widest text-forest/60 font-semibold block">
+                      Packaging Option
+                    </span>
+                    <div className="flex flex-wrap gap-3">
+                      {availableBottleTypes.map((type) => {
+                        const isSelected = selectedBottleType === type;
+                        return (
+                          <button
+                            key={type}
+                            type="button"
+                            onClick={() => setSelectedBottleType(type)}
+                            className={`px-6 py-3 rounded-md text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer border ${
+                              isSelected
+                                ? "bg-forest text-white border-forest shadow-sm"
+                                : "bg-white text-forest/80 border-forest/20 hover:border-forest/50"
+                            }`}
+                          >
+                            {type}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
