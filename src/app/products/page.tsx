@@ -9,7 +9,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/Button";
 import { BrandBottle } from "@/components/ui/BrandBottle";
-import { Lock, ChevronDown, Check } from "lucide-react";
+import { Lock, ChevronDown, Check, Star } from "lucide-react";
 
 function ProductCard({ product }: { product: any }) {
   const prices = Object.values(product.sizePrices) as number[];
@@ -20,7 +20,7 @@ function ProductCard({ product }: { product: any }) {
       href={`/products/${product.id}`}
       className="flex flex-col justify-between group bg-white rounded-2xl border border-forest/10 p-4 shadow-xs hover:shadow-md hover:border-forest/30 transition-all duration-300"
     >
-      <div className="space-y-4">
+      <div className="space-y-3">
         {/* Enlarged Product Image Container */}
         <div className="relative aspect-[4/5] w-full min-h-[300px] sm:min-h-[340px] bg-brand-bg/30 rounded-xl overflow-hidden p-2 flex items-center justify-center">
           <Image 
@@ -36,8 +36,18 @@ function ProductCard({ product }: { product: any }) {
           )}
         </div>
 
+        {/* Star Rating & Review Count */}
+        <div className="flex items-center gap-1.5 pt-1 text-gold text-xs font-semibold">
+          <div className="flex gap-0.5">
+            {[...Array(5)].map((_, i) => (
+              <Star key={i} className="w-3.5 h-3.5 fill-gold text-gold" />
+            ))}
+          </div>
+          <span className="text-dark/50 text-[11px]">({product.reviewsCount || 104})</span>
+        </div>
+
         {/* Product Title */}
-        <h3 className="font-serif text-xl font-bold text-forest group-hover:text-gold transition-colors leading-snug line-clamp-1 pt-1">
+        <h3 className="font-serif text-xl font-bold text-forest group-hover:text-gold transition-colors leading-snug line-clamp-1">
           {product.name}
         </h3>
 

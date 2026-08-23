@@ -254,6 +254,7 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
   const handleAddToCart = () => {
     if (product.isComingSoon) return;
     addToCart(product, selectedVariant.size, quantity, selectedVariant.bottleType);
+    router.push("/checkout");
   };
 
   const handleBuyNow = () => {
@@ -263,12 +264,19 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
   };
 
   // Calculated ratings
-  const mockReviewsFormatted = (product.reviews || []).map((r: any) => ({ rating: r.rating }));
+  const mockReviewsFormatted = (product.reviews || []).map((r: any, idx: number) => ({
+    id: `mock-${idx}-${r.author || "rev"}`,
+    rating: r.rating,
+    name: r.author || "Verified Buyer",
+    createdAt: r.date ? new Date(r.date).toISOString() : new Date().toISOString(),
+    comment: r.comment || "",
+    title: r.title || "",
+    isVerified: r.verified ?? true,
+    location: "Verified Buyer",
+  }));
   const allReviews = [...dbReviews, ...mockReviewsFormatted];
-  const totalReviewsCount = allReviews.length;
-  const averageRating = totalReviewsCount > 0 
-    ? (allReviews.reduce((sum, r) => sum + r.rating, 0) / totalReviewsCount).toFixed(1) 
-    : "5.0";
+  const totalReviewsCount = (product.reviewsCount || 0) + dbReviews.length;
+  const averageRating = product.rating ? product.rating.toFixed(1) : "5.0";
 
   return (
     <div className="bg-brand-bg text-dark font-sans font-light selection:bg-gold/30 min-h-screen">
@@ -357,7 +365,6 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
 
                 <div className="px-3 py-1 bg-[#E8F3EB] border border-forest/20 rounded-full text-xs text-[#123025] font-semibold flex items-center gap-1">
                   <span>Members Price Rs. {Math.round(selectedVariant.price * 0.88)}</span>
-                  <span className="text-gold font-bold underline cursor-pointer ml-1">Join Membership</span>
                 </div>
               </div>
 
@@ -642,13 +649,19 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
                           <Star key={i} className={`w-4 h-4 ${i < r.rating ? 'fill-gold text-gold' : 'fill-transparent text-dark/20'}`} />
                         ))}
                       </div>
-                      <span className="text-[10px] text-dark/40">{new Date(r.createdAt).toLocaleDateString()}</span>
+                      <span className="text-[10px] text-dark/40">
+                        {r.createdAt && !isNaN(new Date(r.createdAt).getTime()) 
+                          ? new Date(r.createdAt).toLocaleDateString() 
+                          : new Date().toLocaleDateString()}
+                      </span>
                     </div>
                     
                     {r.title && <h4 className="text-base font-serif text-forest font-semibold">"{r.title}"</h4>}
-                    <p className="text-xs text-dark/70 font-light leading-relaxed whitespace-pre-line">
-                      {r.comment}
-                    </p>
+                    {r.comment && (
+                      <p className="text-xs text-dark/70 font-light leading-relaxed whitespace-pre-line">
+                        {r.comment}
+                      </p>
+                    )}
 
                     {r.mediaUrls && r.mediaUrls.length > 0 && (
                       <div className="flex gap-2 pt-2">
@@ -668,8 +681,8 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
                     )}
 
                     <div className="flex items-center gap-3 pt-2 text-[10px] uppercase tracking-widest border-t border-forest/5">
-                      <span className="font-semibold text-forest">{r.name}</span>
-                      <span className="text-dark/40">({r.location})</span>
+                      <span className="font-semibold text-forest">{r.name || "Verified Buyer"}</span>
+                      {r.location && <span className="text-dark/40">({r.location})</span>}
                       {r.isVerified && <span className="text-gold flex items-center gap-1"><Check className="w-3 h-3" /> Verified Buyer</span>}
                     </div>
                   </div>

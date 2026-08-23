@@ -223,4 +223,12 @@ Thank you for supporting a small business ❤️`;
     const customerMessage = `🌿 Root & Harvest: Your order ${order.orderNumber} has been delivered. Thank you for shopping with us! ❤️`;
     this.queueMessage(order.shippingPhone, customerMessage, "CUSTOMER", order.id);
   }
+
+  /**
+   * Enqueues promotional offer notifications to customer.
+   */
+  static queuePromotionNotification(recipient: string, promoMessage: string) {
+    const formattedMessage = `🎁 Root & Harvest Offer:\n\n${promoMessage}\n\nShop now at rootandharvest.in`;
+    this.queueMessage(recipient, formattedMessage, "PROMO");
+  }
 }
