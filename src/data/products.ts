@@ -289,10 +289,10 @@ export const INITIAL_PRODUCTS: Product[] = [
     id: "jaisriram-unpolished-rice",
     name: "Jai Sriram Unpolished Rice",
     tagline: "Heritage premium unpolished rice variety.",
-    description: "Premium heritage Jai Sriram rice variety, unpolished to retain its highly nutritious bran layer, fiber content, and natural rich earthy flavor.",
+    description: "At Root & Harvest, we believe rice should be more than just a staple — it should be clean, wholesome, and naturally good. Our Jai Sri Ram Rice is carefully selected for its quality, grain consistency, taste, and aroma. We focus on bringing you rice that is handled with care and processed thoughtfully, so you can enjoy the natural character of the grain in your everyday meals.",
     shortDescription: "Jai Sriram traditional unpolished rice. High fiber, rich in vitamins and minerals.",
     image: "/images/jaisriram-unpolished-rice.jpg",
-    gallery: ["/images/jaisriram-unpolished-rice.jpg"],
+    gallery: ["/images/jaisriram-unpolished-rice.jpg", "/images/why-jaisriram-rice.jpg"],
     sizes: ["1 kg", "5 kg"],
     sizePrices: {
       "1 kg": 95,
@@ -303,9 +303,11 @@ export const INITIAL_PRODUCTS: Product[] = [
       "5 kg": 520
     },
     benefits: [
-      "High dietary fiber supports digestive health.",
-      "Slow digest rate keeps blood sugar levels stable.",
-      "Bran layer retains natural B-complex vitamins."
+      "Carefully Selected Grains: We choose quality grains with good size, texture, and consistency.",
+      "Thoughtfully Processed: We avoid unnecessary polishing and processing to retain the natural goodness of the rice.",
+      "Naturally Tasty & Aromatic: Perfect for everyday cooking, with a pleasant texture and traditional rice flavour.",
+      "Clean & Carefully Packed: Handled and packed with attention to cleanliness and quality.",
+      "From Our Selection to Your Kitchen: We believe in bringing trusted, quality staples from our source to your family."
     ],
     ingredients: "100% Raw Jai Sriram Unpolished Rice.",
     storage: "Store in a cool dry place. Keep airtight.",
@@ -330,10 +332,10 @@ export const INITIAL_PRODUCTS: Product[] = [
     id: "jaisriram-polished-rice",
     name: "Jai Sriram Polished Rice",
     tagline: "Fine-grain premium polished white rice.",
-    description: "Premium fine-grain Jai Sriram rice, polished gently to produce a beautiful long grain with excellent texture, sweet natural taste, and soft finish.",
+    description: "At Root & Harvest, we believe rice should be more than just a staple — it should be clean, wholesome, and naturally good. Our Jai Sri Ram Rice is carefully selected for its quality, grain consistency, taste, and aroma. We focus on bringing you rice that is handled with care and processed thoughtfully, so you can enjoy the natural character of the grain in your everyday meals.",
     shortDescription: "Premium Jai Sriram polished white rice. Fluffy, fragrant, and highly digestible.",
     image: "/images/jaisriram-polished-rice.jpg",
-    gallery: ["/images/jaisriram-polished-rice.jpg"],
+    gallery: ["/images/jaisriram-polished-rice.jpg", "/images/why-jaisriram-rice.jpg"],
     sizes: ["1 kg", "5 kg"],
     sizePrices: {
       "1 kg": 88,
@@ -344,9 +346,11 @@ export const INITIAL_PRODUCTS: Product[] = [
       "5 kg": 490
     },
     benefits: [
-      "Highly digestible starch source.",
-      "Cooks into beautifully separate, fluffy grains.",
-      "Perfect for premium daily meals and special traditional rice dishes."
+      "Carefully Selected Grains: We choose quality grains with good size, texture, and consistency.",
+      "Thoughtfully Processed: We avoid unnecessary processing and focus on retaining the natural character of the rice.",
+      "Naturally Tasty & Aromatic: Perfect for everyday cooking, with a pleasant texture and traditional rice flavour.",
+      "Clean & Carefully Packed: Handled and packed with attention to cleanliness and quality.",
+      "From Our Selection to Your Kitchen: We believe in bringing trusted, quality staples from our source to your family."
     ],
     ingredients: "100% Raw Jai Sriram Polished Rice.",
     storage: "Store in a cool dry place. Keep airtight.",
