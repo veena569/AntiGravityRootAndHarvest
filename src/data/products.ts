@@ -89,7 +89,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     bestBefore: "December 23, 2026 (6 Months from Packing)",
     batchNumber: "RH-GNT-2606A",
     rating: 5.0,
-    reviewsCount: 104,
+    reviewsCount: 4,
     reviews: [
       {
         author: "Thanvika Reddy",
@@ -105,6 +105,22 @@ export const INITIAL_PRODUCTS: Product[] = [
         date: "2026-06-28",
         title: "Highly recommended for families",
         comment: "Switching to Root & Harvest has been the best decision for our family's health. The oil is light, clean, and tastes incredibly pure in all our traditional dishes.",
+        verified: true
+      },
+      {
+        author: "Chiranjeevi E",
+        rating: 5,
+        date: "2026-07-02",
+        title: "Pure and Authentic Taste",
+        comment: "The oil has a fresh, natural groundnut smell and a delicious taste. It looks pure and authentic, making it perfect for everyday cooking. I suggest to buy everyone.",
+        verified: true
+      },
+      {
+        author: "Rajesh Kumar",
+        rating: 5,
+        date: "2026-07-08",
+        title: "Top Quality Wood Pressed Oil",
+        comment: "Excellent wood pressed groundnut oil. Fresh, natural aroma and great taste in homestyle cooking.",
         verified: true
       }
     ],
