@@ -303,21 +303,25 @@ export default function HomePage() {
                   </div>
                 </div>
 
-                {/* Coming Soon Oil: Sesame Oil */}
-                <div className="bg-white border border-forest/5 p-6 relative overflow-hidden flex flex-col justify-between opacity-80">
+                {/* Active Oil: Sesame Oil */}
+                <div className="bg-white border border-forest/5 p-6 hover:shadow-lg transition-all flex flex-col justify-between">
                   <div className="space-y-4">
                     <div className="relative aspect-[3/4] w-full bg-white border border-forest/10 flex items-center justify-center p-4">
-                      <Image src="/images/sesame-oil-1l.jpg" alt="Wood Pressed Sesame Oil" fill className="object-contain p-4 blur-[2px]" />
-                      <div className="absolute inset-0 bg-white/20 backdrop-blur-xs flex flex-col items-center justify-center gap-2">
-                        <Lock className="w-5 h-5 text-forest/40" />
-                        <span className="bg-forest text-white text-[10px] uppercase tracking-widest font-bold px-3 py-1.5 shadow">Coming Soon</span>
-                      </div>
+                      <Image src="/images/sesame-oil-1l.jpg" alt="Wood Pressed Sesame Oil" fill className="object-contain p-4" />
                     </div>
-                    <h3 className="text-xl font-serif text-forest/50 font-semibold mt-4">Wood Pressed Sesame Oil</h3>
-                    <p className="text-xs text-dark/40 font-light leading-relaxed font-sans">
+                    <h3 className="text-xl font-serif text-forest font-semibold mt-4">Wood Pressed Sesame Oil</h3>
+                    <p className="text-xs text-dark/60 font-light leading-relaxed font-sans">
                       Slow-pressed rich sesame oil, unrefined, zero preservatives. Highly aromatic and ideal for nourishing health.
                     </p>
-                    <p className="font-serif text-lg text-dark/40 font-semibold pt-2">Launching Soon</p>
+                    <p className="font-serif text-lg text-forest font-semibold pt-2">From ₹319.00</p>
+                  </div>
+                  <div className="pt-6">
+                    <Link
+                      href="/products/sesame-oil"
+                      className="block w-full py-3 bg-forest hover:bg-forest-light text-white text-center text-xs uppercase tracking-widest font-semibold transition-colors"
+                    >
+                      View Details &amp; Reviews
+                    </Link>
                   </div>
                 </div>
 
@@ -364,39 +368,47 @@ export default function HomePage() {
                   </div>
                 </div>
 
-                {/* Coming Soon Grain: Jai Sriram Unpolished Rice */}
-                <div className="bg-white border border-forest/5 p-6 relative overflow-hidden flex flex-col justify-between opacity-80">
+                {/* Active Grain: Jai Sriram Unpolished Rice */}
+                <div className="bg-white border border-forest/5 p-6 hover:shadow-lg transition-all flex flex-col justify-between">
                   <div className="space-y-4">
                     <div className="relative aspect-[3/4] w-full bg-white border border-forest/10 flex items-center justify-center p-4">
-                      <Image src="/images/jaisriram-unpolished-rice.jpg" alt="Jai Sriram Unpolished Rice" fill className="object-contain p-4 blur-[2px]" />
-                      <div className="absolute inset-0 bg-white/20 backdrop-blur-xs flex flex-col items-center justify-center gap-2">
-                        <Lock className="w-5 h-5 text-forest/40" />
-                        <span className="bg-forest text-white text-[10px] uppercase tracking-widest font-bold px-3 py-1.5 shadow">Coming Soon</span>
-                      </div>
+                      <Image src="/images/jaisriram-unpolished-rice.jpg" alt="Jai Sriram Unpolished Rice" fill className="object-contain p-4" />
                     </div>
-                    <h3 className="text-xl font-serif text-forest/50 font-semibold mt-4">Jai Sriram Unpolished Rice</h3>
-                    <p className="text-xs text-dark/40 font-light leading-relaxed font-sans">
+                    <h3 className="text-xl font-serif text-forest font-semibold mt-4">Jai Sriram Unpolished Rice</h3>
+                    <p className="text-xs text-dark/60 font-light leading-relaxed font-sans">
                       Heritage unpolished Jai Sriram rice variety. High fiber, rich in vitamins, with authentic earthy flavor.
                     </p>
-                    <p className="font-serif text-lg text-dark/40 font-semibold pt-2">Launching Soon</p>
+                    <p className="font-serif text-lg text-forest font-semibold pt-2">From ₹95.00</p>
+                  </div>
+                  <div className="pt-6">
+                    <Link
+                      href="/products/jaisriram-unpolished-rice"
+                      className="block w-full py-3 bg-forest hover:bg-forest-light text-white text-center text-xs uppercase tracking-widest font-semibold transition-colors"
+                    >
+                      View Details &amp; Reviews
+                    </Link>
                   </div>
                 </div>
 
-                {/* Coming Soon Grain: Jai Sriram Polished Rice */}
-                <div className="bg-white border border-forest/5 p-6 relative overflow-hidden flex flex-col justify-between opacity-80">
+                {/* Active Grain: Jai Sriram Polished Rice */}
+                <div className="bg-white border border-forest/5 p-6 hover:shadow-lg transition-all flex flex-col justify-between">
                   <div className="space-y-4">
                     <div className="relative aspect-[3/4] w-full bg-white border border-forest/10 flex items-center justify-center p-4">
-                      <Image src="/images/jaisriram-polished-rice.jpg" alt="Jai Sriram Polished Rice" fill className="object-contain p-4 blur-[2px]" />
-                      <div className="absolute inset-0 bg-white/20 backdrop-blur-xs flex flex-col items-center justify-center gap-2">
-                        <Lock className="w-5 h-5 text-forest/40" />
-                        <span className="bg-forest text-white text-[10px] uppercase tracking-widest font-bold px-3 py-1.5 shadow">Coming Soon</span>
-                      </div>
+                      <Image src="/images/jaisriram-polished-rice.jpg" alt="Jai Sriram Polished Rice" fill className="object-contain p-4" />
                     </div>
-                    <h3 className="text-xl font-serif text-forest/50 font-semibold mt-4">Jai Sriram Polished Rice</h3>
-                    <p className="text-xs text-dark/40 font-light leading-relaxed font-sans">
+                    <h3 className="text-xl font-serif text-forest font-semibold mt-4">Jai Sriram Polished Rice</h3>
+                    <p className="text-xs text-dark/60 font-light leading-relaxed font-sans">
                       Gently polished fine-grain premium rice variety. Sweet natural taste, cooks into light and fluffy grains.
                     </p>
-                    <p className="font-serif text-lg text-dark/40 font-semibold pt-2">Launching Soon</p>
+                    <p className="font-serif text-lg text-forest font-semibold pt-2">From ₹88.00</p>
+                  </div>
+                  <div className="pt-6">
+                    <Link
+                      href="/products/jaisriram-polished-rice"
+                      className="block w-full py-3 bg-forest hover:bg-forest-light text-white text-center text-xs uppercase tracking-widest font-semibold transition-colors"
+                    >
+                      View Details &amp; Reviews
+                    </Link>
                   </div>
                 </div>
               </div>
