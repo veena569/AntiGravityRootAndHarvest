@@ -307,36 +307,46 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
               />
             </div>
 
-            {/* 2x2 Infographics & Gallery Cards */}
-            <div className="grid grid-cols-2 gap-4">
-              {(isOil
-                ? [
-                    { src: "/images/why-made.jpg", label: "WHY CHOOSE US?" },
-                    { src: "/images/how-made.jpg", label: "FARM TO DOORSTEP" },
-                    { src: "/images/journey.jpg", label: "HOW IT'S MADE" },
-                    { src: "/images/family.jpg", label: "OUR HERITAGE" },
-                  ]
-                : [
-                    { src: product.image, label: "FARM FRESH GRAIN" },
-                    { src: "/images/family.jpg", label: "OUR HERITAGE" },
-                    { src: "/images/journey.jpg", label: "FARM TO DOORSTEP" },
-                    { src: "/images/why-made.jpg", label: "100% TRADITIONAL" },
-                  ]
-              ).map((item, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setSelectedImage(item.src)}
-                  className={`relative aspect-square w-full rounded-xl overflow-hidden border transition-all cursor-pointer bg-white group ${
-                    selectedImage === item.src ? "border-forest ring-2 ring-forest shadow-md" : "border-forest/10 opacity-85 hover:opacity-100"
-                  }`}
-                >
-                  <Image src={item.src} alt={item.label} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
-                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-forest/90 via-forest/60 to-transparent p-2 text-center">
-                    <span className="text-[10px] font-bold text-white uppercase tracking-wider">{item.label}</span>
-                  </div>
-                </button>
-              ))}
-            </div>
+            {/* 2x2 Infographics for Oils OR Gallery Thumbnails for Grains */}
+            {isOil ? (
+              <div className="grid grid-cols-2 gap-4">
+                {[
+                  { src: "/images/why-made.jpg", label: "WHY CHOOSE US?" },
+                  { src: "/images/how-made.jpg", label: "FARM TO DOORSTEP" },
+                  { src: "/images/journey.jpg", label: "HOW IT'S MADE" },
+                  { src: "/images/family.jpg", label: "OUR HERITAGE" },
+                ].map((item, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setSelectedImage(item.src)}
+                    className={`relative aspect-square w-full rounded-xl overflow-hidden border transition-all cursor-pointer bg-white group ${
+                      selectedImage === item.src ? "border-forest ring-2 ring-forest shadow-md" : "border-forest/10 opacity-85 hover:opacity-100"
+                    }`}
+                  >
+                    <Image src={item.src} alt={item.label} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-forest/90 via-forest/60 to-transparent p-2 text-center">
+                      <span className="text-[10px] font-bold text-white uppercase tracking-wider">{item.label}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              product.gallery && product.gallery.length > 1 && (
+                <div className="flex gap-3 overflow-x-auto pb-2">
+                  {product.gallery.map((imgSrc, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setSelectedImage(imgSrc)}
+                      className={`relative w-20 h-20 rounded-xl overflow-hidden border transition-all cursor-pointer bg-white shrink-0 ${
+                        selectedImage === imgSrc ? "border-forest ring-2 ring-forest shadow-md" : "border-forest/10 opacity-80 hover:opacity-100"
+                      }`}
+                    >
+                      <Image src={imgSrc} alt={`Gallery ${idx + 1}`} fill className="object-cover" />
+                    </button>
+                  ))}
+                </div>
+              )
+            )}
           </div>
 
           {/* RIGHT COLUMN: Price, Combined Variant Cards, Buy Actions, Trust Badges & Accordions */}
@@ -796,7 +806,7 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
                       rows={4}
                       value={comment}
                       onChange={(e) => setComment(e.target.value)}
-                      placeholder="What did you think of our cold pressed oils?"
+                      placeholder={isOil ? "What did you think of our cold pressed oils?" : "What did you think of our farm fresh grains?"}
                       className="w-full p-3 bg-white border border-forest/10 text-xs focus:border-forest outline-none rounded"
                     />
                   </div>
