@@ -616,16 +616,13 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
 
         {/* SPECIAL INFOGRAPHIC FEATURE BANNER FOR JAI SRI RAM RICE */}
         {product.id.includes("jaisriram") && (
-          <div className="max-w-[1280px] mx-auto px-6 pt-12">
-            <div className="relative w-full rounded-2xl overflow-hidden border border-forest/15 shadow-md bg-white p-4">
-              <div className="relative aspect-[3/4] sm:aspect-[4/3] md:aspect-[16/9] w-full">
-                <Image
-                  src="/images/why-jaisriram-rice.jpg"
-                  alt="Why Our Jai Sri Ram Rice - Root & Harvest"
-                  fill
-                  className="object-contain"
-                />
-              </div>
+          <div className="max-w-[1280px] mx-auto px-4 sm:px-6 pt-12">
+            <div className="w-full rounded-2xl overflow-hidden border border-forest/15 shadow-md bg-white p-4 sm:p-8 flex justify-center">
+              <img
+                src="/images/why-jaisriram-rice.jpg"
+                alt="Why Our Jai Sri Ram Rice - Root & Harvest"
+                className="w-full h-auto max-w-[850px] object-contain rounded-xl shadow-xs"
+              />
             </div>
           </div>
         )}
