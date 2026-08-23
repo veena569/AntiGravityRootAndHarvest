@@ -635,19 +635,6 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
           </div>
         )}
 
-        {/* SPECIAL INFOGRAPHIC FEATURE BANNER FOR SESAME OIL */}
-        {product.id === "sesame-oil" && (
-          <div className="max-w-[1280px] mx-auto px-4 sm:px-6 pt-12">
-            <div className="w-full rounded-2xl overflow-hidden border border-forest/15 shadow-md bg-white p-4 sm:p-8 flex justify-center">
-              <img
-                src="/images/how-made-sesame.jpg"
-                alt="How Is It Made? From Sesame Seed to Pure Goodness - Root & Harvest"
-                className="w-full h-auto max-w-[850px] object-contain rounded-xl shadow-xs"
-              />
-            </div>
-          </div>
-        )}
-
         {/* Minimal Details Grid (Benefits, Nutrition, Storage) */}
         <section className="bg-white py-20 px-6 border-y border-forest/10 mt-16">
           <div className="max-w-[1280px] mx-auto grid grid-cols-1 md:grid-cols-3 gap-16 md:gap-8">
