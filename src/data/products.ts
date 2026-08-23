@@ -262,9 +262,13 @@ export const INITIAL_PRODUCTS: Product[] = [
       "5 kg": 1199
     },
     benefits: [
-      "Excellent plant-based source of protein.",
-      "Rich in heart-healthy monounsaturated fats.",
-      "Contains key vitamins and minerals like biotin, copper, and vitamin E."
+      "Good source of plant protein – supports muscle and tissue maintenance.",
+      "Contains healthy unsaturated fats – especially monounsaturated and polyunsaturated fats.",
+      "Rich in fibre – supports healthy digestion and helps with fullness.",
+      "Provides energy – calorie-dense and useful as an energy-rich food.",
+      "Contains important nutrients – including magnesium, phosphorus, niacin, vitamin E and folate.",
+      "Contains antioxidants – including vitamin E and other plant compounds.",
+      "May support heart health when eaten as part of an overall healthy diet."
     ],
     ingredients: "100% Organic Raw Peanuts / Groundnuts.",
     storage: "Store in an airtight container in a cool, dry place.",
