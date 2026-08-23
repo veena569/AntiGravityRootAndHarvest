@@ -307,14 +307,22 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
               />
             </div>
 
-            {/* 2x2 Infographics & Gallery Cards (Matching Image 1) */}
+            {/* 2x2 Infographics & Gallery Cards */}
             <div className="grid grid-cols-2 gap-4">
-              {[
-                { src: "/images/why-made.jpg", label: "WHY CHOOSE US?" },
-                { src: "/images/how-made.jpg", label: "FARM TO DOORSTEP" },
-                { src: "/images/journey.jpg", label: "HOW IT'S MADE" },
-                { src: "/images/family.jpg", label: "OUR HERITAGE" },
-              ].map((item, idx) => (
+              {(isOil
+                ? [
+                    { src: "/images/why-made.jpg", label: "WHY CHOOSE US?" },
+                    { src: "/images/how-made.jpg", label: "FARM TO DOORSTEP" },
+                    { src: "/images/journey.jpg", label: "HOW IT'S MADE" },
+                    { src: "/images/family.jpg", label: "OUR HERITAGE" },
+                  ]
+                : [
+                    { src: product.image, label: "FARM FRESH GRAIN" },
+                    { src: "/images/family.jpg", label: "OUR HERITAGE" },
+                    { src: "/images/journey.jpg", label: "FARM TO DOORSTEP" },
+                    { src: "/images/why-made.jpg", label: "100% TRADITIONAL" },
+                  ]
+              ).map((item, idx) => (
                 <button
                   key={idx}
                   onClick={() => setSelectedImage(item.src)}
@@ -488,60 +496,83 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
               </div>
             </div>
 
-            {/* KEY FEATURES BULLET LIST (Matching Image 1) */}
+            {/* KEY FEATURES BULLET LIST */}
             <div className="space-y-2 pt-2 border-t border-forest/10">
               <ul className="space-y-2 text-xs md:text-sm text-dark/80 font-light leading-relaxed">
-                <li className="flex items-start gap-2.5">
-                  <span className="text-gold font-bold">•</span>
-                  <span>Fresh, cold-pressed oil extracted in small batches</span>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <span className="text-gold font-bold">•</span>
-                  <span>Gently extracted using a traditional slow stone kolhu (wooden Ghani)</span>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <span className="text-gold font-bold">•</span>
-                  <span>Light on the stomach and easy to digest</span>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <span className="text-gold font-bold">•</span>
-                  <span>Rich, authentic natural nut aroma</span>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <span className="text-gold font-bold">•</span>
-                  <span>Ideal for crisp, clean frying and daily homestyle cooking</span>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <span className="text-gold font-bold">•</span>
-                  <span>100% pure, unrefined, zero chemical solvents or artificial additives</span>
-                </li>
+                {(isOil
+                  ? [
+                      "Fresh, cold-pressed oil extracted in small batches",
+                      "Gently extracted using a traditional slow stone kolhu (wooden Ghani)",
+                      "Light on the stomach and easy to digest",
+                      "Rich, authentic natural nut aroma",
+                      "Ideal for crisp, clean frying and daily homestyle cooking",
+                      "100% pure, unrefined, zero chemical solvents or artificial additives",
+                    ]
+                  : [
+                      "100% Traditional, pesticide-free heritage grains & rice",
+                      "Sourced directly from rain-fed family farms in South India",
+                      "Gently processed to retain natural bran layer, fiber & essential B-complex vitamins",
+                      "Fluffy, aromatic texture and authentic natural taste when cooked",
+                      "Slow-digesting complex carbs that provide sustained energy without post-meal lethargy",
+                      "100% pure, unpolished, zero chemical additives or artificial coating",
+                    ]
+                ).map((feature, idx) => (
+                  <li key={idx} className="flex items-start gap-2.5">
+                    <span className="text-gold font-bold">•</span>
+                    <span>{feature}</span>
+                  </li>
+                ))}
               </ul>
             </div>
 
-            {/* EXPANDABLE COLLAPSIBLE ACCORDIONS (Matching Image 1) */}
+            {/* EXPANDABLE COLLAPSIBLE ACCORDIONS */}
             <div className="space-y-3 pt-4 border-t border-forest/10">
-              {[
-                {
-                  id: "why-better",
-                  title: "WHY IT TASTES BETTER",
-                  content: "Our wood pressing mills run under 14 RPM in seasoned Vagai wooden Ghanis. By keeping extraction temperatures strictly under 38°C, zero nutrients or natural aromas are lost, resulting in authentic, rich homestyle flavor."
-                },
-                {
-                  id: "whats-inside",
-                  title: "WHAT'S INSIDE",
-                  content: "100% pure single-origin bold seeds sourced directly from rain-fed family farms. 0% mineral oil, 0% preservatives, 0% added chemical solvents."
-                },
-                {
-                  id: "how-made",
-                  title: "HOW IT'S MADE",
-                  content: "Sun-dried oilseeds are slowly crushed in traditional wooden Ghani, gravity-filtered for 48 hours without chemical bleaching, and packed fresh upon order."
-                },
-                {
-                  id: "results-notice",
-                  title: "RESULTS YOU'LL NOTICE",
-                  content: "Lighter stomach feeling after meals, authentic traditional aroma in your kitchen, reduced oil absorption during frying, and pure unadulterated nourishment for your family."
-                }
-              ].map((acc) => {
+              {(isOil
+                ? [
+                    {
+                      id: "why-better",
+                      title: "WHY IT TASTES BETTER",
+                      content: "Our wood pressing mills run under 14 RPM in seasoned Vagai wooden Ghanis. By keeping extraction temperatures strictly under 38°C, zero nutrients or natural aromas are lost, resulting in authentic, rich homestyle flavor."
+                    },
+                    {
+                      id: "whats-inside",
+                      title: "WHAT'S INSIDE",
+                      content: "100% pure single-origin bold seeds sourced directly from rain-fed family farms. 0% mineral oil, 0% preservatives, 0% added chemical solvents."
+                    },
+                    {
+                      id: "how-made",
+                      title: "HOW IT'S MADE",
+                      content: "Sun-dried oilseeds are slowly crushed in traditional wooden Ghani, gravity-filtered for 48 hours without chemical bleaching, and packed fresh upon order."
+                    },
+                    {
+                      id: "results-notice",
+                      title: "RESULTS YOU'LL NOTICE",
+                      content: "Lighter stomach feeling after meals, authentic traditional aroma in your kitchen, reduced oil absorption during frying, and pure unadulterated nourishment for your family."
+                    }
+                  ]
+                : [
+                    {
+                      id: "why-better",
+                      title: "WHY IT TASTES BETTER",
+                      content: "Our heritage grains and traditional rice varieties are grown naturally and aged to perfection. By avoiding harsh chemical polishing, the grain retains its original aroma, natural sweetness, and wholesome texture."
+                    },
+                    {
+                      id: "whats-inside",
+                      title: "WHAT'S INSIDE",
+                      content: "100% pure single-origin heritage grains sourced directly from local family farmers. High in natural dietary fiber, essential B-complex vitamins, and minerals with zero chemical preservatives or artificial polish."
+                    },
+                    {
+                      id: "how-made",
+                      title: "HOW IT'S GROWN & PROCESSED",
+                      content: "Harvested at peak maturity, naturally sun-dried, and gently dehusked using traditional milling methods to keep the nutrition-rich bran layer intact."
+                    },
+                    {
+                      id: "results-notice",
+                      title: "RESULTS YOU'LL NOTICE",
+                      content: "Sustained energy without post-meal heaviness, improved digestion, authentic traditional aroma while cooking, and pure wholesome nourishment for your family."
+                    }
+                  ]
+              ).map((acc) => {
                 const isOpen = openAccordion === acc.id;
                 return (
                   <div key={acc.id} className="border-b border-forest/10 pb-3">
