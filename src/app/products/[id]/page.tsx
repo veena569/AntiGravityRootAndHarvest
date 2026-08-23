@@ -310,12 +310,20 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
             {/* 2x2 Infographics for Oils OR Gallery Thumbnails for Grains */}
             {isOil ? (
               <div className="grid grid-cols-2 gap-4">
-                {[
-                  { src: "/images/why-made.jpg", label: "WHY CHOOSE US?" },
-                  { src: "/images/how-made.jpg", label: "FARM TO DOORSTEP" },
-                  { src: "/images/journey.jpg", label: "HOW IT'S MADE" },
-                  { src: "/images/family.jpg", label: "OUR HERITAGE" },
-                ].map((item, idx) => (
+                {(product.id === "sesame-oil"
+                  ? [
+                      { src: "/images/why-made.jpg", label: "WHY CHOOSE US?" },
+                      { src: "/images/how-made-sesame.jpg", label: "HOW IT'S MADE" },
+                      { src: "/images/journey.jpg", label: "FARM TO DOORSTEP" },
+                      { src: "/images/family.jpg", label: "OUR HERITAGE" },
+                    ]
+                  : [
+                      { src: "/images/why-made.jpg", label: "WHY CHOOSE US?" },
+                      { src: "/images/how-made.jpg", label: "FARM TO DOORSTEP" },
+                      { src: "/images/journey.jpg", label: "HOW IT'S MADE" },
+                      { src: "/images/family.jpg", label: "OUR HERITAGE" },
+                    ]
+                ).map((item, idx) => (
                   <button
                     key={idx}
                     onClick={() => setSelectedImage(item.src)}
@@ -621,6 +629,19 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
               <img
                 src="/images/why-jaisriram-rice.jpg"
                 alt="Why Our Jai Sri Ram Rice - Root & Harvest"
+                className="w-full h-auto max-w-[850px] object-contain rounded-xl shadow-xs"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* SPECIAL INFOGRAPHIC FEATURE BANNER FOR SESAME OIL */}
+        {product.id === "sesame-oil" && (
+          <div className="max-w-[1280px] mx-auto px-4 sm:px-6 pt-12">
+            <div className="w-full rounded-2xl overflow-hidden border border-forest/15 shadow-md bg-white p-4 sm:p-8 flex justify-center">
+              <img
+                src="/images/how-made-sesame.jpg"
+                alt="How Is It Made? From Sesame Seed to Pure Goodness - Root & Harvest"
                 className="w-full h-auto max-w-[850px] object-contain rounded-xl shadow-xs"
               />
             </div>
