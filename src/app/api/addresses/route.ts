@@ -1,8 +1,10 @@
 export const dynamic = 'force-dynamic';
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { headers } from "next/headers";
+import { headers, cookies } from "next/headers";
 import { z } from "zod";
+import { authConfig } from "@/config/auth";
+import { JwtService } from "@/services/jwt.service";
 
 const addressSchema = z.object({
   name: z.string().min(2),
@@ -16,10 +18,33 @@ const addressSchema = z.object({
   isDefault: z.boolean().optional().default(false),
 });
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    const userId = headers().get("x-user-id");
-    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    let userId = headers().get("x-user-id");
+
+    if (!userId) {
+      const token = cookies().get(authConfig.cookies.accessToken)?.value;
+      if (token) {
+        const payload = await JwtService.verifyToken(token);
+        if (payload && payload.sub) userId = payload.sub;
+      }
+    }
+
+    const { searchParams } = new URL(req.url);
+    const queryPhone = searchParams.get("phone");
+
+    if (!userId && queryPhone) {
+      const raw = queryPhone.replace(/\D/g, "");
+      const formattedPhone = raw.length === 10 ? `+91${raw}` : `+${raw}`;
+      const user = await prisma.user.findFirst({
+        where: { phone: formattedPhone }
+      });
+      if (user) userId = user.id;
+    }
+
+    if (!userId) {
+      return NextResponse.json({ addresses: [] });
+    }
 
     const addresses = await prisma.address.findMany({
       where: { userId },
@@ -32,17 +57,44 @@ export async function GET() {
     return NextResponse.json({ addresses });
   } catch (error) {
     console.error("[ADDRESSES_GET]", error);
-    return NextResponse.json({ error: "Failed to fetch addresses" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to fetch addresses", addresses: [] }, { status: 500 });
   }
 }
 
 export async function POST(req: Request) {
   try {
-    const userId = headers().get("x-user-id");
-    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    let userId = headers().get("x-user-id");
+
+    if (!userId) {
+      const token = cookies().get(authConfig.cookies.accessToken)?.value;
+      if (token) {
+        const payload = await JwtService.verifyToken(token);
+        if (payload && payload.sub) userId = payload.sub;
+      }
+    }
 
     const body = await req.json();
     const data = addressSchema.parse(body);
+
+    if (!userId && data.phone) {
+      const raw = data.phone.replace(/\D/g, "");
+      const formattedPhone = raw.length === 10 ? `+91${raw}` : `+${raw}`;
+      let user = await prisma.user.findFirst({
+        where: { phone: formattedPhone }
+      });
+      if (!user) {
+        user = await prisma.user.create({
+          data: {
+            name: data.name,
+            phone: formattedPhone,
+            role: "CUSTOMER"
+          }
+        });
+      }
+      userId = user.id;
+    }
+
+    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     // If this is set to default, unset other defaults
     if (data.isDefault) {

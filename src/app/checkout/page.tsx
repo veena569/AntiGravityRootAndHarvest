@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Check, Lock, ChevronRight, MapPin, CreditCard, ShoppingBag, ShieldCheck, RefreshCw } from "lucide-react";
+import { ArrowLeft, Check, Lock, ChevronRight, MapPin, CreditCard, ShoppingBag, ShieldCheck, RefreshCw, Plus } from "lucide-react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -41,6 +41,12 @@ export default function CheckoutPage() {
   const { user, login } = useAuth();
   const [currentStep, setCurrentStep] = useState<CheckoutStep>("shipping");
   const [shippingData, setShippingData] = useState<ShippingFormValues | null>(null);
+
+  // Saved addresses state
+  const [savedAddresses, setSavedAddresses] = useState<any[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+  const [showNewAddressForm, setShowNewAddressForm] = useState(false);
+  const [addressLoading, setAddressLoading] = useState(false);
 
   // OTP state
   const [otpDigits, setOtpDigits] = useState(["", "", "", "", "", ""]);
@@ -186,6 +192,69 @@ export default function CheckoutPage() {
     }
   };
 
+  // Fetch saved addresses from server
+  const fetchUserSavedAddresses = async (phoneOrUserId?: string) => {
+    setAddressLoading(true);
+    try {
+      const url = phoneOrUserId ? `/api/addresses?phone=${encodeURIComponent(phoneOrUserId)}` : `/api/addresses`;
+      const res = await fetch(url);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.addresses && Array.isArray(data.addresses) && data.addresses.length > 0) {
+          setSavedAddresses(data.addresses);
+          const defaultAddr = data.addresses.find((a: any) => a.isDefault) || data.addresses[0];
+          setSelectedAddressId(defaultAddr.id);
+          applyAddressToShipping(defaultAddr);
+          setShowNewAddressForm(false);
+          return data.addresses;
+        } else {
+          setSavedAddresses([]);
+          setShowNewAddressForm(true);
+          return [];
+        }
+      }
+    } catch (err) {
+      console.error("Failed to load saved addresses:", err);
+      setShowNewAddressForm(true);
+    } finally {
+      setAddressLoading(false);
+    }
+    return [];
+  };
+
+  // Apply a saved address to shippingData
+  const applyAddressToShipping = (addr: any) => {
+    const formattedData: ShippingFormValues = {
+      name: addr.name,
+      phone: addr.phone.replace(/\D/g, "").slice(-10),
+      email: addr.email || "",
+      addressLine1: addr.addressLine1,
+      addressLine2: addr.addressLine2 || "",
+      city: addr.city,
+      state: addr.state,
+      pincode: addr.pincode,
+      saveAddress: false,
+      addressType: addr.type || "Home",
+    };
+    setShippingData(formattedData);
+    setValue("name", formattedData.name);
+    setValue("phone", formattedData.phone);
+    setValue("addressLine1", formattedData.addressLine1);
+    setValue("addressLine2", formattedData.addressLine2 || "");
+    setValue("state", formattedData.state);
+    setValue("city", formattedData.city);
+    setValue("pincode", formattedData.pincode);
+  };
+
+  // Initial load of addresses if user is logged in
+  useEffect(() => {
+    if (user?.phone) {
+      fetchUserSavedAddresses(user.phone);
+    } else if (guestPhone) {
+      fetchUserSavedAddresses(guestPhone);
+    }
+  }, [user, guestPhone]);
+
   // Pre-fill name & phone once guest data loads
   useEffect(() => {
     if (guestName) setValue("name", guestName);
@@ -203,14 +272,33 @@ export default function CheckoutPage() {
     return null;
   }
 
-  // ── STEP 1: Shipping form submit → go to OTP verify ──
+  // ── STEP 1: Shipping form submit → go to OTP verify or Review ──
   const onShippingSubmit = async (data: ShippingFormValues) => {
     setShippingData(data);
     setOtpDigits(["", "", "", "", "", ""]);
     setOtpError("");
 
     if (user) {
-      // User is already logged in, skip OTP verification step
+      // User is already logged in -> save address if requested and proceed to review
+      if (data.saveAddress) {
+        try {
+          await fetch("/api/addresses", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              name: data.name,
+              phone: data.phone,
+              addressLine1: data.addressLine1,
+              addressLine2: data.addressLine2,
+              city: data.city,
+              state: data.state,
+              pincode: data.pincode,
+              type: data.addressType,
+              isDefault: savedAddresses.length === 0,
+            }),
+          });
+        } catch (e) {}
+      }
       setCurrentStep("review");
     } else {
       // Prompt OTP verification using Firebase Phone Auth
@@ -345,8 +433,36 @@ export default function CheckoutPage() {
         }));
       } catch {}
 
-      // Verified successfully with Firebase OTP -> proceed to review step
-      setCurrentStep("review");
+      // Check if user has saved addresses in DB
+      const existingAddresses = await fetchUserSavedAddresses(formattedPhone);
+
+      // If user had existing saved addresses and did not type a complete new address, let them pick their saved address!
+      if (existingAddresses && existingAddresses.length > 1) {
+        setCurrentStep("shipping");
+        setShowNewAddressForm(false);
+      } else {
+        // Save current address to database if requested
+        if (shippingData?.saveAddress) {
+          try {
+            await fetch("/api/addresses", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                name: shippingData.name,
+                phone: shippingData.phone,
+                addressLine1: shippingData.addressLine1,
+                addressLine2: shippingData.addressLine2,
+                city: shippingData.city,
+                state: shippingData.state,
+                pincode: shippingData.pincode,
+                type: shippingData.addressType,
+                isDefault: true,
+              }),
+            });
+          } catch (e) {}
+        }
+        setCurrentStep("review");
+      }
     } catch (err: any) {
       console.error("[FIREBASE_VERIFY_OTP_CHECKOUT_ERROR]", err);
       let userMsg = "Incorrect or expired verification code. Please check and try again.";
@@ -532,256 +648,369 @@ export default function CheckoutPage() {
           <div className="bg-white p-8 md:p-12 shadow-sm border border-forest/5 relative overflow-hidden">
             <AnimatePresence mode="wait">
 
-              {/* ── STEP 1: SHIPPING ── */}
+              {/* ── STEP 1: SHIPPING (SAVED ADDRESSES OR NEW ADDRESS) ── */}
               {currentStep === "shipping" && (
                 <motion.div key="shipping" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
-                  <h2 className="text-2xl font-serif text-forest mb-8">Shipping Details</h2>
-                  <form onSubmit={handleSubmit(onShippingSubmit)} className="space-y-6">
-
-                    <div className="space-y-2">
-                      <label className="text-[10px] uppercase tracking-widest text-dark/50 font-semibold">Full Name</label>
-                      <Controller name="name" control={control} render={({ field }) => (
-                        <input {...field} className="w-full p-4 text-sm border border-forest/20 focus:border-forest outline-none bg-brand-bg/50 transition-colors" />
-                      )} />
-                      {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-[10px] uppercase tracking-widest text-dark/50 font-semibold">Phone Number <span className="text-gold normal-case text-[9px]">(OTP will be sent here)</span></label>
-                      <Controller name="phone" control={control} render={({ field }) => (
-                        <div className="flex">
-                          <span className="p-4 border border-r-0 border-forest/20 bg-brand-bg/80 text-sm text-dark/50">+91</span>
-                          <input {...field} type="tel" maxLength={10} className="w-full p-4 text-sm border border-forest/20 focus:border-forest outline-none bg-brand-bg/50 transition-colors" />
+                  
+                  {/* CASE A: USER HAS SAVED ADDRESSES & IS NOT FORCING NEW FORM */}
+                  {savedAddresses.length > 0 && !showNewAddressForm ? (
+                    <div className="space-y-6">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-forest/10">
+                        <div>
+                          <h2 className="text-2xl font-serif text-forest">Select Delivery Address</h2>
+                          <p className="text-xs text-dark/60 mt-0.5">
+                            {user?.phone ? `Logged in with +91 ${user.phone.replace(/\D/g, "").slice(-10)}` : "Choose a saved address below"}
+                          </p>
                         </div>
-                      )} />
-                      {errors.phone && <p className="text-xs text-red-500">{errors.phone.message}</p>}
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-[10px] uppercase tracking-widest text-dark/50 font-semibold">Email Address (Optional)</label>
-                      <Controller name="email" control={control} render={({ field }) => (
-                        <input {...field} type="email" className="w-full p-4 text-sm border border-forest/20 focus:border-forest outline-none bg-brand-bg/50 transition-colors" />
-                      )} />
-                      {errors.email && <p className="text-xs text-red-500">{errors.email.message}</p>}
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-[10px] uppercase tracking-widest text-dark/50 font-semibold">Address Line 1</label>
-                      <Controller name="addressLine1" control={control} render={({ field }) => (
-                        <input {...field} className="w-full p-4 text-sm border border-forest/20 focus:border-forest outline-none bg-brand-bg/50 transition-colors" />
-                      )} />
-                      {errors.addressLine1 && <p className="text-xs text-red-500">{errors.addressLine1.message}</p>}
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-[10px] uppercase tracking-widest text-dark/50 font-semibold">Address Line 2 (Optional)</label>
-                      <Controller name="addressLine2" control={control} render={({ field }) => (
-                        <input {...field} className="w-full p-4 text-sm border border-forest/20 focus:border-forest outline-none bg-brand-bg/50 transition-colors" />
-                      )} />
-                    </div>
-
-                    {/* 1. STATE SELECTION (FIRST) */}
-                    <div className="space-y-2">
-                      <label className="text-[10px] uppercase tracking-widest text-dark/60 font-bold block">
-                        State <span className="text-forest font-normal text-[9px]">(Select Indian State)</span>
-                      </label>
-                      <Controller
-                        name="state"
-                        control={control}
-                        render={({ field }) => (
-                          <select
-                            {...field}
-                            value={field.value || ""}
-                            onChange={(e) => {
-                              const chosenState = e.target.value;
-                              field.onChange(chosenState);
-                              setValue("city", "", { shouldValidate: true });
-                              setIsCustomCity(false);
-                              setCustomCityInput("");
-                            }}
-                            className="w-full p-4 text-sm font-medium border border-forest/30 focus:border-forest outline-none bg-white transition-colors cursor-pointer"
-                          >
-                            <option value="">-- Select Indian State --</option>
-                            {ALL_INDIAN_STATES.map((st) => (
-                              <option key={st} value={st}>
-                                {st}
-                              </option>
-                            ))}
-                          </select>
-                        )}
-                      />
-                      {errors.state && <p className="text-xs text-red-500">{errors.state.message}</p>}
-                    </div>
-
-                    {/* 2. CITY SELECTION (SECOND - POPULATED BASED ON SELECTED STATE) */}
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <label className="text-[10px] uppercase tracking-widest text-dark/60 font-bold block">
-                          City / District {selectedState ? <span className="text-forest font-semibold text-[9px]">({selectedState})</span> : ""}
-                        </label>
-                        {!selectedState && (
-                          <span className="text-[10px] text-amber-700 font-medium">← Please select State above first</span>
-                        )}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowNewAddressForm(true);
+                            setValue("addressLine1", "");
+                            setValue("addressLine2", "");
+                            setValue("city", "");
+                            setValue("state", "");
+                            setValue("pincode", "");
+                            setIsCustomCity(false);
+                            setCustomCityInput("");
+                          }}
+                          className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-forest/5 hover:bg-forest/10 text-forest text-xs font-semibold uppercase tracking-wider border border-forest/20 rounded-sm transition-all"
+                        >
+                          <Plus className="w-3.5 h-3.5" /> Add New Address
+                        </button>
                       </div>
-                      <Controller
-                        name="city"
-                        control={control}
-                        render={({ field }) => {
-                          const stateToUse = selectedState || getValues("state") || "";
-                          const availableCities = getCitiesForState(stateToUse);
-                          const currentCity = field.value || "";
-                          const isInList = availableCities.includes(currentCity);
 
+                      {/* Saved Address Cards */}
+                      <div className="space-y-3.5">
+                        {savedAddresses.map((addr) => {
+                          const isSelected = selectedAddressId === addr.id;
                           return (
-                            <div className="space-y-3">
-                              <select
-                                value={isCustomCity ? "Other" : (isInList ? currentCity : (currentCity ? "Other" : ""))}
-                                onChange={(e) => {
-                                  const val = e.target.value;
-                                  if (val === "Other") {
-                                    setIsCustomCity(true);
-                                    field.onChange(customCityInput || "");
-                                  } else {
-                                    setIsCustomCity(false);
-                                    setCustomCityInput("");
-                                    field.onChange(val);
-                                  }
-                                }}
-                                disabled={!stateToUse}
-                                className="w-full p-4 text-sm font-medium border border-forest/30 focus:border-forest outline-none bg-white transition-colors cursor-pointer disabled:bg-gray-100 disabled:opacity-60 disabled:cursor-not-allowed"
-                              >
-                                <option value="">
-                                  {stateToUse ? `-- Select City in ${stateToUse} --` : "-- Select State Above First --"}
-                                </option>
-                                {availableCities.map((ct) => (
-                                  <option key={ct} value={ct}>
-                                    {ct}
-                                  </option>
-                                ))}
-                                {stateToUse && (
-                                  <option value="Other">✨ Other (Enter City/Town Manually)</option>
-                                )}
-                              </select>
+                            <div
+                              key={addr.id}
+                              onClick={() => {
+                                setSelectedAddressId(addr.id);
+                                applyAddressToShipping(addr);
+                              }}
+                              className={`p-5 border-2 transition-all cursor-pointer rounded-sm relative ${
+                                isSelected ? "border-forest bg-forest/[0.03] shadow-sm" : "border-forest/15 hover:border-forest/30 bg-white"
+                              }`}
+                            >
+                              <div className="flex items-start justify-between">
+                                <div className="flex items-center gap-2.5 mb-1.5">
+                                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${isSelected ? "border-forest" : "border-dark/30"}`}>
+                                    {isSelected && <div className="w-2 h-2 rounded-full bg-forest" />}
+                                  </div>
+                                  <span className="font-semibold text-forest text-sm md:text-base">{addr.name}</span>
+                                  <span className="text-[9px] uppercase font-bold px-2 py-0.5 bg-forest/10 text-forest rounded">
+                                    {addr.type || "Home"}
+                                  </span>
+                                  {addr.isDefault && (
+                                    <span className="text-[9px] uppercase font-bold px-2 py-0.5 bg-gold/15 text-gold rounded">
+                                      Default
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
 
-                              {isCustomCity && (
-                                <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} className="space-y-1.5 pt-1">
-                                  <label className="text-[10px] uppercase tracking-wider text-gold font-bold block">
-                                    Enter Your City / Town / Village Name:
-                                  </label>
-                                  <input
-                                    type="text"
-                                    placeholder="e.g. Gachibowli, Kondapur, or village name"
-                                    value={customCityInput}
-                                    onChange={(e) => {
-                                      const manualVal = e.target.value;
-                                      setCustomCityInput(manualVal);
-                                      field.onChange(manualVal);
+                              <div className="pl-6 space-y-0.5 text-xs md:text-sm text-dark/75 font-light">
+                                <p>{addr.addressLine1}{addr.addressLine2 ? `, ${addr.addressLine2}` : ""}</p>
+                                <p>{addr.city}, {addr.state} - <strong>{addr.pincode}</strong></p>
+                                <p className="text-dark/50 text-xs pt-1">Contact: +91 {addr.phone}</p>
+                              </div>
+
+                              {isSelected && (
+                                <div className="mt-4 pl-6 pt-3 border-t border-forest/10 flex items-center justify-between">
+                                  <span className="text-xs text-forest/70 font-medium">Selected for delivery</span>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      applyAddressToShipping(addr);
+                                      setCurrentStep("review");
                                     }}
-                                    className="w-full p-4 text-sm border-2 border-gold focus:border-forest outline-none bg-white transition-colors placeholder:text-dark/40 shadow-sm"
-                                  />
-                                </motion.div>
+                                    className="px-6 py-2.5 bg-forest text-white text-xs uppercase tracking-widest font-semibold hover:bg-forest-light transition-colors flex items-center gap-2 rounded-sm shadow-sm"
+                                  >
+                                    Deliver Here <ChevronRight className="w-4 h-4" />
+                                  </button>
+                                </div>
                               )}
                             </div>
                           );
-                        }}
-                      />
-                      {errors.city && <p className="text-xs text-red-500">{errors.city.message}</p>}
+                        })}
+                      </div>
                     </div>
-
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <label className="text-[10px] uppercase tracking-widest text-dark/50 font-semibold">Pincode (6-Digits)</label>
-                        {pincodeLoading && (
-                          <span className="text-[10px] text-forest/70 flex items-center gap-1">
-                            <RefreshCw className="w-3 h-3 animate-spin" /> Detecting location...
-                          </span>
+                  ) : (
+                    /* CASE B: NEW ADDRESS FORM */
+                    <div className="space-y-6">
+                      <div className="flex items-center justify-between pb-4 border-b border-forest/10">
+                        <div>
+                          <h2 className="text-2xl font-serif text-forest">
+                            {savedAddresses.length > 0 ? "Add New Address" : "Shipping Details"}
+                          </h2>
+                          <p className="text-xs text-dark/50 mt-0.5">Please provide complete address details for timely delivery</p>
+                        </div>
+                        {savedAddresses.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => setShowNewAddressForm(false)}
+                            className="text-xs font-semibold text-gold hover:underline"
+                          >
+                            ← Back to Saved Addresses
+                          </button>
                         )}
                       </div>
-                      <Controller name="pincode" control={control} render={({ field }) => (
-                        <input
-                          {...field}
-                          maxLength={6}
-                          placeholder="e.g. 500001, 600001, 560001"
-                          onChange={(e) => handlePincodeInput(e.target.value, field.onChange)}
-                          className="w-full p-4 text-sm border border-forest/20 focus:border-forest outline-none bg-brand-bg/50 transition-colors"
-                        />
-                      )} />
-                      {errors.pincode && <p className="text-xs text-red-500">{errors.pincode.message}</p>}
 
-                      {detectedLocation && (
-                        <div className="flex items-center gap-2 text-xs text-forest bg-forest/5 border border-forest/15 px-3.5 py-2.5 rounded-md mt-1.5 transition-all">
-                          <MapPin className="w-4 h-4 text-gold shrink-0" />
-                          <div>
-                            <span className="font-semibold text-dark">
-                              {detectedLocation.city ? `${detectedLocation.city}, ` : ""}{detectedLocation.state}
-                            </span>
-                            <span className="text-dark/60 ml-2">
-                              {detectedLocation.isHyderabad ? (
-                                <strong className="text-emerald-700 font-bold">• Free Local Delivery</strong>
-                              ) : (
-                                <span>
-                                  • {subtotal >= 999 ? (
-                                    <strong className="text-emerald-700 font-bold">Free Shipping (Order &gt; ₹999)</strong>
+                      <form onSubmit={handleSubmit(onShippingSubmit)} className="space-y-5">
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] uppercase tracking-widest text-dark/60 font-semibold">Full Name</label>
+                          <Controller name="name" control={control} render={({ field }) => (
+                            <input {...field} placeholder="Recipient's full name" className="w-full p-3.5 text-sm border border-forest/20 focus:border-forest outline-none bg-brand-bg/40 transition-colors" />
+                          )} />
+                          {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] uppercase tracking-widest text-dark/60 font-semibold">
+                            Phone Number <span className="text-gold normal-case text-[9px]">(For delivery updates &amp; OTP)</span>
+                          </label>
+                          <Controller name="phone" control={control} render={({ field }) => (
+                            <div className="flex">
+                              <span className="p-3.5 border border-r-0 border-forest/20 bg-brand-bg/80 text-sm text-dark/50 font-medium">+91</span>
+                              <input {...field} type="tel" maxLength={10} placeholder="10-digit mobile number" className="w-full p-3.5 text-sm border border-forest/20 focus:border-forest outline-none bg-brand-bg/40 transition-colors" />
+                            </div>
+                          )} />
+                          {errors.phone && <p className="text-xs text-red-500">{errors.phone.message}</p>}
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] uppercase tracking-widest text-dark/60 font-semibold">Email Address (Optional)</label>
+                          <Controller name="email" control={control} render={({ field }) => (
+                            <input {...field} type="email" placeholder="For order invoices" className="w-full p-3.5 text-sm border border-forest/20 focus:border-forest outline-none bg-brand-bg/40 transition-colors" />
+                          )} />
+                          {errors.email && <p className="text-xs text-red-500">{errors.email.message}</p>}
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] uppercase tracking-widest text-dark/60 font-semibold">House No., Flat, Building, Street (Address Line 1)</label>
+                          <Controller name="addressLine1" control={control} render={({ field }) => (
+                            <input {...field} placeholder="e.g. Flat 402, Green Meadows, Main Road" className="w-full p-3.5 text-sm border border-forest/20 focus:border-forest outline-none bg-brand-bg/40 transition-colors" />
+                          )} />
+                          {errors.addressLine1 && <p className="text-xs text-red-500">{errors.addressLine1.message}</p>}
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] uppercase tracking-widest text-dark/60 font-semibold">Landmark / Locality (Address Line 2 - Optional)</label>
+                          <Controller name="addressLine2" control={control} render={({ field }) => (
+                            <input {...field} placeholder="e.g. Near Community Hall" className="w-full p-3.5 text-sm border border-forest/20 focus:border-forest outline-none bg-brand-bg/40 transition-colors" />
+                          )} />
+                        </div>
+
+                        {/* 1. STATE SELECTION (FIRST) */}
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] uppercase tracking-widest text-dark/60 font-bold block">
+                            State <span className="text-forest font-normal text-[9px]">(Select Indian State)</span>
+                          </label>
+                          <Controller
+                            name="state"
+                            control={control}
+                            render={({ field }) => (
+                              <select
+                                {...field}
+                                value={field.value || ""}
+                                onChange={(e) => {
+                                  const chosenState = e.target.value;
+                                  field.onChange(chosenState);
+                                  setValue("city", "", { shouldValidate: true });
+                                  setIsCustomCity(false);
+                                  setCustomCityInput("");
+                                }}
+                                className="w-full p-3.5 text-sm font-medium border border-forest/30 focus:border-forest outline-none bg-white transition-colors cursor-pointer"
+                              >
+                                <option value="">-- Select Indian State --</option>
+                                {ALL_INDIAN_STATES.map((st) => (
+                                  <option key={st} value={st}>
+                                    {st}
+                                  </option>
+                                ))}
+                              </select>
+                            )}
+                          />
+                          {errors.state && <p className="text-xs text-red-500">{errors.state.message}</p>}
+                        </div>
+
+                        {/* 2. CITY SELECTION (SECOND - POPULATED BASED ON SELECTED STATE) */}
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <label className="text-[10px] uppercase tracking-widest text-dark/60 font-bold block">
+                              City / District {selectedState ? <span className="text-forest font-semibold text-[9px]">({selectedState})</span> : ""}
+                            </label>
+                            {!selectedState && (
+                              <span className="text-[10px] text-amber-700 font-medium">← Please select State above first</span>
+                            )}
+                          </div>
+                          <Controller
+                            name="city"
+                            control={control}
+                            render={({ field }) => {
+                              const stateToUse = selectedState || getValues("state") || "";
+                              const availableCities = getCitiesForState(stateToUse);
+                              const currentCity = field.value || "";
+                              const isInList = availableCities.includes(currentCity);
+
+                              return (
+                                <div className="space-y-3">
+                                  <select
+                                    value={isCustomCity ? "Other" : (isInList ? currentCity : (currentCity ? "Other" : ""))}
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      if (val === "Other") {
+                                        setIsCustomCity(true);
+                                        field.onChange(customCityInput || "");
+                                      } else {
+                                        setIsCustomCity(false);
+                                        setCustomCityInput("");
+                                        field.onChange(val);
+                                      }
+                                    }}
+                                    disabled={!stateToUse}
+                                    className="w-full p-3.5 text-sm font-medium border border-forest/30 focus:border-forest outline-none bg-white transition-colors cursor-pointer disabled:bg-gray-100 disabled:opacity-60 disabled:cursor-not-allowed"
+                                  >
+                                    <option value="">
+                                      {stateToUse ? `-- Select City in ${stateToUse} --` : "-- Select State Above First --"}
+                                    </option>
+                                    {availableCities.map((ct) => (
+                                      <option key={ct} value={ct}>
+                                        {ct}
+                                      </option>
+                                    ))}
+                                    {stateToUse && (
+                                      <option value="Other">✨ Other (Enter City/Town Manually)</option>
+                                    )}
+                                  </select>
+
+                                  {isCustomCity && (
+                                    <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} className="space-y-1.5 pt-1">
+                                      <label className="text-[10px] uppercase tracking-wider text-gold font-bold block">
+                                        Enter Your City / Town / Village Name:
+                                      </label>
+                                      <input
+                                        type="text"
+                                        placeholder="e.g. Gachibowli, Kondapur, or village name"
+                                        value={customCityInput}
+                                        onChange={(e) => {
+                                          const manualVal = e.target.value;
+                                          setCustomCityInput(manualVal);
+                                          field.onChange(manualVal);
+                                        }}
+                                        className="w-full p-3.5 text-sm border-2 border-gold focus:border-forest outline-none bg-white transition-colors placeholder:text-dark/40 shadow-sm"
+                                      />
+                                    </motion.div>
+                                  )}
+                                </div>
+                              );
+                            }}
+                          />
+                          {errors.city && <p className="text-xs text-red-500">{errors.city.message}</p>}
+                        </div>
+
+                        {/* 3. PINCODE */}
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <label className="text-[10px] uppercase tracking-widest text-dark/60 font-semibold">Pincode (6-Digits)</label>
+                            {pincodeLoading && (
+                              <span className="text-[10px] text-forest/70 flex items-center gap-1">
+                                <RefreshCw className="w-3 h-3 animate-spin" /> Detecting location...
+                              </span>
+                            )}
+                          </div>
+                          <Controller name="pincode" control={control} render={({ field }) => (
+                            <input
+                              {...field}
+                              maxLength={6}
+                              placeholder="e.g. 500001, 600001, 560001"
+                              onChange={(e) => handlePincodeInput(e.target.value, field.onChange)}
+                              className="w-full p-3.5 text-sm border border-forest/20 focus:border-forest outline-none bg-brand-bg/40 transition-colors"
+                            />
+                          )} />
+                          {errors.pincode && <p className="text-xs text-red-500">{errors.pincode.message}</p>}
+
+                          {detectedLocation && (
+                            <div className="flex items-center gap-2 text-xs text-forest bg-forest/5 border border-forest/15 px-3.5 py-2.5 rounded-md mt-1.5 transition-all">
+                              <MapPin className="w-4 h-4 text-gold shrink-0" />
+                              <div>
+                                <span className="font-semibold text-dark">
+                                  {detectedLocation.city ? `${detectedLocation.city}, ` : ""}{detectedLocation.state}
+                                </span>
+                                <span className="text-dark/60 ml-2">
+                                  {detectedLocation.isHyderabad ? (
+                                    <strong className="text-emerald-700 font-bold">• Free Local Delivery</strong>
                                   ) : (
-                                    <strong className="text-forest font-semibold">Standard Shipping: ₹100</strong>
+                                    <span>
+                                      • {subtotal >= 999 ? (
+                                        <strong className="text-emerald-700 font-bold">Free Shipping (Order &gt; ₹999)</strong>
+                                      ) : (
+                                        <strong className="text-forest font-semibold">Standard Shipping: ₹100</strong>
+                                      )}
+                                    </span>
                                   )}
                                 </span>
-                              )}
-                            </span>
-                          </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
 
-                    {/* Address Tag Selector */}
-                    <div className="space-y-2">
-                      <label className="text-[10px] uppercase tracking-widest text-dark/50 font-semibold block mb-2">Address Tag (Save as)</label>
-                      <Controller name="addressType" control={control} render={({ field }) => (
-                        <div className="flex gap-3">
-                          {["Home", "Office", "Other"].map((tag) => (
-                            <button
-                              key={tag}
-                              type="button"
-                              onClick={() => field.onChange(tag)}
-                              className={`px-4 py-2 text-xs font-semibold uppercase tracking-wider border rounded-sm transition-all ${
-                                field.value === tag
-                                  ? "bg-forest text-white border-forest shadow-sm"
-                                  : "border-forest/20 text-forest hover:bg-forest/5 bg-transparent"
-                              }`}
-                            >
-                              {tag}
-                            </button>
-                          ))}
+                        {/* Address Tag Selector */}
+                        <div className="space-y-1.5 pt-2">
+                          <label className="text-[10px] uppercase tracking-widest text-dark/60 font-semibold block mb-1">Save Address As</label>
+                          <Controller name="addressType" control={control} render={({ field }) => (
+                            <div className="flex gap-3">
+                              {["Home", "Office", "Other"].map((tag) => (
+                                <button
+                                  key={tag}
+                                  type="button"
+                                  onClick={() => field.onChange(tag)}
+                                  className={`px-4 py-2 text-xs font-semibold uppercase tracking-wider border rounded-sm transition-all ${
+                                    field.value === tag
+                                      ? "bg-forest text-white border-forest shadow-sm"
+                                      : "border-forest/20 text-forest hover:bg-forest/5 bg-transparent"
+                                  }`}
+                                >
+                                  {tag}
+                                </button>
+                              ))}
+                            </div>
+                          )} />
                         </div>
-                      )} />
-                    </div>
 
-                    {/* Save Address Checkbox */}
-                    <div className="flex items-center gap-2 pt-2">
-                      <Controller name="saveAddress" control={control} render={({ field }) => (
-                        <input
-                          type="checkbox"
-                          id="saveAddress"
-                          checked={field.value}
-                          onChange={(e) => field.onChange(e.target.checked)}
-                          className="accent-forest w-4 h-4 cursor-pointer"
-                        />
-                      )} />
-                      <label htmlFor="saveAddress" className="text-xs text-dark/70 cursor-pointer select-none">
-                        Save this address to my profile
-                      </label>
-                    </div>
+                        {/* Save Address Checkbox */}
+                        <div className="flex items-center gap-2 pt-2">
+                          <Controller name="saveAddress" control={control} render={({ field }) => (
+                            <input
+                              type="checkbox"
+                              id="saveAddress"
+                              checked={field.value}
+                              onChange={(e) => field.onChange(e.target.checked)}
+                              className="accent-forest w-4 h-4 cursor-pointer"
+                            />
+                          )} />
+                          <label htmlFor="saveAddress" className="text-xs text-dark/70 cursor-pointer select-none">
+                            Save this address to my profile for future orders
+                          </label>
+                        </div>
 
-                    <div className="pt-8">
-                      <button type="submit" disabled={otpSending} className="w-full px-8 py-5 bg-forest text-white text-xs uppercase tracking-widest font-semibold hover:bg-forest-light transition-colors flex items-center justify-center gap-2 group disabled:opacity-60">
-                        {otpSending ? (
-                          <><RefreshCw className="w-4 h-4 animate-spin" /> Sending OTP...</>
-                        ) : (
-                          <>Continue &amp; Verify Phone <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" /></>
-                        )}
-                      </button>
+                        <div className="pt-6">
+                          <button type="submit" disabled={otpSending} className="w-full px-8 py-4.5 bg-forest text-white text-xs uppercase tracking-widest font-semibold hover:bg-forest-light transition-colors flex items-center justify-center gap-2 group disabled:opacity-60 rounded-sm shadow-sm">
+                            {otpSending ? (
+                              <><RefreshCw className="w-4 h-4 animate-spin" /> Sending OTP...</>
+                            ) : (
+                              <>{user ? "Proceed to Review Order" : "Continue & Verify Phone"} <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" /></>
+                            )}
+                          </button>
+                        </div>
+                      </form>
                     </div>
-                  </form>
+                  )}
+
                 </motion.div>
               )}
 
@@ -889,13 +1118,13 @@ export default function CheckoutPage() {
                       ))}
                     </div>
 
-                    <div className="bg-brand-bg/50 p-6 space-y-2 border border-forest/5 text-sm">
+                    <div className="bg-brand-bg/50 p-6 space-y-2 border border-forest/5 text-sm rounded-sm">
                       <div className="flex justify-between mb-2">
                         <span className="text-[10px] uppercase tracking-widest text-dark/50 font-semibold">Delivering To</span>
-                        <button onClick={() => setCurrentStep("shipping")} className="text-[10px] uppercase tracking-widest text-gold font-semibold underline">Edit</button>
+                        <button onClick={() => setCurrentStep("shipping")} className="text-[10px] uppercase tracking-widest text-gold font-semibold underline">Edit / Change Address</button>
                       </div>
                       <p className="font-medium text-forest">{shippingData?.name}</p>
-                      <p className="text-dark/70 font-light">{shippingData?.addressLine1}, {shippingData?.city}, {shippingData?.state} - {shippingData?.pincode}</p>
+                      <p className="text-dark/70 font-light">{shippingData?.addressLine1}{shippingData?.addressLine2 ? `, ${shippingData?.addressLine2}` : ""}, {shippingData?.city}, {shippingData?.state} - {shippingData?.pincode}</p>
                       <p className="text-dark/70 font-light">+91 {shippingData?.phone}</p>
                     </div>
 
