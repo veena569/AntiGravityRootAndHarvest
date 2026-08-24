@@ -272,23 +272,25 @@ export default function CheckoutPage() {
       // Fetch verified JWT ID Token
       const idToken = await userCredential.user.getIdToken();
 
-      // Submit token to local server API to create/link user in Prisma database
+      // Submit token to server API to create/link user in Prisma database
       const formattedPhone = `+91${shippingData?.phone.replace(/\D/g, "").slice(-10)}`;
-      const success = await login(formattedPhone, idToken, shippingData?.name);
-
-      if (success) {
-        // Save guest details in localStorage for fallback pre-fills
-        try {
-          localStorage.setItem("rh_guest", JSON.stringify({
-            name: shippingData?.name.trim(),
-            phone: formattedPhone,
-          }));
-        } catch {}
-
-        setCurrentStep("review");
-      } else {
-        setOtpError("Failed to initialize user session on database.");
+      try {
+        await login(formattedPhone, idToken, shippingData?.name);
+      } catch (sessionErr) {
+        console.warn("[CHECKOUT_SESSION_LINK_WARN]", sessionErr);
       }
+
+      // Save guest details in localStorage for fallback pre-fills
+      try {
+        localStorage.setItem("rh_guest", JSON.stringify({
+          name: shippingData?.name.trim(),
+          phone: formattedPhone,
+          verified: true
+        }));
+      } catch {}
+
+      // Verified successfully with Firebase OTP -> proceed to review step
+      setCurrentStep("review");
     } catch (err: any) {
       console.error("[FIREBASE_VERIFY_OTP_CHECKOUT_ERROR]", err);
       let userMsg = "Incorrect or expired verification code. Please check and try again.";
