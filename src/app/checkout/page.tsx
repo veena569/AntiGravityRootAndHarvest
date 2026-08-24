@@ -14,6 +14,7 @@ import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from "fi
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/components/layout/AuthProvider";
 import Script from "next/script";
+import { lookupPincode, calculateShippingFee } from "@/lib/pincode";
 
 // Zod Schema for Shipping
 const shippingSchema = z.object({
@@ -129,6 +130,35 @@ export default function CheckoutPage() {
       addressType: "Home",
     },
   });
+
+  // Pincode auto-detection states
+  const [pincodeLoading, setPincodeLoading] = useState(false);
+  const [detectedLocation, setDetectedLocation] = useState<{ city: string; state: string; isHyderabad: boolean } | null>(null);
+
+  const handlePincodeInput = async (rawPin: string, onChange: (v: string) => void) => {
+    const cleaned = rawPin.replace(/\D/g, "").slice(0, 6);
+    onChange(cleaned);
+
+    if (cleaned.length === 6) {
+      setPincodeLoading(true);
+      try {
+        const loc = await lookupPincode(cleaned);
+        if (loc) {
+          setDetectedLocation(loc);
+          if (loc.city) setValue("city", loc.city, { shouldValidate: true });
+          if (loc.state) setValue("state", loc.state, { shouldValidate: true });
+        } else {
+          setDetectedLocation(null);
+        }
+      } catch (e) {
+        console.error("Pincode lookup error:", e);
+      } finally {
+        setPincodeLoading(false);
+      }
+    } else {
+      setDetectedLocation(null);
+    }
+  };
 
   // Pre-fill name & phone once guest data loads
   useEffect(() => {
@@ -310,8 +340,7 @@ export default function CheckoutPage() {
     setCurrentStep("payment");
     setPaymentStatus("processing");
     setShowPaymentModal(true);
-    const isHyd = (shippingData?.city || "").toLowerCase().includes("hyderabad");
-    const shippingCharge = isHyd ? 0 : 100;
+    const { shippingCharge } = calculateShippingFee(shippingData?.pincode, shippingData?.city, subtotal);
     const totalToPay = subtotal + shippingCharge;
 
     try {
@@ -543,11 +572,48 @@ export default function CheckoutPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-[10px] uppercase tracking-widest text-dark/50 font-semibold">Pincode</label>
+                      <div className="flex items-center justify-between">
+                        <label className="text-[10px] uppercase tracking-widest text-dark/50 font-semibold">Pincode (6-Digits)</label>
+                        {pincodeLoading && (
+                          <span className="text-[10px] text-forest/70 flex items-center gap-1">
+                            <RefreshCw className="w-3 h-3 animate-spin" /> Detecting location...
+                          </span>
+                        )}
+                      </div>
                       <Controller name="pincode" control={control} render={({ field }) => (
-                        <input {...field} maxLength={6} className="w-full p-4 text-sm border border-forest/20 focus:border-forest outline-none bg-brand-bg/50 transition-colors" />
+                        <input
+                          {...field}
+                          maxLength={6}
+                          placeholder="e.g. 500001, 600001, 560001"
+                          onChange={(e) => handlePincodeInput(e.target.value, field.onChange)}
+                          className="w-full p-4 text-sm border border-forest/20 focus:border-forest outline-none bg-brand-bg/50 transition-colors"
+                        />
                       )} />
                       {errors.pincode && <p className="text-xs text-red-500">{errors.pincode.message}</p>}
+
+                      {detectedLocation && (
+                        <div className="flex items-center gap-2 text-xs text-forest bg-forest/5 border border-forest/15 px-3.5 py-2.5 rounded-md mt-1.5 transition-all">
+                          <MapPin className="w-4 h-4 text-gold shrink-0" />
+                          <div>
+                            <span className="font-semibold text-dark">
+                              {detectedLocation.city ? `${detectedLocation.city}, ` : ""}{detectedLocation.state}
+                            </span>
+                            <span className="text-dark/60 ml-2">
+                              {detectedLocation.isHyderabad ? (
+                                <strong className="text-emerald-700 font-bold">• Free Local Delivery</strong>
+                              ) : (
+                                <span>
+                                  • {subtotal >= 999 ? (
+                                    <strong className="text-emerald-700 font-bold">Free Shipping (Order &gt; ₹999)</strong>
+                                  ) : (
+                                    <strong className="text-forest font-semibold">Standard Shipping: ₹100</strong>
+                                  )}
+                                </span>
+                              )}
+                            </span>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     {/* Address Tag Selector */}
@@ -717,9 +783,8 @@ export default function CheckoutPage() {
                     </div>
 
                     {(() => {
-                      const isHyd = (shippingData?.city || "").toLowerCase().includes("hyderabad");
-                      const shippingCharge = isHyd ? 0 : 100;
-                      const totalToPay = subtotal + shippingCharge;
+                      const shippingInfo = calculateShippingFee(shippingData?.pincode, shippingData?.city, subtotal);
+                      const totalToPay = subtotal + shippingInfo.shippingCharge;
 
                       return (
                         <div className="space-y-4 pt-4 text-sm font-light">
@@ -727,9 +792,9 @@ export default function CheckoutPage() {
                             <span>Subtotal</span><span>₹{subtotal}</span>
                           </div>
                           <div className="flex justify-between text-dark/80">
-                            <span>Shipping</span>
+                            <span>Shipping ({shippingInfo.description})</span>
                             <span className="text-forest font-medium">
-                              {isHyd ? "Free Delivery (Hyderabad)" : "₹100 (Outside Hyderabad)"}
+                              {shippingInfo.shippingLabel}
                             </span>
                           </div>
                           <div className="flex justify-between items-end border-t border-forest/10 pt-4">

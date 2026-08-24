@@ -135,7 +135,9 @@ export default function CartPage() {
                     </div>
                     <div className="flex justify-between text-dark/80">
                       <span>Shipping</span>
-                      <span className="text-forest font-medium">Complimentary</span>
+                      <span className="text-forest font-medium">
+                        {subtotal >= 999 ? "Free Shipping (Order > ₹999)" : "Calculated at checkout"}
+                      </span>
                     </div>
                   </div>
 
