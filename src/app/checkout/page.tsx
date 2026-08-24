@@ -341,7 +341,7 @@ export default function CheckoutPage() {
         : "";
 
       const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "",
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_live_TEIC4Fxh9xf0S0",
         amount: data.amount || Math.round(subtotal * 100),
         currency: "INR",
         name: "Root & Harvest",

@@ -5,7 +5,7 @@ const JWKS = createRemoteJWKSet(
 );
 
 export async function verifyFirebaseToken(token: string) {
-  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "root-and-harvest-f5b08";
   if (!projectId) {
     throw new Error("NEXT_PUBLIC_FIREBASE_PROJECT_ID environment variable is missing");
   }
