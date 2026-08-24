@@ -9,8 +9,8 @@ export class SmsService {
         return;
       }
 
-      const apiKey = process.env.FAST2SMS_API_KEY;
-      const adminPhone = process.env.ADMIN_NOTIFICATION_PHONE;
+      const apiKey = process.env.FAST2SMS_API_KEY || "fpHwim5ZQaNB3WTgIvs6Vby01tFzXoeS7x2DKRhLClj4OnuGdAWsZ3YfT9BuzyXp2PeQoI6iOMD8dUL7";
+      const adminPhone = process.env.ADMIN_NOTIFICATION_PHONE || "9121603832,9666913832";
 
       if (!apiKey || !adminPhone) {
         console.warn("[SMS WARNING] FAST2SMS_API_KEY or ADMIN_NOTIFICATION_PHONE is not configured in environment.");
@@ -64,7 +64,7 @@ export class SmsService {
 
   static async sendCustomerOrderSMS(order: any) {
     try {
-      const apiKey = process.env.FAST2SMS_API_KEY;
+      const apiKey = process.env.FAST2SMS_API_KEY || "fpHwim5ZQaNB3WTgIvs6Vby01tFzXoeS7x2DKRhLClj4OnuGdAWsZ3YfT9BuzyXp2PeQoI6iOMD8dUL7";
       if (!apiKey) {
         console.warn("[SMS WARNING] FAST2SMS_API_KEY is not configured in environment.");
         return;
@@ -97,7 +97,7 @@ export class SmsService {
 
   static async sendCustomerDeliverySMS(order: any) {
     try {
-      const apiKey = process.env.FAST2SMS_API_KEY;
+      const apiKey = process.env.FAST2SMS_API_KEY || "fpHwim5ZQaNB3WTgIvs6Vby01tFzXoeS7x2DKRhLClj4OnuGdAWsZ3YfT9BuzyXp2PeQoI6iOMD8dUL7";
       if (!apiKey) {
         console.warn("[SMS WARNING] FAST2SMS_API_KEY is not configured in environment.");
         return;

@@ -176,19 +176,17 @@ Order Time:
 ${orderTime}`;
 
         // Admin number can be comma-separated list
+        const promises: Promise<any>[] = [];
         const adminNumbers = adminPhone.split(",");
         for (const num of adminNumbers) {
           const trimmedNum = num.trim();
           if (trimmedNum) {
-            this.queueMessage(trimmedNum, adminMessage, "ADMIN", order.id);
+            promises.push(this.sendMessageWithRetry(trimmedNum, adminMessage, "ADMIN", order.id));
           }
         }
-      } else {
-        console.warn("[WhatsApp API Warning] No admin phone number configured for order alerts.");
-      }
 
-      // 2. Send Customer Notification
-      const customerMessage = `🌿 Thank you for choosing Root & Harvest.
+        // 2. Send Customer Notification
+        const customerMessage = `🌿 Thank you for choosing Root & Harvest.
 
 We've received your order successfully.
 
@@ -202,7 +200,11 @@ Our team will freshly prepare your wood-pressed oils and update you when your or
 
 Thank you for supporting a small business ❤️`;
 
-      this.queueMessage(order.shippingPhone, customerMessage, "CUSTOMER", order.id);
+        promises.push(this.sendMessageWithRetry(order.shippingPhone, customerMessage, "CUSTOMER", order.id));
+        await Promise.allSettled(promises);
+      } else {
+        console.warn("[WhatsApp API Warning] No admin phone number configured for order alerts.");
+      }
     } catch (err) {
       console.error("[WhatsApp Queue Error]", err);
     }
