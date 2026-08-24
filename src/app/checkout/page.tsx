@@ -15,6 +15,7 @@ import { auth } from "@/lib/firebase";
 import { useAuth } from "@/components/layout/AuthProvider";
 import Script from "next/script";
 import { lookupPincode, calculateShippingFee } from "@/lib/pincode";
+import { ALL_INDIAN_STATES, getCitiesForState } from "@/data/india-locations";
 
 // Zod Schema for Shipping
 const shippingSchema = z.object({
@@ -115,6 +116,7 @@ export default function CheckoutPage() {
     formState: { errors },
     setValue,
     getValues,
+    watch,
   } = useForm<ShippingFormValues>({
     resolver: zodResolver(shippingSchema),
     defaultValues: {
@@ -131,6 +133,11 @@ export default function CheckoutPage() {
     },
   });
 
+  const selectedState = watch("state");
+  const selectedCity = watch("city");
+  const [isCustomCity, setIsCustomCity] = useState(false);
+  const [customCityInput, setCustomCityInput] = useState("");
+
   // Pincode auto-detection states
   const [pincodeLoading, setPincodeLoading] = useState(false);
   const [detectedLocation, setDetectedLocation] = useState<{ city: string; state: string; isHyderabad: boolean } | null>(null);
@@ -145,8 +152,27 @@ export default function CheckoutPage() {
         const loc = await lookupPincode(cleaned);
         if (loc) {
           setDetectedLocation(loc);
-          if (loc.city) setValue("city", loc.city, { shouldValidate: true });
-          if (loc.state) setValue("state", loc.state, { shouldValidate: true });
+          if (loc.state) {
+            setValue("state", loc.state, { shouldValidate: true });
+            const stateCities = getCitiesForState(loc.state);
+            if (loc.city) {
+              const matchedCity = stateCities.find(
+                (c) =>
+                  c.toLowerCase() === loc.city.toLowerCase() ||
+                  loc.city.toLowerCase().includes(c.toLowerCase()) ||
+                  c.toLowerCase().includes(loc.city.toLowerCase())
+              );
+              if (matchedCity) {
+                setValue("city", matchedCity, { shouldValidate: true });
+                setIsCustomCity(false);
+                setCustomCityInput("");
+              } else {
+                setValue("city", loc.city, { shouldValidate: true });
+                setIsCustomCity(true);
+                setCustomCityInput(loc.city);
+              }
+            }
+          }
         } else {
           setDetectedLocation(null);
         }
@@ -554,20 +580,94 @@ export default function CheckoutPage() {
                       )} />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <label className="text-[10px] uppercase tracking-widest text-dark/50 font-semibold">City</label>
-                        <Controller name="city" control={control} render={({ field }) => (
-                          <input {...field} className="w-full p-4 text-sm border border-forest/20 focus:border-forest outline-none bg-brand-bg/50 transition-colors" />
-                        )} />
-                        {errors.city && <p className="text-xs text-red-500">{errors.city.message}</p>}
-                      </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* State Dropdown */}
                       <div className="space-y-2">
                         <label className="text-[10px] uppercase tracking-widest text-dark/50 font-semibold">State</label>
-                        <Controller name="state" control={control} render={({ field }) => (
-                          <input {...field} className="w-full p-4 text-sm border border-forest/20 focus:border-forest outline-none bg-brand-bg/50 transition-colors" />
-                        )} />
+                        <Controller
+                          name="state"
+                          control={control}
+                          render={({ field }) => (
+                            <select
+                              {...field}
+                              onChange={(e) => {
+                                field.onChange(e.target.value);
+                                setValue("city", "");
+                                setIsCustomCity(false);
+                                setCustomCityInput("");
+                              }}
+                              className="w-full p-4 text-sm border border-forest/20 focus:border-forest outline-none bg-brand-bg/50 transition-colors cursor-pointer"
+                            >
+                              <option value="">-- Select State --</option>
+                              {ALL_INDIAN_STATES.map((st) => (
+                                <option key={st} value={st}>
+                                  {st}
+                                </option>
+                              ))}
+                            </select>
+                          )}
+                        />
                         {errors.state && <p className="text-xs text-red-500">{errors.state.message}</p>}
+                      </div>
+
+                      {/* City Dropdown with Other Option */}
+                      <div className="space-y-2">
+                        <label className="text-[10px] uppercase tracking-widest text-dark/50 font-semibold">City / District</label>
+                        <Controller
+                          name="city"
+                          control={control}
+                          render={({ field }) => {
+                            const availableCities = getCitiesForState(selectedState || getValues("state"));
+                            const currentCity = field.value || "";
+                            const isInList = availableCities.includes(currentCity);
+
+                            return (
+                              <div className="space-y-3">
+                                <select
+                                  value={isCustomCity ? "Other" : (isInList ? currentCity : (currentCity ? "Other" : ""))}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    if (val === "Other") {
+                                      setIsCustomCity(true);
+                                      field.onChange(customCityInput || "");
+                                    } else {
+                                      setIsCustomCity(false);
+                                      field.onChange(val);
+                                    }
+                                  }}
+                                  disabled={!selectedState && !getValues("state")}
+                                  className="w-full p-4 text-sm border border-forest/20 focus:border-forest outline-none bg-brand-bg/50 transition-colors cursor-pointer disabled:opacity-50"
+                                >
+                                  <option value="">
+                                    {selectedState || getValues("state") ? "-- Select City / District --" : "Select State first"}
+                                  </option>
+                                  {availableCities.map((ct) => (
+                                    <option key={ct} value={ct}>
+                                      {ct}
+                                    </option>
+                                  ))}
+                                  <option value="Other">Other (Enter Manually)</option>
+                                </select>
+
+                                {isCustomCity && (
+                                  <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}>
+                                    <input
+                                      type="text"
+                                      placeholder="Type your City / Town / Village name"
+                                      value={customCityInput}
+                                      onChange={(e) => {
+                                        setCustomCityInput(e.target.value);
+                                        field.onChange(e.target.value);
+                                      }}
+                                      className="w-full p-4 text-sm border-2 border-gold/40 focus:border-forest outline-none bg-white transition-colors placeholder:text-dark/40"
+                                    />
+                                  </motion.div>
+                                )}
+                              </div>
+                            );
+                          }}
+                        />
+                        {errors.city && <p className="text-xs text-red-500">{errors.city.message}</p>}
                       </div>
                     </div>
 

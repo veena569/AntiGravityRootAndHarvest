@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { ALL_INDIAN_STATES, getCitiesForState } from "@/data/india-locations";
 
 export default function AddressesPage() {
   const [addresses, setAddresses] = useState<any[]>([]);
@@ -12,6 +13,8 @@ export default function AddressesPage() {
   const [formData, setFormData] = useState({
     name: "", phone: "", addressLine1: "", addressLine2: "", city: "", state: "", pincode: "", isDefault: false, type: "Home"
   });
+  const [isCustomCity, setIsCustomCity] = useState(false);
+  const [customCityInput, setCustomCityInput] = useState("");
   const [saving, setSaving] = useState(false);
 
   const fetchAddresses = () => {
@@ -88,16 +91,83 @@ export default function AddressesPage() {
                 <input value={formData.addressLine2} onChange={e => setFormData({...formData, addressLine2: e.target.value})} className="w-full p-3 text-sm border border-forest/20 focus:border-forest outline-none bg-brand-bg/50" />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] uppercase tracking-widest text-dark/50 font-semibold">City</label>
-                <input required value={formData.city} onChange={e => setFormData({...formData, city: e.target.value})} className="w-full p-3 text-sm border border-forest/20 focus:border-forest outline-none bg-brand-bg/50" />
-              </div>
-              <div className="space-y-2">
                 <label className="text-[10px] uppercase tracking-widest text-dark/50 font-semibold">State</label>
-                <input required value={formData.state} onChange={e => setFormData({...formData, state: e.target.value})} className="w-full p-3 text-sm border border-forest/20 focus:border-forest outline-none bg-brand-bg/50" />
+                <select
+                  required
+                  value={formData.state}
+                  onChange={(e) => {
+                    setFormData({ ...formData, state: e.target.value, city: "" });
+                    setIsCustomCity(false);
+                    setCustomCityInput("");
+                  }}
+                  className="w-full p-3 text-sm border border-forest/20 focus:border-forest outline-none bg-brand-bg/50 cursor-pointer"
+                >
+                  <option value="">-- Select State --</option>
+                  {ALL_INDIAN_STATES.map((st) => (
+                    <option key={st} value={st}>
+                      {st}
+                    </option>
+                  ))}
+                </select>
               </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] uppercase tracking-widest text-dark/50 font-semibold">City / District</label>
+                {(() => {
+                  const stateCities = getCitiesForState(formData.state);
+                  const currentCity = formData.city;
+                  const isInList = stateCities.includes(currentCity);
+
+                  return (
+                    <div className="space-y-2">
+                      <select
+                        required
+                        disabled={!formData.state}
+                        value={isCustomCity ? "Other" : (isInList ? currentCity : (currentCity ? "Other" : ""))}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === "Other") {
+                            setIsCustomCity(true);
+                            setFormData({ ...formData, city: customCityInput });
+                          } else {
+                            setIsCustomCity(false);
+                            setFormData({ ...formData, city: val });
+                          }
+                        }}
+                        className="w-full p-3 text-sm border border-forest/20 focus:border-forest outline-none bg-brand-bg/50 cursor-pointer disabled:opacity-50"
+                      >
+                        <option value="">
+                          {formData.state ? "-- Select City / District --" : "Select State first"}
+                        </option>
+                        {stateCities.map((ct) => (
+                          <option key={ct} value={ct}>
+                            {ct}
+                          </option>
+                        ))}
+                        <option value="Other">Other (Enter Manually)</option>
+                      </select>
+
+                      {isCustomCity && (
+                        <input
+                          required
+                          type="text"
+                          placeholder="Type City / Town / Village name"
+                          value={customCityInput}
+                          onChange={(e) => {
+                            setCustomCityInput(e.target.value);
+                            setFormData({ ...formData, city: e.target.value });
+                          }}
+                          className="w-full p-3 text-sm border-2 border-gold/40 focus:border-forest outline-none bg-white placeholder:text-dark/40"
+                        />
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
+
               <div className="space-y-2">
                 <label className="text-[10px] uppercase tracking-widest text-dark/50 font-semibold">Pincode</label>
-                <input required value={formData.pincode} onChange={e => setFormData({...formData, pincode: e.target.value})} className="w-full p-3 text-sm border border-forest/20 focus:border-forest outline-none bg-brand-bg/50" />
+                <input required maxLength={6} value={formData.pincode} onChange={e => setFormData({...formData, pincode: e.target.value})} className="w-full p-3 text-sm border border-forest/20 focus:border-forest outline-none bg-brand-bg/50" />
               </div>
               <div className="space-y-2 md:col-span-2">
                 <label className="text-[10px] uppercase tracking-widest text-dark/50 font-semibold block mb-2">Address Tag</label>
