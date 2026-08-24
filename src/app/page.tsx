@@ -101,7 +101,7 @@ export default function HomePage() {
         <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 md:px-12 pt-8 pb-16 animate-slide-from-top">
           <div className="relative w-full aspect-[3/2] border-4 border-forest shadow-lg overflow-hidden bg-white rounded-md">
             <Image
-              src="/images/brand-banner.jpg"
+              src="/images/brand-banner-v2.jpg"
               alt="Root & Harvest Brand Infographic"
               fill
               className="object-contain"
@@ -425,7 +425,7 @@ export default function HomePage() {
         <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 md:px-12">
           <div className="relative w-full aspect-[1.85] border-4 border-forest shadow-md overflow-hidden bg-white rounded-md">
             <Image
-              src="/images/brand-story-banner.png"
+              src="/images/brand-story-banner-v2.png"
               alt="Root & Harvest Brand Story Infographic"
               fill
               className="object-contain"
