@@ -16,7 +16,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing required verification fields" }, { status: 400 });
     }
 
-    const keySecret = process.env.RAZORPAY_KEY_SECRET;
+    const keySecret = process.env.RAZORPAY_KEY_SECRET || "xPLKgZ5CBpk3DlC8Bqw3w41Y";
     if (!keySecret) {
       return NextResponse.json({ error: "Razorpay server configuration error" }, { status: 500 });
     }
@@ -32,7 +32,7 @@ export async function POST(req: Request) {
     if (!isVerified) {
       console.warn(`[PAYMENT_VERIFICATION_FAILED] Signature hash mismatch. Attempting API fallback verification from Razorpay server...`);
       try {
-        const keyId = process.env.RAZORPAY_KEY_ID || "";
+        const keyId = process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_live_TEIC4Fxh9xf0S0";
         const basicAuth = Buffer.from(`${keyId}:${keySecret}`).toString("base64");
         const rzpRes = await fetch(`https://api.razorpay.com/v1/payments/${razorpay_payment_id}`, {
           headers: {

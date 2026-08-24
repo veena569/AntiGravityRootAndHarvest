@@ -32,7 +32,7 @@ export const Navbar: React.FC = () => {
     <>
       {/* Top Announcement Banner */}
       <div className="w-full bg-forest text-gold text-[10px] sm:text-xs uppercase tracking-[0.2em] py-2.5 px-4 text-center font-semibold z-50">
-        10% OFF & FREE SHIPPING FOR THE FIRST 100 ORDERS
+        10% OFF &amp; FREE SHIPPING FOR THE FIRST 100 ORDERS IN HYDERABAD
       </div>
 
       <header

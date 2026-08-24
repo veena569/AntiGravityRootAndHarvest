@@ -10,8 +10,8 @@ import { EmailService } from "@/services/email.service";
 import { WhatsappMetaService } from "@/services/whatsapp-meta.service";
 
 function getRazorpayClient() {
-  const key_id = process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "";
-  const key_secret = process.env.RAZORPAY_KEY_SECRET || "";
+  const key_id = process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_live_TEIC4Fxh9xf0S0";
+  const key_secret = process.env.RAZORPAY_KEY_SECRET || "xPLKgZ5CBpk3DlC8Bqw3w41Y";
   return new Razorpay({ key_id, key_secret });
 }
 
@@ -171,10 +171,10 @@ export async function POST(req: Request) {
       if (err.statusCode === 401 || (err.code === "BAD_REQUEST_ERROR" && err.description?.toLowerCase().includes("api key"))) {
         return NextResponse.json({ error: "Unauthorized: Invalid Razorpay API Key or Secret" }, { status: 401 });
       }
-      return NextResponse.json({ error: err.description || "Failed to create order on Razorpay" }, { status: 500 });
+      return NextResponse.json({ error: err.error?.description || err.description || err.message || "Failed to create order on Razorpay" }, { status: 500 });
     }
-  } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error: "Failed to create order" }, { status: 500 });
+  } catch (error: any) {
+    console.error("[CREATE_ORDER_GENERAL_ERROR]", error);
+    return NextResponse.json({ error: error.message || "Failed to create order" }, { status: 500 });
   }
 }
