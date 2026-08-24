@@ -580,95 +580,112 @@ export default function CheckoutPage() {
                       )} />
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {/* State Dropdown */}
-                      <div className="space-y-2">
-                        <label className="text-[10px] uppercase tracking-widest text-dark/50 font-semibold">State</label>
-                        <Controller
-                          name="state"
-                          control={control}
-                          render={({ field }) => (
-                            <select
-                              {...field}
-                              onChange={(e) => {
-                                field.onChange(e.target.value);
-                                setValue("city", "");
-                                setIsCustomCity(false);
-                                setCustomCityInput("");
-                              }}
-                              className="w-full p-4 text-sm border border-forest/20 focus:border-forest outline-none bg-brand-bg/50 transition-colors cursor-pointer"
-                            >
-                              <option value="">-- Select State --</option>
-                              {ALL_INDIAN_STATES.map((st) => (
-                                <option key={st} value={st}>
-                                  {st}
+                    {/* 1. STATE SELECTION (FIRST) */}
+                    <div className="space-y-2">
+                      <label className="text-[10px] uppercase tracking-widest text-dark/60 font-bold block">
+                        State <span className="text-forest font-normal text-[9px]">(Select Indian State)</span>
+                      </label>
+                      <Controller
+                        name="state"
+                        control={control}
+                        render={({ field }) => (
+                          <select
+                            {...field}
+                            value={field.value || ""}
+                            onChange={(e) => {
+                              const chosenState = e.target.value;
+                              field.onChange(chosenState);
+                              setValue("city", "", { shouldValidate: true });
+                              setIsCustomCity(false);
+                              setCustomCityInput("");
+                            }}
+                            className="w-full p-4 text-sm font-medium border border-forest/30 focus:border-forest outline-none bg-white transition-colors cursor-pointer"
+                          >
+                            <option value="">-- Select Indian State --</option>
+                            {ALL_INDIAN_STATES.map((st) => (
+                              <option key={st} value={st}>
+                                {st}
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                      />
+                      {errors.state && <p className="text-xs text-red-500">{errors.state.message}</p>}
+                    </div>
+
+                    {/* 2. CITY SELECTION (SECOND - POPULATED BASED ON SELECTED STATE) */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[10px] uppercase tracking-widest text-dark/60 font-bold block">
+                          City / District {selectedState ? <span className="text-forest font-semibold text-[9px]">({selectedState})</span> : ""}
+                        </label>
+                        {!selectedState && (
+                          <span className="text-[10px] text-amber-700 font-medium">← Please select State above first</span>
+                        )}
+                      </div>
+                      <Controller
+                        name="city"
+                        control={control}
+                        render={({ field }) => {
+                          const stateToUse = selectedState || getValues("state") || "";
+                          const availableCities = getCitiesForState(stateToUse);
+                          const currentCity = field.value || "";
+                          const isInList = availableCities.includes(currentCity);
+
+                          return (
+                            <div className="space-y-3">
+                              <select
+                                value={isCustomCity ? "Other" : (isInList ? currentCity : (currentCity ? "Other" : ""))}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  if (val === "Other") {
+                                    setIsCustomCity(true);
+                                    field.onChange(customCityInput || "");
+                                  } else {
+                                    setIsCustomCity(false);
+                                    setCustomCityInput("");
+                                    field.onChange(val);
+                                  }
+                                }}
+                                disabled={!stateToUse}
+                                className="w-full p-4 text-sm font-medium border border-forest/30 focus:border-forest outline-none bg-white transition-colors cursor-pointer disabled:bg-gray-100 disabled:opacity-60 disabled:cursor-not-allowed"
+                              >
+                                <option value="">
+                                  {stateToUse ? `-- Select City in ${stateToUse} --` : "-- Select State Above First --"}
                                 </option>
-                              ))}
-                            </select>
-                          )}
-                        />
-                        {errors.state && <p className="text-xs text-red-500">{errors.state.message}</p>}
-                      </div>
-
-                      {/* City Dropdown with Other Option */}
-                      <div className="space-y-2">
-                        <label className="text-[10px] uppercase tracking-widest text-dark/50 font-semibold">City / District</label>
-                        <Controller
-                          name="city"
-                          control={control}
-                          render={({ field }) => {
-                            const availableCities = getCitiesForState(selectedState || getValues("state"));
-                            const currentCity = field.value || "";
-                            const isInList = availableCities.includes(currentCity);
-
-                            return (
-                              <div className="space-y-3">
-                                <select
-                                  value={isCustomCity ? "Other" : (isInList ? currentCity : (currentCity ? "Other" : ""))}
-                                  onChange={(e) => {
-                                    const val = e.target.value;
-                                    if (val === "Other") {
-                                      setIsCustomCity(true);
-                                      field.onChange(customCityInput || "");
-                                    } else {
-                                      setIsCustomCity(false);
-                                      field.onChange(val);
-                                    }
-                                  }}
-                                  disabled={!selectedState && !getValues("state")}
-                                  className="w-full p-4 text-sm border border-forest/20 focus:border-forest outline-none bg-brand-bg/50 transition-colors cursor-pointer disabled:opacity-50"
-                                >
-                                  <option value="">
-                                    {selectedState || getValues("state") ? "-- Select City / District --" : "Select State first"}
+                                {availableCities.map((ct) => (
+                                  <option key={ct} value={ct}>
+                                    {ct}
                                   </option>
-                                  {availableCities.map((ct) => (
-                                    <option key={ct} value={ct}>
-                                      {ct}
-                                    </option>
-                                  ))}
-                                  <option value="Other">Other (Enter Manually)</option>
-                                </select>
-
-                                {isCustomCity && (
-                                  <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}>
-                                    <input
-                                      type="text"
-                                      placeholder="Type your City / Town / Village name"
-                                      value={customCityInput}
-                                      onChange={(e) => {
-                                        setCustomCityInput(e.target.value);
-                                        field.onChange(e.target.value);
-                                      }}
-                                      className="w-full p-4 text-sm border-2 border-gold/40 focus:border-forest outline-none bg-white transition-colors placeholder:text-dark/40"
-                                    />
-                                  </motion.div>
+                                ))}
+                                {stateToUse && (
+                                  <option value="Other">✨ Other (Enter City/Town Manually)</option>
                                 )}
-                              </div>
-                            );
-                          }}
-                        />
-                        {errors.city && <p className="text-xs text-red-500">{errors.city.message}</p>}
-                      </div>
+                              </select>
+
+                              {isCustomCity && (
+                                <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} className="space-y-1.5 pt-1">
+                                  <label className="text-[10px] uppercase tracking-wider text-gold font-bold block">
+                                    Enter Your City / Town / Village Name:
+                                  </label>
+                                  <input
+                                    type="text"
+                                    placeholder="e.g. Gachibowli, Kondapur, or village name"
+                                    value={customCityInput}
+                                    onChange={(e) => {
+                                      const manualVal = e.target.value;
+                                      setCustomCityInput(manualVal);
+                                      field.onChange(manualVal);
+                                    }}
+                                    className="w-full p-4 text-sm border-2 border-gold focus:border-forest outline-none bg-white transition-colors placeholder:text-dark/40 shadow-sm"
+                                  />
+                                </motion.div>
+                              )}
+                            </div>
+                          );
+                        }}
+                      />
+                      {errors.city && <p className="text-xs text-red-500">{errors.city.message}</p>}
                     </div>
 
                     <div className="space-y-2">
