@@ -9,10 +9,11 @@ import { SmsService } from "@/services/sms.service";
 import { EmailService } from "@/services/email.service";
 import { WhatsappMetaService } from "@/services/whatsapp-meta.service";
 
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID || "",
-  key_secret: process.env.RAZORPAY_KEY_SECRET || "",
-});
+function getRazorpayClient() {
+  const key_id = process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "";
+  const key_secret = process.env.RAZORPAY_KEY_SECRET || "";
+  return new Razorpay({ key_id, key_secret });
+}
 
 export async function POST(req: Request) {
   try {
@@ -150,6 +151,7 @@ export async function POST(req: Request) {
 
     // 2. Call Razorpay API to create order
     try {
+      const razorpay = getRazorpayClient();
       const razorpayOrder = await razorpay.orders.create({
         amount: amountInPaise,
         currency,
