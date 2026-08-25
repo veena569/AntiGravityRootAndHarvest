@@ -13,6 +13,11 @@ const adminPaths = ["/admin", "/api/admin"];
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
+  // Allow unauthenticated access to the admin login page
+  if (pathname === "/admin/login") {
+    return NextResponse.next();
+  }
+
   const isProtected = protectedPaths.some((p) => pathname.startsWith(p));
   const isAdmin = adminPaths.some((p) => pathname.startsWith(p));
 
