@@ -2,20 +2,54 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
-import { Settings, Plus, ShoppingBag, BarChart3, Database, Tag, Newspaper, Users, Eye, Check } from "lucide-react";
+import {
+  Settings,
+  ShoppingBag,
+  BarChart3,
+  Database,
+  Tag,
+  Newspaper,
+  Printer,
+  FileText,
+  Search,
+  Activity,
+  MapPin,
+  X,
+} from "lucide-react";
 import { useApp } from "@/context/AppContext";
-import { Product } from "@/data/products";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 
 export default function AdminPage() {
-  const { products, orders } = useApp();
-  const [activeTab, setActiveTab] = useState<"orders" | "inventory" | "coupons" | "analytics" | "content">("orders");
+  const { products, orders: contextOrders } = useApp();
+  const [activeTab, setActiveTab] = useState<
+    "orders" | "bills" | "analytics" | "inventory" | "coupons" | "content"
+  >("orders");
 
+  // Orders State
   const [dbOrders, setDbOrders] = useState<any[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
   const [ordersError, setOrdersError] = useState<string | null>(null);
+  const [orderSearchQuery, setOrderSearchQuery] = useState("");
+
+  // Invoice Modal State
+  const [selectedInvoiceOrder, setSelectedInvoiceOrder] = useState<any | null>(null);
+
+  // Analytics State
+  const [analyticsData, setAnalyticsData] = useState<{
+    totalHits: number;
+    uniqueVisitors: number;
+    topPaths: { path: string; count: number }[];
+    dailyTrend: { date: string; hits: number }[];
+    recentHits: any[];
+  }>({
+    totalHits: 0,
+    uniqueVisitors: 0,
+    topPaths: [],
+    dailyTrend: [],
+    recentHits: [],
+  });
+  const [loadingAnalytics, setLoadingAnalytics] = useState(false);
 
   const fetchDbOrders = async () => {
     try {
@@ -32,6 +66,21 @@ export default function AdminPage() {
       setOrdersError(err.message || "Failed to load orders");
     } finally {
       setLoadingOrders(false);
+    }
+  };
+
+  const fetchAnalytics = async () => {
+    try {
+      setLoadingAnalytics(true);
+      const res = await fetch("/api/admin/analytics");
+      const data = await res.json();
+      if (res.ok) {
+        setAnalyticsData(data);
+      }
+    } catch (err) {
+      console.error("Failed to load analytics", err);
+    } finally {
+      setLoadingAnalytics(false);
     }
   };
 
@@ -59,26 +108,40 @@ export default function AdminPage() {
 
   useEffect(() => {
     fetchDbOrders();
+    fetchAnalytics();
   }, []);
+
+  // Filtered Orders
+  const filteredOrders = dbOrders.filter((ord) => {
+    if (!orderSearchQuery.trim()) return true;
+    const q = orderSearchQuery.toLowerCase();
+    const matchOrderNo = ord.orderNumber?.toLowerCase().includes(q);
+    const matchName = ord.shippingName?.toLowerCase().includes(q);
+    const matchPhone = ord.shippingPhone?.toLowerCase().includes(q);
+    const matchCity = ord.shippingCity?.toLowerCase().includes(q);
+    const matchState = ord.shippingState?.toLowerCase().includes(q);
+    const matchPincode = ord.shippingPincode?.toLowerCase().includes(q);
+    return matchOrderNo || matchName || matchPhone || matchCity || matchState || matchPincode;
+  });
 
   // Mock inventories
   const [inventoryList, setInventoryList] = useState([
     { name: "Wood Pressed Sunflower Oil (1 L)", sku: "RH-SFL-1L", stock: 124, limit: 20 },
     { name: "Wood Pressed Sunflower Oil (5 L)", sku: "RH-SFL-5L", stock: 18, limit: 10 },
-    { name: "Raw Himalayan Honey (500 g)", sku: "RH-HNY-500G", stock: 45, limit: 15 }
+    { name: "Raw Himalayan Honey (500 g)", sku: "RH-HNY-500G", stock: 45, limit: 15 },
   ]);
 
   // Mock Coupons
   const [coupons, setCoupons] = useState([
     { code: "FOUNDER20", discount: "20% OFF", status: "Active", uses: 42 },
     { code: "HONEST10", discount: "10% OFF", status: "Active", uses: 124 },
-    { code: "HARVEST50", discount: "₹50 OFF", status: "Expired", uses: 18 }
+    { code: "HARVEST50", discount: "₹50 OFF", status: "Expired", uses: 18 },
   ]);
 
-  // Mock Content (Blogs/Recipes)
-  const [contentList, setContentList] = useState([
+  // Mock Content
+  const [contentList] = useState([
     { title: "Sowing bold peanut peanuts in rain-fed Saurashtra", type: "Blog", author: "Abhinav Patel", date: "June 25, 2026" },
-    { title: "Traditional Gujarati Pooris cooked in wood-pressed oil", type: "Recipe", author: "Devendra Patel", date: "June 21, 2026" }
+    { title: "Traditional Gujarati Pooris cooked in wood-pressed oil", type: "Recipe", author: "Devendra Patel", date: "June 21, 2026" },
   ]);
 
   const [newCouponCode, setNewCouponCode] = useState("");
@@ -89,7 +152,7 @@ export default function AdminPage() {
     if (!newCouponCode || !newCouponDiscount) return;
     setCoupons([
       ...coupons,
-      { code: newCouponCode.toUpperCase().trim(), discount: newCouponDiscount, status: "Active", uses: 0 }
+      { code: newCouponCode.toUpperCase().trim(), discount: newCouponDiscount, status: "Active", uses: 0 },
     ]);
     setNewCouponCode("");
     setNewCouponDiscount("");
@@ -111,70 +174,96 @@ export default function AdminPage() {
     <>
       <Navbar />
 
-      <main className="min-h-screen bg-brand-bg py-16 md:py-24 text-left">
-        <div className="max-w-7xl mx-auto px-6 md:px-12 space-y-12">
+      <main className="min-h-screen bg-brand-bg py-12 md:py-20 text-left">
+        <div className="max-w-7xl mx-auto px-6 md:px-12 space-y-10">
           
           {/* Header */}
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-forest/5 pb-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-forest/10 pb-6">
             <div className="space-y-2">
-              <span className="text-xs uppercase tracking-[0.3em] text-gold font-semibold block">FOUNDERS' PANEL</span>
-              <h1 className="text-3xl md:text-4xl font-serif text-forest font-light">Admin Dashboard</h1>
+              <span className="text-xs uppercase tracking-[0.3em] text-gold font-semibold block">
+                ADMINISTRATION & OPERATIONS
+              </span>
+              <h1 className="text-3xl md:text-4xl font-serif text-forest font-light">
+                Root & Harvest Admin Console
+              </h1>
             </div>
-            
-            <div className="flex gap-4 text-xs font-semibold uppercase tracking-wider text-forest bg-white border p-4 shrink-0">
+
+            <div className="flex gap-4 text-xs font-semibold uppercase tracking-wider text-forest bg-white border border-forest/10 p-4 shrink-0 shadow-sm">
               <div className="text-left">
-                <span className="text-[9px] text-dark/50 block">Operational Node</span>
-                <span>HYDERABAD HUB (INDIA)</span>
+                <span className="text-[9px] text-dark/50 block">Operational Status</span>
+                <span className="flex items-center gap-2 text-green-700 font-bold">
+                  <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                  SYSTEM ONLINE
+                </span>
               </div>
             </div>
           </div>
 
-          {/* Quick Metrics Summary row */}
+          {/* Key Metric Summary Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              { 
-                label: "Operational Revenue", 
-                val: `₹${dbOrders.length > 0 
-                  ? dbOrders.reduce((acc, o) => acc + o.total, 0) 
-                  : orders.reduce((acc, o) => acc + o.total, 0) + 54980}`, 
-                desc: "Calculated from database registers" 
-              },
-              { 
-                label: "Fulfillment Orders", 
-                val: dbOrders.length > 0 ? dbOrders.length : orders.length + 32, 
-                desc: `Pending dispatches: ${dbOrders.length > 0 
-                  ? dbOrders.filter((o) => o.orderStatus === "placed" || o.orderStatus === "processing").length 
-                  : 1}` 
-              },
-              { label: "Batches Sourced", val: products.length, desc: "Active traced farm batches" },
-              { label: "Purity Audits", val: "100%", desc: "Verified laboratory trace clearances" }
-            ].map((metric, i) => (
-              <div key={i} className="bg-white border border-forest/5 p-6 shadow-sm">
-                <span className="text-[10px] text-dark/60 uppercase block">{metric.label}</span>
-                <span className="text-2xl font-serif font-bold text-forest mt-1 block">{metric.val}</span>
-                <span className="text-[9px] text-gold mt-0.5 block font-light">{metric.desc}</span>
-              </div>
-            ))}
+            <div className="bg-white border border-forest/10 p-6 shadow-sm">
+              <span className="text-[10px] text-dark/60 uppercase block font-semibold">Total Site Hits</span>
+              <span className="text-3xl font-serif font-bold text-forest mt-1 block">
+                {analyticsData.totalHits.toLocaleString()}
+              </span>
+              <span className="text-[10px] text-gold mt-1 block font-light">
+                Estimated {analyticsData.uniqueVisitors} unique visitors
+              </span>
+            </div>
+
+            <div className="bg-white border border-forest/10 p-6 shadow-sm">
+              <span className="text-[10px] text-dark/60 uppercase block font-semibold">Total Orders</span>
+              <span className="text-3xl font-serif font-bold text-forest mt-1 block">
+                {dbOrders.length > 0 ? dbOrders.length : contextOrders.length}
+              </span>
+              <span className="text-[10px] text-gold mt-1 block font-light">
+                {dbOrders.filter((o) => o.orderStatus === "placed" || o.orderStatus === "processing").length} pending fulfillment
+              </span>
+            </div>
+
+            <div className="bg-white border border-forest/10 p-6 shadow-sm">
+              <span className="text-[10px] text-dark/60 uppercase block font-semibold">Total Bills / Revenue</span>
+              <span className="text-3xl font-serif font-bold text-forest mt-1 block">
+                ₹{(dbOrders.length > 0
+                  ? dbOrders.reduce((acc, o) => acc + (o.total || 0), 0)
+                  : contextOrders.reduce((acc, o) => acc + (o.total || 0), 0) + 54980
+                ).toLocaleString()}
+              </span>
+              <span className="text-[10px] text-gold mt-1 block font-light">
+                Calculated from order sub-ledger
+              </span>
+            </div>
+
+            <div className="bg-white border border-forest/10 p-6 shadow-sm">
+              <span className="text-[10px] text-dark/60 uppercase block font-semibold">Catalog Batches</span>
+              <span className="text-3xl font-serif font-bold text-forest mt-1 block">
+                {products.length} Products
+              </span>
+              <span className="text-[10px] text-gold mt-1 block font-light">
+                100% Purity Verified & Traceable
+              </span>
+            </div>
           </div>
 
-          {/* Nav and Workspace Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+          {/* Nav & Panel Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             
-            {/* Tabs Sidebar (Left - 3 columns) */}
-            <div className="lg:col-span-3 bg-white border border-forest/5 p-6 space-y-2">
+            {/* Sidebar Navigation */}
+            <div className="lg:col-span-3 bg-white border border-forest/10 p-4 space-y-2 shadow-sm">
               {[
-                { id: "orders", label: "Orders Register", icon: <ShoppingBag className="w-4 h-4" /> },
+                { id: "orders", label: "Orders & Addresses", icon: <ShoppingBag className="w-4 h-4" /> },
+                { id: "bills", label: "Bills & Invoices", icon: <FileText className="w-4 h-4" /> },
+                { id: "analytics", label: "Complete Site Hits", icon: <Activity className="w-4 h-4" /> },
                 { id: "inventory", label: "Inventory Logs", icon: <Database className="w-4 h-4" /> },
-                { id: "analytics", label: "Analytics Charts", icon: <BarChart3 className="w-4 h-4" /> },
                 { id: "coupons", label: "Coupons Manager", icon: <Tag className="w-4 h-4" /> },
-                { id: "content", label: "Blogs & Recipes", icon: <Newspaper className="w-4 h-4" /> }
+                { id: "content", label: "Blogs & Recipes", icon: <Newspaper className="w-4 h-4" /> },
               ].map((tab) => {
                 const isActive = activeTab === tab.id;
                 return (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id as any)}
-                    className={`w-full p-4 text-xs font-semibold uppercase tracking-wider flex items-center gap-3 transition-colors ${
+                    className={`w-full p-3.5 text-xs font-semibold uppercase tracking-wider flex items-center gap-3 transition-colors text-left ${
                       isActive ? "bg-forest text-brand-bg font-bold" : "text-forest hover:bg-forest/5"
                     }`}
                   >
@@ -183,23 +272,40 @@ export default function AdminPage() {
                   </button>
                 );
               })}
+
               <Link
                 href="/admin/whatsapp"
-                className="w-full p-4 text-xs font-semibold uppercase tracking-wider flex items-center gap-3 text-forest hover:bg-forest/5 border-t border-forest/5 mt-4 transition-colors"
+                className="w-full p-3.5 text-xs font-semibold uppercase tracking-wider flex items-center gap-3 text-forest hover:bg-forest/5 border-t border-forest/10 mt-4 transition-colors"
               >
                 <Settings className="w-4 h-4 text-gold" />
-                WhatsApp Settings
+                WhatsApp Alerts Settings
               </Link>
             </div>
 
-            {/* Panel Area (Right - 9 columns) */}
-            <div className="lg:col-span-9 space-y-6 bg-white border border-forest/5 p-8 shadow-sm">
+            {/* Main Panel Content */}
+            <div className="lg:col-span-9 space-y-6 bg-white border border-forest/10 p-6 md:p-8 shadow-sm">
               
-              {/* Orders Register */}
+              {/* ORDERS & ADDRESSES TAB */}
               {activeTab === "orders" && (
                 <div className="space-y-6">
-                  <h3 className="text-lg font-serif text-forest font-semibold border-b border-forest/5 pb-3">Active Order Book</h3>
-                  
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-forest/10 pb-4">
+                    <div>
+                      <h3 className="text-xl font-serif text-forest font-semibold">Total Orders & Customer Addresses</h3>
+                      <p className="text-xs text-dark/60">View all customer orders along with complete delivery addresses</p>
+                    </div>
+
+                    <div className="relative w-full md:w-64">
+                      <Search className="w-4 h-4 absolute left-3 top-3 text-forest/40" />
+                      <input
+                        type="text"
+                        placeholder="Search order, name, phone, city..."
+                        value={orderSearchQuery}
+                        onChange={(e) => setOrderSearchQuery(e.target.value)}
+                        className="w-full pl-9 pr-4 py-2 text-xs border border-forest/20 bg-brand-bg/30 focus:outline-none focus:border-forest"
+                      />
+                    </div>
+                  </div>
+
                   {loadingOrders ? (
                     <p className="text-xs text-dark/60">Fetching order registers from database...</p>
                   ) : ordersError ? (
@@ -207,49 +313,154 @@ export default function AdminPage() {
                       Error: {ordersError}
                       <button onClick={fetchDbOrders} className="ml-4 font-bold underline">Retry</button>
                     </div>
-                  ) : dbOrders.length === 0 ? (
-                    <p className="text-xs text-dark/60">No database orders found.</p>
+                  ) : filteredOrders.length === 0 ? (
+                    <p className="text-xs text-dark/60">No orders match your query.</p>
+                  ) : (
+                    <div className="space-y-6">
+                      {filteredOrders.map((ord) => (
+                        <div key={ord.id} className="border border-forest/10 bg-brand-bg/15 p-5 text-xs space-y-4 shadow-sm hover:border-forest/30 transition-colors">
+                          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-forest/10 pb-3">
+                            <div className="flex items-center gap-3">
+                              <span className="font-mono font-bold text-sm text-forest">{ord.orderNumber}</span>
+                              <span className="text-[10px] font-mono text-dark/50">
+                                {new Date(ord.createdAt).toLocaleString("en-IN")}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <span className={`text-[10px] font-bold px-2 py-1 uppercase ${
+                                ord.paymentStatus === "paid" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
+                              }`}>
+                                Payment: {ord.paymentStatus} ({ord.paymentId ? "Online" : "COD"})
+                              </span>
+                              <select
+                                value={ord.orderStatus}
+                                onChange={(e) => handleUpdateOrderStatus(ord.id, e.target.value)}
+                                className="text-[10px] border border-forest/20 bg-white p-1 text-forest uppercase font-semibold focus:outline-none"
+                              >
+                                <option value="placed">Placed</option>
+                                <option value="processing">Processing</option>
+                                <option value="shipped">Shipped</option>
+                                <option value="delivered">Delivered</option>
+                              </select>
+                            </div>
+                          </div>
+
+                          {/* Customer & Address Details */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white p-4 border border-forest/5">
+                            <div className="space-y-1">
+                              <span className="text-[10px] uppercase font-bold text-forest/70 block">Customer Information</span>
+                              <p className="font-semibold text-sm text-forest">{ord.shippingName}</p>
+                              <p className="text-dark/70">Phone: {ord.shippingPhone}</p>
+                              {ord.shippingEmail && <p className="text-dark/70">Email: {ord.shippingEmail}</p>}
+                            </div>
+
+                            <div className="space-y-1 border-t md:border-t-0 md:border-l border-forest/10 pt-2 md:pt-0 md:pl-4">
+                              <span className="text-[10px] uppercase font-bold text-forest/70 flex items-center gap-1">
+                                <MapPin className="w-3 h-3 text-gold" /> Shipping Address
+                              </span>
+                              <p className="text-dark font-medium">{ord.shippingAddress1}</p>
+                              {ord.shippingAddress2 && <p className="text-dark/70">{ord.shippingAddress2}</p>}
+                              <p className="text-dark/70">
+                                {ord.shippingCity}, {ord.shippingState} - <span className="font-mono font-bold">{ord.shippingPincode}</span>
+                              </p>
+                              <span className="inline-block text-[9px] bg-forest/5 text-forest px-2 py-0.5 mt-1 font-semibold uppercase">
+                                Address Type: {ord.addressType || "Home"}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Items Summary & Total */}
+                          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pt-2">
+                            <div className="space-y-1">
+                              <span className="text-[10px] uppercase font-bold text-forest/60 block">Ordered Items</span>
+                              <div className="flex flex-wrap gap-2">
+                                {ord.items && ord.items.length > 0 ? (
+                                  ord.items.map((it: any) => (
+                                    <span key={it.id} className="bg-white border border-forest/10 text-[10px] px-2 py-1 text-forest">
+                                      {it.name} ({it.size}) × {it.quantity} @ ₹{it.price}
+                                    </span>
+                                  ))
+                                ) : (
+                                  <span className="text-dark/50 text-[11px]">1x Wood Pressed Sunflower Oil (1 L)</span>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="text-right shrink-0">
+                              <span className="text-[10px] text-dark/60 block uppercase">Total Amount</span>
+                              <span className="text-lg font-serif font-bold text-forest">₹{ord.total}</span>
+                            </div>
+                          </div>
+
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* BILLS & INVOICES TAB */}
+              {activeTab === "bills" && (
+                <div className="space-y-6">
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-forest/10 pb-4">
+                    <div>
+                      <h3 className="text-xl font-serif text-forest font-semibold">Bills & Invoices Register</h3>
+                      <p className="text-xs text-dark/60">Generate and print customer bills along with complete billing and shipping addresses</p>
+                    </div>
+
+                    <div className="relative w-full md:w-64">
+                      <Search className="w-4 h-4 absolute left-3 top-3 text-forest/40" />
+                      <input
+                        type="text"
+                        placeholder="Filter bills by order, name..."
+                        value={orderSearchQuery}
+                        onChange={(e) => setOrderSearchQuery(e.target.value)}
+                        className="w-full pl-9 pr-4 py-2 text-xs border border-forest/20 bg-brand-bg/30 focus:outline-none focus:border-forest"
+                      />
+                    </div>
+                  </div>
+
+                  {filteredOrders.length === 0 ? (
+                    <p className="text-xs text-dark/60">No bills found.</p>
                   ) : (
                     <div className="overflow-x-auto">
                       <table className="w-full text-xs font-light text-dark divide-y divide-forest/10">
                         <thead className="bg-brand-bg text-[10px] uppercase font-semibold text-forest text-left">
                           <tr>
-                            <th className="p-3 text-left">Order Number</th>
-                            <th className="p-3 text-left">Customer</th>
-                            <th className="p-3 text-left">Amount</th>
-                            <th className="p-3 text-left">Payment</th>
-                            <th className="p-3 text-left">Payment Status</th>
-                            <th className="p-3 text-left">Order Status</th>
+                            <th className="p-3">Bill / Invoice No.</th>
+                            <th className="p-3">Customer Name</th>
+                            <th className="p-3">Delivery Address</th>
+                            <th className="p-3">Payment</th>
+                            <th className="p-3">Amount</th>
+                            <th className="p-3 text-right">Action</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-forest/5">
-                          {dbOrders.map((ord) => (
-                            <tr key={ord.id} className="hover:bg-brand-bg/20 text-left">
-                              <td className="p-3 font-mono font-semibold">{ord.orderNumber}</td>
+                          {filteredOrders.map((ord) => (
+                            <tr key={ord.id} className="hover:bg-brand-bg/20">
+                              <td className="p-3 font-mono font-bold text-forest">{ord.orderNumber}</td>
                               <td className="p-3">
                                 <div className="font-semibold text-forest">{ord.shippingName}</div>
                                 <div className="text-[10px] text-dark/60">{ord.shippingPhone}</div>
                               </td>
-                              <td className="p-3 font-semibold">₹{ord.total}</td>
-                              <td className="p-3 uppercase">{ord.paymentId ? "Online" : "COD"}</td>
+                              <td className="p-3 text-[11px] max-w-xs truncate">
+                                {ord.shippingAddress1}, {ord.shippingCity}, {ord.shippingState} - {ord.shippingPincode}
+                              </td>
                               <td className="p-3">
                                 <span className={`text-[9px] font-bold px-2 py-0.5 uppercase ${
-                                  ord.paymentStatus === "paid" ? "bg-green-50 text-green-700" : "bg-yellow-50 text-yellow-700"
+                                  ord.paymentStatus === "paid" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
                                 }`}>
                                   {ord.paymentStatus}
                                 </span>
                               </td>
-                              <td className="p-3">
-                                <select
-                                  value={ord.orderStatus}
-                                  onChange={(e) => handleUpdateOrderStatus(ord.id, e.target.value)}
-                                  className="text-[10px] border border-forest/15 bg-white p-1 text-forest uppercase font-semibold focus:outline-none"
+                              <td className="p-3 font-semibold text-forest">₹{ord.total}</td>
+                              <td className="p-3 text-right">
+                                <button
+                                  onClick={() => setSelectedInvoiceOrder(ord)}
+                                  className="inline-flex items-center gap-1 px-3 py-1.5 bg-forest text-brand-bg hover:bg-forest-light text-[10px] uppercase font-semibold transition-colors"
                                 >
-                                  <option value="placed">Placed</option>
-                                  <option value="processing">Processing</option>
-                                  <option value="shipped">Shipped</option>
-                                  <option value="delivered">Delivered</option>
-                                </select>
+                                  <FileText className="w-3 h-3" /> View Invoice
+                                </button>
                               </td>
                             </tr>
                           ))}
@@ -260,11 +471,127 @@ export default function AdminPage() {
                 </div>
               )}
 
-              {/* Inventory Logs */}
+              {/* ANALYTICS & COMPLETE SITE HITS TAB */}
+              {activeTab === "analytics" && (
+                <div className="space-y-8">
+                  <div className="flex justify-between items-center border-b border-forest/10 pb-4">
+                    <div>
+                      <h3 className="text-xl font-serif text-forest font-semibold">Complete Site Hits & Visitor Traffic</h3>
+                      <p className="text-xs text-dark/60">Real-time visitor page views, path distribution, and traffic analytics</p>
+                    </div>
+
+                    <button
+                      onClick={fetchAnalytics}
+                      disabled={loadingAnalytics}
+                      className="text-xs font-semibold uppercase px-4 py-2 border border-forest/20 hover:bg-forest/5 text-forest"
+                    >
+                      {loadingAnalytics ? "Refreshing..." : "Refresh Traffic"}
+                    </button>
+                  </div>
+
+                  {/* Summary Metric Cards */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div className="p-5 border border-forest/10 bg-brand-bg/30">
+                      <span className="text-[10px] text-dark/60 uppercase block font-semibold">Total Recorded Hits</span>
+                      <span className="text-4xl font-serif font-bold text-forest mt-1 block">
+                        {analyticsData.totalHits}
+                      </span>
+                      <span className="text-[10px] text-gold mt-1 block">All page views logged across site</span>
+                    </div>
+
+                    <div className="p-5 border border-forest/10 bg-brand-bg/30">
+                      <span className="text-[10px] text-dark/60 uppercase block font-semibold">Unique IP Visitors</span>
+                      <span className="text-4xl font-serif font-bold text-forest mt-1 block">
+                        {analyticsData.uniqueVisitors}
+                      </span>
+                      <span className="text-[10px] text-gold mt-1 block">Distinct client addresses</span>
+                    </div>
+                  </div>
+
+                  {/* Daily Trend */}
+                  <div className="space-y-3">
+                    <h4 className="text-sm font-semibold text-forest uppercase tracking-wider">7-Day Page Hit Trend</h4>
+                    <div className="grid grid-cols-7 gap-2 items-end h-32 border border-forest/10 p-4 bg-brand-bg/10">
+                      {analyticsData.dailyTrend.map((d) => {
+                        const maxHits = Math.max(...analyticsData.dailyTrend.map((t) => t.hits), 1);
+                        const heightPct = Math.max(10, Math.round((d.hits / maxHits) * 100));
+                        return (
+                          <div key={d.date} className="flex flex-col items-center gap-2 h-full justify-end">
+                            <span className="text-[9px] font-bold text-forest">{d.hits}</span>
+                            <div
+                              style={{ height: `${heightPct}%` }}
+                              className="w-full bg-forest/80 hover:bg-gold transition-all"
+                            />
+                            <span className="text-[8px] font-mono text-dark/60 truncate w-full text-center">
+                              {d.date.slice(5)}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Top Visited Routes */}
+                  <div className="space-y-4">
+                    <h4 className="text-sm font-semibold text-forest uppercase tracking-wider">Top Visited Pages / Routes</h4>
+                    {analyticsData.topPaths.length === 0 ? (
+                      <p className="text-xs text-dark/50">No path hits logged yet. Visit pages to see live traffic breakdown!</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {analyticsData.topPaths.map((p) => (
+                          <div key={p.path} className="flex justify-between items-center p-3 border border-forest/5 bg-brand-bg/25 text-xs">
+                            <span className="font-mono font-semibold text-forest">{p.path}</span>
+                            <span className="font-bold text-forest bg-forest/10 px-2 py-0.5 text-[10px]">
+                              {p.count} Hits
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Recent Activity Log */}
+                  <div className="space-y-4">
+                    <h4 className="text-sm font-semibold text-forest uppercase tracking-wider">Recent Hit Logs</h4>
+                    {analyticsData.recentHits.length === 0 ? (
+                      <p className="text-xs text-dark/50">No recent hit logs available.</p>
+                    ) : (
+                      <div className="overflow-x-auto max-h-60 overflow-y-auto">
+                        <table className="w-full text-xs font-light text-dark divide-y divide-forest/10">
+                          <thead className="bg-brand-bg text-[9px] uppercase font-semibold text-forest sticky top-0">
+                            <tr>
+                              <th className="p-2 text-left">Timestamp</th>
+                              <th className="p-2 text-left">Path</th>
+                              <th className="p-2 text-left">IP Address</th>
+                              <th className="p-2 text-left">User Agent</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-forest/5">
+                            {analyticsData.recentHits.map((h) => (
+                              <tr key={h.id}>
+                                <td className="p-2 font-mono text-[10px]">
+                                  {new Date(h.createdAt).toLocaleString("en-IN")}
+                                </td>
+                                <td className="p-2 font-mono font-semibold text-forest">{h.path}</td>
+                                <td className="p-2 font-mono text-[10px] text-dark/70">{h.ipAddress || "Direct"}</td>
+                                <td className="p-2 text-[9px] text-dark/50 max-w-xs truncate">{h.userAgent || "Unknown"}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+
+                </div>
+              )}
+
+              {/* INVENTORY LOGS TAB */}
               {activeTab === "inventory" && (
                 <div className="space-y-6">
-                  <h3 className="text-lg font-serif text-forest font-semibold border-b border-forest/5 pb-3">Operational Stock Register</h3>
-                  
+                  <h3 className="text-lg font-serif text-forest font-semibold border-b border-forest/10 pb-3">
+                    Operational Stock Register
+                  </h3>
                   <div className="space-y-4">
                     {inventoryList.map((item) => (
                       <div key={item.sku} className="flex justify-between items-center p-4 border border-forest/5 bg-brand-bg/30 text-xs">
@@ -279,7 +606,6 @@ export default function AdminPage() {
                               {item.stock} Units
                             </span>
                           </div>
-                          
                           <div className="flex gap-2">
                             <button
                               onClick={() => handleDecrementStock(item.sku)}
@@ -301,48 +627,10 @@ export default function AdminPage() {
                 </div>
               )}
 
-              {/* Analytics Charts */}
-              {activeTab === "analytics" && (
-                <div className="space-y-6">
-                  <h3 className="text-lg font-serif text-forest font-semibold border-b border-forest/5 pb-3">Monthly Yield & Sales Trajectory</h3>
-                  
-                  <div className="space-y-6 text-xs">
-                    {/* Mock Sales Chart SVG */}
-                    <div className="space-y-2">
-                      <span className="text-[10px] text-dark/60 uppercase block">Weekly Sales Revenue Trajectory</span>
-                      <div className="w-full aspect-[21/9] border border-forest/10 relative bg-brand-bg flex items-end p-4">
-                        <svg className="absolute inset-0 w-full h-full p-6 text-gold" viewBox="0 0 100 100" preserveAspectRatio="none">
-                          {/* Grid lines */}
-                          <line x1="0" y1="20" x2="100" y2="20" stroke="rgba(30,74,58,0.05)" strokeWidth="0.5" />
-                          <line x1="0" y1="50" x2="100" y2="50" stroke="rgba(30,74,58,0.05)" strokeWidth="0.5" />
-                          <line x1="0" y1="80" x2="100" y2="80" stroke="rgba(30,74,58,0.05)" strokeWidth="0.5" />
-                          
-                          {/* Trajectory vector */}
-                          <polyline
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="1.5"
-                            points="0,85 20,60 40,75 60,35 80,45 100,10"
-                          />
-                        </svg>
-                        <div className="absolute bottom-2 left-6 right-6 flex justify-between text-[8px] text-dark/50 font-mono">
-                          <span>Week 1</span>
-                          <span>Week 2</span>
-                          <span>Week 3</span>
-                          <span>Week 4</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Coupons Manager */}
+              {/* COUPONS TAB */}
               {activeTab === "coupons" && (
                 <div className="space-y-8">
-                  <h3 className="text-lg font-serif text-forest font-semibold border-b border-forest/5 pb-3">Coupons Manager</h3>
-                  
-                  {/* Create coupon form */}
+                  <h3 className="text-lg font-serif text-forest font-semibold border-b border-forest/10 pb-3">Coupons Manager</h3>
                   <form onSubmit={handleCreateCoupon} className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end text-xs">
                     <div className="space-y-1">
                       <label className="text-[10px] uppercase font-semibold text-forest/60 block">Coupon Code</label>
@@ -374,7 +662,6 @@ export default function AdminPage() {
                     </button>
                   </form>
 
-                  {/* List of active codes */}
                   <div className="space-y-3 pt-4">
                     {coupons.map((c) => (
                       <div key={c.code} className="flex justify-between items-center p-3 border border-forest/5 bg-brand-bg/25 text-xs">
@@ -394,11 +681,10 @@ export default function AdminPage() {
                 </div>
               )}
 
-              {/* Blogs & Recipes Publishing */}
+              {/* CONTENT TAB */}
               {activeTab === "content" && (
                 <div className="space-y-8">
-                  <h3 className="text-lg font-serif text-forest font-semibold border-b border-forest/5 pb-3">Publication Engine</h3>
-                  
+                  <h3 className="text-lg font-serif text-forest font-semibold border-b border-forest/10 pb-3">Publication Engine</h3>
                   <div className="space-y-4">
                     {contentList.map((item, idx) => (
                       <div key={idx} className="p-4 border border-forest/5 bg-brand-bg/20 text-xs flex justify-between items-center">
@@ -412,11 +698,6 @@ export default function AdminPage() {
                       </div>
                     ))}
                   </div>
-                  
-                  {/* Simulated draft publisher warning */}
-                  <div className="bg-brand-bg p-4 border border-gold/20 text-xs flex gap-3 text-forest">
-                    <span>Publication Engine is synced with the Saurashtra blog sub-ledger. Select 'Content Management System' from settings to add drafts.</span>
-                  </div>
                 </div>
               )}
 
@@ -426,6 +707,137 @@ export default function AdminPage() {
 
         </div>
       </main>
+
+      {/* PRINTABLE INVOICE / BILL MODAL */}
+      {selectedInvoiceOrder && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white text-dark w-full max-w-2xl p-8 space-y-6 shadow-2xl relative border border-forest/20 my-8">
+            
+            {/* Modal Header Controls */}
+            <div className="flex justify-between items-center border-b border-forest/10 pb-4 print:hidden">
+              <span className="text-xs uppercase tracking-widest text-gold font-bold flex items-center gap-2">
+                <FileText className="w-4 h-4" /> Tax Invoice & Bill
+              </span>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => window.print()}
+                  className="px-4 py-2 bg-forest text-brand-bg text-xs font-semibold uppercase flex items-center gap-2 hover:bg-forest-light"
+                >
+                  <Printer className="w-4 h-4" /> Print / Download PDF
+                </button>
+                <button
+                  onClick={() => setSelectedInvoiceOrder(null)}
+                  className="p-2 text-dark/60 hover:text-dark hover:bg-forest/5"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Printable Invoice Header */}
+            <div className="flex justify-between items-start border-b-2 border-forest pb-6">
+              <div>
+                <h2 className="text-2xl font-serif text-forest font-bold tracking-wider">ROOT & HARVEST</h2>
+                <p className="text-[10px] text-dark/60 uppercase tracking-widest mt-1">Honest Food, Naturally Crafted</p>
+                <p className="text-[10px] text-dark/60 mt-1">Hyderabad Operations Hub, India</p>
+                <p className="text-[10px] text-dark/60">GSTIN: 36AAACR1234F1Z9 | support@rootandharvest.in</p>
+              </div>
+              <div className="text-right">
+                <span className="text-xs font-bold uppercase tracking-widest text-forest block">TAX INVOICE</span>
+                <p className="font-mono text-sm font-bold text-forest mt-1">{selectedInvoiceOrder.orderNumber}</p>
+                <p className="text-[10px] font-mono text-dark/60">
+                  Date: {new Date(selectedInvoiceOrder.createdAt).toLocaleDateString("en-IN")}
+                </p>
+                <p className="text-[10px] uppercase font-bold text-green-700 mt-1">
+                  Status: {selectedInvoiceOrder.paymentStatus}
+                </p>
+              </div>
+            </div>
+
+            {/* Addresses Block */}
+            <div className="grid grid-cols-2 gap-6 text-xs bg-brand-bg/30 p-4 border border-forest/10">
+              <div className="space-y-1">
+                <span className="text-[10px] font-bold uppercase text-forest block">Billed & Shipped To</span>
+                <p className="font-bold text-forest">{selectedInvoiceOrder.shippingName}</p>
+                <p>{selectedInvoiceOrder.shippingAddress1}</p>
+                {selectedInvoiceOrder.shippingAddress2 && <p>{selectedInvoiceOrder.shippingAddress2}</p>}
+                <p>{selectedInvoiceOrder.shippingCity}, {selectedInvoiceOrder.shippingState} - {selectedInvoiceOrder.shippingPincode}</p>
+                <p className="text-dark/70 font-mono text-[11px]">Phone: {selectedInvoiceOrder.shippingPhone}</p>
+                {selectedInvoiceOrder.shippingEmail && <p className="text-dark/70 text-[11px]">Email: {selectedInvoiceOrder.shippingEmail}</p>}
+              </div>
+
+              <div className="space-y-1 text-right">
+                <span className="text-[10px] font-bold uppercase text-forest block">Payment Details</span>
+                <p className="font-semibold">{selectedInvoiceOrder.paymentId ? "Online Gateway (Razorpay/UPI)" : "Cash on Delivery (COD)"}</p>
+                {selectedInvoiceOrder.paymentId && (
+                  <p className="font-mono text-[10px] text-dark/60">Txn Ref: {selectedInvoiceOrder.paymentId}</p>
+                )}
+                <p className="text-[10px] text-dark/60 mt-2">Delivery Type: Standard Express</p>
+              </div>
+            </div>
+
+            {/* Itemized Invoice Table */}
+            <table className="w-full text-xs divide-y divide-forest/10">
+              <thead className="bg-forest/5 text-forest font-semibold uppercase text-[10px]">
+                <tr>
+                  <th className="p-3 text-left">Item Description</th>
+                  <th className="p-3 text-center">Qty</th>
+                  <th className="p-3 text-right">Unit Price</th>
+                  <th className="p-3 text-right">Amount</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-forest/5">
+                {selectedInvoiceOrder.items && selectedInvoiceOrder.items.length > 0 ? (
+                  selectedInvoiceOrder.items.map((it: any) => (
+                    <tr key={it.id}>
+                      <td className="p-3 font-semibold text-forest">
+                        {it.name} <span className="text-[10px] font-normal text-dark/60">({it.size})</span>
+                      </td>
+                      <td className="p-3 text-center font-mono">{it.quantity}</td>
+                      <td className="p-3 text-right font-mono">₹{it.price}</td>
+                      <td className="p-3 text-right font-mono font-semibold">₹{it.price * it.quantity}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td className="p-3 font-semibold text-forest">Wood Pressed Sunflower Oil (1 L)</td>
+                    <td className="p-3 text-center font-mono">1</td>
+                    <td className="p-3 text-right font-mono">₹{selectedInvoiceOrder.total}</td>
+                    <td className="p-3 text-right font-mono font-semibold">₹{selectedInvoiceOrder.total}</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+
+            {/* Totals Breakdown */}
+            <div className="border-t border-forest/20 pt-4 flex justify-between items-start text-xs">
+              <div className="text-[10px] text-dark/60 space-y-1">
+                <p>Thank you for choosing 100% natural, farm-fresh produce from Root & Harvest!</p>
+                <p>This is a computer-generated tax invoice.</p>
+              </div>
+              <div className="space-y-1 text-right w-48 font-mono">
+                <div className="flex justify-between text-dark/70">
+                  <span>Subtotal:</span>
+                  <span>₹{selectedInvoiceOrder.total}</span>
+                </div>
+                <div className="flex justify-between text-dark/70">
+                  <span>GST (5% Included):</span>
+                  <span>₹{Math.round(selectedInvoiceOrder.total * 0.05)}</span>
+                </div>
+                <div className="flex justify-between text-dark/70">
+                  <span>Shipping Fee:</span>
+                  <span className="text-green-700 font-bold uppercase text-[10px]">FREE</span>
+                </div>
+                <div className="flex justify-between border-t border-forest/20 pt-2 text-sm font-bold text-forest">
+                  <span>Total Bill:</span>
+                  <span>₹{selectedInvoiceOrder.total}</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
 
       <Footer />
     </>

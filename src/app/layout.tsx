@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Cormorant_Garamond, Inter } from "next/font/google";
 import { AppProvider } from "@/context/AppContext";
 import { AuthProvider } from "@/components/layout/AuthProvider";
+import { PageHitTracker } from "@/components/analytics/PageHitTracker";
 import "./globals.css";
 
 const cormorant = Cormorant_Garamond({
@@ -110,6 +111,7 @@ export default function RootLayout({
       >
         <AuthProvider>
           <AppProvider>
+            <PageHitTracker />
             {children}
           </AppProvider>
         </AuthProvider>
