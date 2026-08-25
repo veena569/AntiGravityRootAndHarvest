@@ -14,7 +14,7 @@ export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // Allow unauthenticated access to the admin login page
-  if (pathname === "/admin/login") {
+  if (pathname === "/admin/login" || pathname === "/admin/login/") {
     return NextResponse.next();
   }
 
@@ -32,8 +32,9 @@ export async function middleware(req: NextRequest) {
     if (pathname.startsWith("/api/")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    // Redirect to login with callback URL
-    const url = new URL("/login", req.url);
+    // Redirect to correct login page (admin vs customer)
+    const loginPath = isAdmin ? "/admin/login" : "/login";
+    const url = new URL(loginPath, req.url);
     url.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(url);
   }
@@ -64,10 +65,9 @@ export async function middleware(req: NextRequest) {
     if (pathname.startsWith("/api/")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    // Note: To handle silent refresh seamlessly on page load, we often let the client handle 401s 
-    // and refresh, or we can refresh here. But Edge can't easily hit Prisma. 
-    // We redirect to login and the client `ApiClient` or `AuthProvider` will attempt refresh.
-    const url = new URL("/login", req.url);
+    // Redirect to correct login page (admin vs customer)
+    const loginPath = isAdmin ? "/admin/login" : "/login";
+    const url = new URL(loginPath, req.url);
     url.searchParams.set("callbackUrl", pathname);
     // Add a flag to indicate session expiry
     url.searchParams.set("expired", "true");
