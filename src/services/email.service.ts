@@ -1,10 +1,14 @@
 import nodemailer from "nodemailer";
 
 export class EmailService {
+  private static getSmtpUser() {
+    return process.env.SMTP_USER || "hello@rootandharvest.in";
+  }
+
   private static getTransporter() {
     const host = process.env.SMTP_HOST || "smtpout.secureserver.net";
     const port = parseInt(process.env.SMTP_PORT || "465");
-    const user = process.env.SMTP_USER || "hello@rootandharvest.in";
+    const user = this.getSmtpUser();
     const pass = process.env.SMTP_PASS || "Anaira@2019";
 
     if (!host || !user || !pass) {
@@ -109,7 +113,7 @@ export class EmailService {
 
     try {
       await transporter.sendMail({
-        from: `"Root & Harvest" <${process.env.SMTP_USER}>`,
+        from: `"Root & Harvest" <${this.getSmtpUser()}>`,
         to: order.shippingEmail,
         subject,
         html,
@@ -139,7 +143,7 @@ export class EmailService {
 
     try {
       await transporter.sendMail({
-        from: `"Root & Harvest Admin" <${process.env.SMTP_USER}>`,
+        from: `"Root & Harvest Admin" <${this.getSmtpUser()}>`,
         to: adminRecipients.join(", "),
         subject,
         html,
@@ -215,7 +219,7 @@ export class EmailService {
 
     try {
       await transporter.sendMail({
-        from: `"Root & Harvest" <${process.env.SMTP_USER}>`,
+        from: `"Root & Harvest" <${this.getSmtpUser()}>`,
         to: order.shippingEmail,
         subject,
         html,
@@ -337,7 +341,7 @@ export class EmailService {
 
     try {
       await transporter.sendMail({
-        from: `"Root & Harvest Admin" <${process.env.SMTP_USER}>`,
+        from: `"Root & Harvest Admin" <${this.getSmtpUser()}>`,
         to: adminRecipients.join(", "),
         subject,
         html,
@@ -365,7 +369,7 @@ export class EmailService {
 
     try {
       await transporter.sendMail({
-        from: `"Root & Harvest" <${process.env.SMTP_USER}>`,
+        from: `"Root & Harvest" <${this.getSmtpUser()}>`,
         to: order.shippingEmail,
         subject,
         html,
@@ -404,7 +408,7 @@ export class EmailService {
 
     try {
       await transporter.sendMail({
-        from: `"Root & Harvest" <${process.env.SMTP_USER}>`,
+        from: `"Root & Harvest" <${this.getSmtpUser()}>`,
         to: email,
         subject,
         html,
