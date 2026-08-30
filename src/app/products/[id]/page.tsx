@@ -264,16 +264,26 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
   };
 
   // Calculated ratings
-  const mockReviewsFormatted = (product.reviews || []).map((r: any, idx: number) => ({
-    id: `mock-${idx}-${r.author || "rev"}`,
-    rating: r.rating,
-    name: r.author || "Verified Buyer",
-    createdAt: r.date ? new Date(r.date).toISOString() : new Date().toISOString(),
-    comment: r.comment || "",
-    title: r.title || "",
-    isVerified: r.verified ?? true,
-    location: "Verified Buyer",
-  }));
+  const mockReviewsFormatted = (product.reviews || [])
+    .filter((r: any) => {
+      const isDuplicate = dbReviews.some(
+        (dbR) =>
+          dbR.comment.trim().toLowerCase() === r.comment.trim().toLowerCase() ||
+          (dbR.name.trim().toLowerCase().replace(/\s+/g, "") === r.author.trim().toLowerCase().replace(/\s+/g, "") &&
+            dbR.comment.substring(0, 15).toLowerCase() === r.comment.substring(0, 15).toLowerCase())
+      );
+      return !isDuplicate;
+    })
+    .map((r: any, idx: number) => ({
+      id: `mock-${idx}-${r.author || "rev"}`,
+      rating: r.rating,
+      name: r.author || "Verified Buyer",
+      createdAt: r.date ? new Date(r.date).toISOString() : new Date().toISOString(),
+      comment: r.comment || "",
+      title: r.title || "",
+      isVerified: r.verified ?? true,
+      location: "Verified Buyer",
+    }));
   const allReviews = [...dbReviews, ...mockReviewsFormatted];
   const totalReviewsCount = (product.reviewsCount || 0) + dbReviews.length;
   const averageRating = product.rating ? product.rating.toFixed(1) : "5.0";
