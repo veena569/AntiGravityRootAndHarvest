@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, Leaf, ShieldCheck, Truck, CheckCircle2, Factory, Heart, Microscope, Star, Users, X, Lock } from "lucide-react";
+import { ArrowRight, Leaf, ShieldCheck, Truck, CheckCircle2, Factory, Heart, Microscope, Star, Users, X, Lock, Droplet, Sparkles } from "lucide-react";
 import { useAuth } from "@/components/layout/AuthProvider";
 import { BrandBottle } from "@/components/ui/BrandBottle";
 import { Button } from "@/components/ui/Button";
@@ -10,6 +10,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Review } from "@/components/ui";
 import { INITIAL_PRODUCTS } from "@/data/products";
+import { useApp } from "@/context/AppContext";
 
 // Scroll reveal hook
 function useScrollReveal() {
@@ -33,9 +34,10 @@ function RevealSection({ children, className = "" }: { children: React.ReactNode
 }
 
 export default function HomePage() {
+  const { wishlist, addToCart, toggleWishlist } = useApp();
   const [reviews, setReviews] = useState<any[]>([]);
   const [loadingReviews, setLoadingReviews] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState("oils");
+  const [addedProduct, setAddedProduct] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchReviews() {
@@ -54,130 +56,369 @@ export default function HomePage() {
     fetchReviews();
   }, []);
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      const cat = params.get("category");
-      if (cat === "grains") {
-        setSelectedCategory("grains");
-        setTimeout(() => {
-          const el = document.getElementById("explore-categories");
-          if (el) el.scrollIntoView({ behavior: "smooth" });
-        }, 100);
-      } else if (cat === "oils") {
-        setSelectedCategory("oils");
-        setTimeout(() => {
-          const el = document.getElementById("explore-categories");
-          if (el) el.scrollIntoView({ behavior: "smooth" });
-        }, 100);
-      }
-    }
-  }, []);
+  const handleAddToCart = (product: any) => {
+    const defaultSize = product.sizes[0];
+    addToCart(product, defaultSize, 1);
+    setAddedProduct(`${product.id}-${defaultSize}`);
+    setTimeout(() => setAddedProduct(null), 2000);
+  };
+
+  const bestsellerIds = ["groundnut-oil", "sesame-oil", "groundnuts", "jaisriram-unpolished-rice"];
+  const bestsellers = bestsellerIds.map(id => INITIAL_PRODUCTS.find(p => p.id === id)).filter(Boolean) as any[];
 
   return (
     <div className="flex flex-col w-full selection:bg-gold/20 font-sans bg-brand-bg text-dark overflow-x-hidden font-light">
       <Navbar />
 
       {/* ============================================================
-          1. HERO — Brand Infographic Banner
+          1. HERO SECTION (New Split Layout)
           ============================================================ */}
-      <section className="relative w-full bg-brand-bg flex flex-col items-center overflow-hidden">
-        <h1 className="sr-only">ROOT &amp; HARVEST | Premium Wood Pressed Oils &amp; Farm Fresh Foods</h1>
-        <style dangerouslySetInnerHTML={{__html: `
-          @keyframes slideFromTop {
-            0% {
-              transform: translateY(-80px);
-              opacity: 0;
-            }
-            100% {
-              transform: translateY(0);
-              opacity: 1;
-            }
-          }
-          .animate-slide-from-top {
-            animation: slideFromTop 1.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-          }
-        `}} />
-        <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 md:px-12 pt-8 pb-16 animate-slide-from-top">
-          <div className="relative w-full aspect-[3/2] border-4 border-forest shadow-lg overflow-hidden bg-white rounded-md">
+      <section className="relative w-full bg-[#F8F5EF] overflow-hidden min-h-[70vh] lg:min-h-[80vh] flex items-center border-b border-forest/5">
+        <h1 className="sr-only">Root &amp; Harvest | Wood Pressed Oils &amp; Traditional Foods</h1>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_20%,rgba(200,161,74,0.08),transparent_50%)] pointer-events-none" />
+        
+        <div className="w-full max-w-[1280px] mx-auto px-6 md:px-12 py-12 md:py-24 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
+          {/* Left Column: Headline and CTAs */}
+          <div className="lg:col-span-7 space-y-6 md:space-y-8 flex flex-col justify-center text-left animate-fade-in-up">
+            <div className="flex items-center gap-3">
+              <span className="w-8 h-[1px] bg-gold" />
+              <span className="text-[10px] sm:text-xs tracking-[0.3em] uppercase text-gold font-bold">
+                Wood Pressed Goodness
+              </span>
+            </div>
+            
+            <h2 className="text-4xl sm:text-5xl lg:text-6xl font-serif text-forest tracking-tight leading-[1.08] font-bold uppercase">
+              Pure by Nature.<br />
+              <span className="italic font-normal lowercase">pressed with</span> Tradition.
+            </h2>
+            
+            <p className="text-dark/65 text-base sm:text-lg max-w-xl leading-relaxed font-sans font-light">
+              Wood-pressed oils and wholesome foods, sourced with care from trusted farms to your family table. Made in small batches, just the way nature intended.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-4 pt-2">
+              <Link
+                href="/products?category=oils"
+                className="inline-flex items-center justify-center bg-forest hover:bg-forest-light text-white text-xs uppercase tracking-[0.2em] font-bold h-14 px-8 transition-colors shadow-md"
+              >
+                SHOP WOOD PRESSED OILS
+              </Link>
+              <Link
+                href="/products?category=grains"
+                className="inline-flex items-center justify-center bg-transparent border border-forest/20 hover:border-forest text-forest text-xs uppercase tracking-[0.2em] font-bold h-14 px-8 transition-colors"
+              >
+                EXPLORE TRADITIONAL GRAINS
+              </Link>
+            </div>
+            
+            {/* Trust Badges Bar */}
+            <div className="pt-6 border-t border-forest/10 flex flex-wrap items-center gap-x-6 gap-y-2 text-[10px] tracking-wider text-forest/60 font-bold uppercase">
+              <span className="flex items-center gap-1.5">◆ Wood Pressed</span>
+              <span className="flex items-center gap-1.5">◆ Unrefined</span>
+              <span className="flex items-center gap-1.5">◆ No Additives</span>
+              <span className="flex items-center gap-1.5">◆ Small Batch</span>
+            </div>
+          </div>
+          
+          {/* Right Column: Hero Visual */}
+          <div className="lg:col-span-5 relative w-full h-[360px] sm:h-[450px] lg:h-[550px] rounded-sm overflow-hidden shadow-xl border border-forest/5 bg-white">
             <Image
-              src="/images/brand-banner-v2.jpg"
-              alt="Root & Harvest Brand Infographic"
+              src="/images/groundnut-oil-farm.jpg"
+              alt="Root & Harvest Farm Purity"
               fill
-              className="object-contain"
               priority
+              sizes="(max-width: 1024px) 100vw, 40vw"
+              className="object-cover transition-transform duration-[6s] hover:scale-103"
             />
+            {/* Ambient gradients */}
+            <div className="absolute inset-0 bg-gradient-to-t from-forest/20 via-transparent to-transparent mix-blend-multiply pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-tr from-gold/5 via-transparent to-transparent pointer-events-none" />
           </div>
         </div>
       </section>
 
       {/* ============================================================
-          2. TRUST BAR — Animated scrolling marquee
+          2. TRUST STRIP
           ============================================================ */}
-      <section className="border-y border-forest/10 bg-forest overflow-hidden py-4">
-        <div className="flex gap-16 animate-[marquee_22s_linear_infinite] whitespace-nowrap">
-          {[...Array(3)].map((_, rep) => (
-            <div key={rep} className="flex gap-16 shrink-0">
-              {[
-                { icon: <Leaf className="w-4 h-4"/>, label: "100% Natural" },
-                { icon: <ShieldCheck className="w-4 h-4"/>, label: "No Preservatives" },
-                { icon: <CheckCircle2 className="w-4 h-4"/>, label: "Secure Payments" },
-                { icon: <Truck className="w-4 h-4"/>, label: "Fast Delivery" },
-                { icon: <Factory className="w-4 h-4"/>, label: "Made in India" },
-                { icon: <Heart className="w-4 h-4"/>, label: "Family Trusted" },
-              ].map((item, i) => (
-                <span key={i} className="flex items-center gap-2 text-xs tracking-[0.25em] uppercase text-gold font-semibold">
-                  <span className="text-gold/60">{item.icon}</span>
-                  {item.label}
-                  <span className="text-gold/30 ml-8">◆</span>
-                </span>
-              ))}
+      <section className="border-b border-forest/10 bg-white py-8">
+        <div className="max-w-[1280px] mx-auto px-6 md:px-12 grid grid-cols-2 lg:grid-cols-4 gap-8 justify-items-center">
+          {[
+            { icon: <Droplet className="w-5 h-5 text-gold"/>, title: "WOOD PRESSED", desc: "Traditional extraction" },
+            { icon: <ShieldCheck className="w-5 h-5 text-gold"/>, title: "UNREFINED", desc: "Nothing unnecessary" },
+            { icon: <Leaf className="w-5 h-5 text-gold"/>, title: "NO ADDITIVES", desc: "Pure and honest" },
+            { icon: <Sparkles className="w-5 h-5 text-gold"/>, title: "SMALL BATCH", desc: "Made with care" },
+          ].map((item, idx) => (
+            <div key={idx} className="flex items-center gap-4 text-left w-full max-w-[220px]">
+              <div className="w-10 h-10 rounded-full bg-[#F8F5EF] flex items-center justify-center shrink-0">
+                {item.icon}
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[10px] tracking-[0.2em] font-bold text-forest uppercase leading-none">{item.title}</span>
+                <span className="text-[10px] text-dark/50 mt-1.5 font-sans font-medium">{item.desc}</span>
+              </div>
             </div>
           ))}
         </div>
       </section>
 
       {/* ============================================================
-          3. WHY CHOOSE US — Warm beige, not dark
+          3. SHOP OUR BESTSELLERS
           ============================================================ */}
       <section className="py-24 bg-[#F8F5EF] relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gold/4 rounded-full blur-3xl -translate-y-1/3 translate-x-1/4 pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-forest/3 rounded-full blur-3xl translate-y-1/3 -translate-x-1/4 pointer-events-none" />
-
-        <div className="relative max-w-[1280px] mx-auto px-6 md:px-12">
+        <div className="max-w-[1280px] mx-auto px-6 md:px-12">
+          
           <RevealSection className="text-center max-w-2xl mx-auto space-y-4 mb-16">
             <div className="flex items-center justify-center gap-3">
               <span className="w-8 h-[1px] bg-gold" />
-              <span className="text-xs tracking-[0.3em] uppercase text-gold font-semibold">Our Promise</span>
+              <span className="text-xs tracking-[0.3em] uppercase text-gold font-bold">Good Food Starts with Good Ingredients</span>
               <span className="w-8 h-[1px] bg-gold" />
             </div>
-            <h2 className="text-4xl md:text-5xl font-serif text-forest tracking-tight">
-              The Root & Harvest<br />Difference
+            <h2 className="text-4xl md:text-5xl font-serif text-forest tracking-tight font-bold uppercase leading-tight">
+              Our Bestsellers
             </h2>
-            <p className="text-dark/55 text-base max-w-md mx-auto">
-              Every drop is a testament to nature's uncompromised purity.
+            <p className="text-sm text-dark/60 font-sans max-w-md mx-auto">
+              Traditional foods, thoughtfully sourced and slowly crafted for your everyday kitchen.
             </p>
           </RevealSection>
 
-          <RevealSection className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[
-              { icon: <Factory className="w-6 h-6"/>, title: "Freshly Wood Pressed", desc: "Extracted at low temperatures using traditional wooden ghani — preserving every nutrient." },
-              { icon: <Leaf className="w-6 h-6"/>, title: "No Chemicals", desc: "Absolutely no solvents, preservatives, or artificial additives. Nature's way, always." },
-              { icon: <CheckCircle2 className="w-6 h-6"/>, title: "Small Batch", desc: "Made in limited quantities to ensure maximum freshness and uncompromised quality." },
-              { icon: <ShieldCheck className="w-6 h-6"/>, title: "100% Transparency", desc: "Complete visibility from farm to bottle with lab-certified purity and batch-level traceability." },
-              { icon: <Truck className="w-6 h-6"/>, title: "Direct from Farms", desc: "Sourced directly from trusted family farms across India — no middlemen." },
-              { icon: <Heart className="w-6 h-6"/>, title: "Family First", desc: "Crafted with the same love and care we demand for our own children's meals." },
-            ].map((feature, idx) => (
-              <div key={idx}
-                className="group relative bg-white border border-forest/8 p-8 hover:border-gold/30 hover:shadow-lg transition-all duration-400 hover-lift"
+          <RevealSection className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {bestsellers.map((product) => (
+              <div 
+                key={product.id} 
+                className="bg-white border border-forest/5 p-6 hover:shadow-lg transition-all duration-300 flex flex-col justify-between group relative"
               >
-                {/* Gold top accent line */}
-                <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-gold to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                <div className="w-12 h-12 rounded-full bg-forest/6 flex items-center justify-center text-forest mb-6 group-hover:bg-forest group-hover:text-white transition-all duration-300">
-                  {feature.icon}
+                {/* Wishlist Button */}
+                <button 
+                  onClick={() => toggleWishlist(product.id)}
+                  className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/90 border border-forest/5 text-forest hover:text-gold transition-colors shadow-sm cursor-pointer"
+                  title={wishlist.includes(product.id) ? "Remove from Wishlist" : "Add to Wishlist"}
+                >
+                  <Heart className={`w-4 h-4 ${wishlist.includes(product.id) ? "fill-gold text-gold" : "text-forest"}`} />
+                </button>
+
+                {/* Product Image Link */}
+                <Link href={`/products/${product.id}`} className="relative aspect-[3/4] w-full bg-brand-bg/20 flex items-center justify-center p-4 overflow-hidden border border-forest/5 mb-6">
+                  <Image 
+                    src={product.image} 
+                    alt={product.name} 
+                    fill 
+                    className="object-contain p-4 group-hover:scale-102 transition-transform duration-500" 
+                  />
+                </Link>
+
+                {/* Card Info */}
+                <div className="space-y-2 flex-grow flex flex-col">
+                  {/* Reviews rating */}
+                  <div className="flex items-center gap-1 text-gold">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className="w-3.5 h-3.5 fill-current" />
+                    ))}
+                    <span className="text-[10px] text-dark/50 font-sans ml-1 font-semibold">({product.reviewsCount})</span>
+                  </div>
+                  
+                  <Link href={`/products/${product.id}`}>
+                    <h3 className="text-lg font-serif text-forest font-bold tracking-wide uppercase group-hover:text-gold transition-colors leading-tight">
+                      {product.name}
+                    </h3>
+                  </Link>
+                  
+                  <p className="text-[11px] text-dark/65 font-sans leading-relaxed line-clamp-2">
+                    {product.shortDescription}
+                  </p>
+
+                  <p className="font-serif text-base text-forest font-bold mt-auto pt-4">
+                    From ₹{product.sizePrices[product.sizes[0]]}.00
+                  </p>
                 </div>
-                <h3 className="text-base font-serif text-forest font-semibold mb-2 tracking-wide uppercase">{feature.title}</h3>
-                <p className="text-sm text-dark/55 leading-relaxed">{feature.desc}</p>
+
+                {/* CTA Action */}
+                <div className="pt-4 mt-auto border-t border-forest/5">
+                  <button
+                    onClick={() => handleAddToCart(product)}
+                    className="w-full py-3 bg-forest hover:bg-forest-light text-white text-center text-[10px] uppercase tracking-widest font-bold transition-colors cursor-pointer"
+                  >
+                    {addedProduct === `${product.id}-${product.sizes[0]}` ? "Added! ✓" : "Add to Cart"}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </RevealSection>
+
+          <div className="text-center mt-16">
+            <Link 
+              href="/products" 
+              className="inline-flex items-center justify-center bg-transparent border border-forest hover:bg-forest hover:text-white text-forest text-[11px] uppercase tracking-[0.2em] font-bold h-14 px-10 transition-colors"
+            >
+              VIEW ALL PRODUCTS
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ============================================================
+          4. WOOD PRESSED OILS SECTION
+          ============================================================ */}
+      <section className="py-24 bg-white relative overflow-hidden border-t border-forest/5">
+        <div className="max-w-[1280px] mx-auto px-6 md:px-12">
+          
+          <RevealSection className="text-center max-w-2xl mx-auto space-y-4 mb-16">
+            <div className="flex items-center justify-center gap-3">
+              <span className="w-8 h-[1px] bg-gold" />
+              <span className="text-xs tracking-[0.3em] uppercase text-gold font-bold">Traditional Ghani Extraction</span>
+              <span className="w-8 h-[1px] bg-gold" />
+            </div>
+            <h2 className="text-4xl md:text-5xl font-serif text-forest tracking-tight font-bold uppercase leading-tight">
+              The Goodness of<br />Wood Pressed Oils
+            </h2>
+            <p className="text-sm text-dark/60 leading-relaxed font-sans max-w-lg mx-auto">
+              Slowly pressed using traditional methods to preserve the natural character of the seeds — without chemical refining or unnecessary additives.
+            </p>
+          </RevealSection>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            {[
+              {
+                id: "groundnut-oil",
+                name: "Wood Pressed Groundnut Oil",
+                desc: "100% natural, single-source bold groundnuts slowly wood-pressed. Perfect for everyday Indian deep frying.",
+                price: "₹225.00",
+                benefits: [
+                  "Rich in heart-healthy MUFA",
+                  "Naturally loaded with Vitamin E",
+                  "High smoke point (~232°C)",
+                  "Zero chemical trans fats"
+                ]
+              },
+              {
+                id: "sesame-oil",
+                name: "Wood Pressed Sesame Oil",
+                desc: "Slow-pressed rich sesame oil, unrefined, zero preservatives. Highly aromatic and ideal for nourishing health.",
+                price: "₹319.00",
+                benefits: [
+                  "Rich in sesamol and sesamolin",
+                  "Ancient Indian superfood oil",
+                  "Ideal for daily oil pulling",
+                  "100% unrefined & preservative-free"
+                ]
+              }
+            ].map((oil) => {
+              const prod = INITIAL_PRODUCTS.find(p => p.id === oil.id)!;
+              return (
+                <RevealSection key={oil.id} className="bg-[#F8F5EF] p-8 md:p-12 flex flex-col md:flex-row gap-8 items-center border border-forest/5 shadow-sm group">
+                  {/* Left: Product Image */}
+                  <div className="w-full md:w-1/2 aspect-[3/4] relative bg-white border border-forest/10 p-4 shrink-0 overflow-hidden">
+                    <Image 
+                      src={prod.image} 
+                      alt={oil.name} 
+                      fill 
+                      className="object-contain p-4 group-hover:scale-102 transition-transform duration-500" 
+                    />
+                  </div>
+                  
+                  {/* Right: Info */}
+                  <div className="flex flex-col justify-between h-full space-y-6">
+                    <div className="space-y-3">
+                      <h3 className="text-2xl font-serif text-forest font-bold uppercase tracking-wide leading-tight">{oil.name}</h3>
+                      <p className="text-xs text-dark/65 font-sans leading-relaxed">{oil.desc}</p>
+                      
+                      {/* Benefits Checkmarks */}
+                      <ul className="space-y-2 pt-2">
+                        {oil.benefits.map((b, idx) => (
+                          <li key={idx} className="flex items-center gap-2 text-[10px] text-forest font-bold tracking-wide uppercase">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-gold shrink-0" />
+                            {b}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div className="pt-4 flex items-center justify-between gap-4 border-t border-forest/10">
+                      <div>
+                        <span className="text-[10px] text-dark/40 uppercase tracking-widest font-semibold block">Starts From</span>
+                        <span className="text-xl font-serif text-forest font-bold">{oil.price}</span>
+                      </div>
+                      <Link 
+                        href={`/products/${oil.id}`} 
+                        className="inline-flex items-center justify-center bg-forest hover:bg-forest-light text-white text-[10px] uppercase tracking-widest font-bold h-11 px-6 transition-colors"
+                      >
+                        VIEW DETAILS
+                      </Link>
+                    </div>
+                  </div>
+                </RevealSection>
+              );
+            })}
+          </div>
+
+          <div className="text-center mt-12">
+            <Link 
+              href="/products?category=oils" 
+              className="inline-flex items-center justify-center bg-transparent border border-forest hover:bg-forest hover:text-white text-forest text-[11px] uppercase tracking-[0.2em] font-bold h-14 px-10 transition-colors"
+            >
+              SHOP ALL OILS
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ============================================================
+          5. WHY ROOT & HARVEST
+          ============================================================ */}
+      <section className="py-24 bg-[#F8F5EF] relative overflow-hidden border-t border-forest/10">
+        <div className="max-w-[1280px] mx-auto px-6 md:px-12">
+          
+          <RevealSection className="text-center max-w-2xl mx-auto space-y-4 mb-16">
+            <div className="flex items-center justify-center gap-3">
+              <span className="w-8 h-[1px] bg-gold" />
+              <span className="text-xs tracking-[0.3em] uppercase text-gold font-bold">Uncompromised Purity</span>
+              <span className="w-8 h-[1px] bg-gold" />
+            </div>
+            <h2 className="text-4xl md:text-5xl font-serif text-forest tracking-tight font-bold uppercase leading-tight">
+              Why Root &amp; Harvest?
+            </h2>
+            <p className="text-sm text-dark/60 font-sans max-w-md mx-auto">
+              Our core principles guide every single batch we extract, bottle, and deliver.
+            </p>
+          </RevealSection>
+
+          <RevealSection className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+            {[
+              {
+                icon: <Factory className="w-6 h-6" />,
+                title: "WOOD PRESSED",
+                desc: "Traditional wooden ghani extraction below 14 RPM."
+              },
+              {
+                icon: <Leaf className="w-6 h-6" />,
+                title: "NATURAL & UNREFINED",
+                desc: "Minimal processing, preserving native nutrients and colors."
+              },
+              {
+                icon: <ShieldCheck className="w-6 h-6" />,
+                title: "NO CHEMICAL REFINING",
+                desc: "Zero solvents, mineral oils, or artificial preservatives."
+              },
+              {
+                icon: <Truck className="w-6 h-6" />,
+                title: "FARM TO FAMILY",
+                desc: "Sourced directly from trusted family farms across India."
+              },
+              {
+                icon: <Sparkles className="w-6 h-6" />,
+                title: "SMALL BATCH",
+                desc: "Made in limited quantities with attention to freshness."
+              }
+            ].map((card, idx) => (
+              <div 
+                key={idx}
+                className="bg-white border border-forest/5 p-8 flex flex-col items-center text-center shadow-xs hover:shadow-md hover:border-gold/20 transition-all duration-300 relative group"
+              >
+                <div className="absolute top-0 left-0 right-0 h-[2px] bg-gold scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
+                <div className="w-12 h-12 rounded-full bg-[#F8F5EF] flex items-center justify-center text-forest mb-6 group-hover:bg-forest group-hover:text-white transition-colors duration-300">
+                  {card.icon}
+                </div>
+                <h3 className="text-sm font-serif text-forest font-bold tracking-wider uppercase mb-3 leading-tight">{card.title}</h3>
+                <p className="text-[10px] text-dark/50 leading-relaxed font-sans font-medium">{card.desc}</p>
               </div>
             ))}
           </RevealSection>
@@ -185,289 +426,166 @@ export default function HomePage() {
       </section>
 
       {/* ============================================================
-          4. OUR STORY — Warm split layout
+          6. OUR STORY
           ============================================================ */}
-      <section id="our-story" className="py-24 bg-white relative overflow-hidden">
+      <section className="py-24 bg-white relative overflow-hidden">
         <div className="max-w-[1280px] mx-auto px-6 md:px-12">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-
-            {/* Left: Story */}
-            <RevealSection className="space-y-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
+            {/* Left Column: Story content */}
+            <RevealSection className="lg:col-span-7 space-y-6 md:space-y-8 text-left">
               <div>
                 <div className="flex items-center gap-3 mb-4">
                   <span className="w-6 h-[1px] bg-gold" />
-                  <span className="text-xs tracking-[0.3em] uppercase text-gold font-semibold">Our Heritage</span>
+                  <span className="text-xs tracking-[0.3em] uppercase text-gold font-bold">Our Heritage</span>
                 </div>
-                <h2 className="text-4xl md:text-5xl font-serif text-forest tracking-tight leading-tight">
-                  Why We Started<br />Root & Harvest
+                <h2 className="text-4xl md:text-5xl font-serif text-forest tracking-tight leading-tight font-bold uppercase">
+                  FROM OUR ROOTS<br /><span className="italic font-normal lowercase">to your</span> TABLE
                 </h2>
               </div>
-              <div className="space-y-5 text-dark/65 text-base leading-relaxed">
+              <div className="space-y-5 text-dark/65 text-base leading-relaxed font-sans font-light">
                 <p>
-                  Root & Harvest was founded by two software engineers who grew up deeply connected to farming. As we built our careers in technology, we saw how disconnected modern food had become from nature.
+                  Root & Harvest was founded by two software engineers who grew up deeply connected to farming. As we built our careers in technology, we saw how disconnected modern, daily food had become from nature.
                 </p>
                 <p>
-                  We watched our families compromise on quality without even realizing it — trading purity for convenience. We decided to fix that.
+                  We watched our families compromise on basic staples without even realizing it — trading raw, unrefined purity for factory-processed convenience. We decided to fix that and reconnect families with trustworthy food.
                 </p>
-                <p className="font-serif text-xl italic text-forest border-l-2 border-gold pl-4">
-                  "Every family deserves food they can implicitly trust."
-                </p>
+                <blockquote className="font-serif text-xl italic text-forest border-l-2 border-gold pl-4 font-normal py-1">
+                  "Every family deserves food they can implicitly trust, crafted with the same integrity we demand for our own kitchens."
+                </blockquote>
               </div>
-              <Button href="/products" variant="primary" className="w-fit">
-                Explore Our Collection <ArrowRight className="w-4 h-4 ml-2 inline" />
-              </Button>
+              <div className="pt-2">
+                <Link
+                  href="/about"
+                  className="inline-flex items-center justify-center bg-forest hover:bg-forest-light text-white text-xs uppercase tracking-[0.2em] font-bold h-14 px-8 transition-colors"
+                >
+                  READ OUR STORY
+                </Link>
+              </div>
             </RevealSection>
 
-            {/* Right: Image */}
-            <RevealSection className="relative aspect-[4/5] w-full rounded-2xl overflow-hidden shadow-2xl lg:ml-auto">
+            {/* Right Column: Family visual */}
+            <RevealSection className="lg:col-span-5 relative aspect-[4/5] w-full rounded-sm overflow-hidden shadow-xl border border-forest/5">
               <Image 
                 src="/images/family.jpg" 
-                alt="Root & Harvest Family" 
+                alt="Root & Harvest Founders Farm" 
                 fill 
-                className="object-cover"
+                className="object-cover transition-transform duration-500 hover:scale-102"
               />
+              <div className="absolute inset-0 bg-gradient-to-t from-forest/10 to-transparent pointer-events-none" />
             </RevealSection>
           </div>
         </div>
       </section>
 
       {/* ============================================================
-          4.5 CATEGORIES & PRODUCTS GRID
+          7. FARM TO FAMILY JOURNEY
           ============================================================ */}
-      <section id="explore-categories" className="py-24 bg-[#F8F5EF] relative overflow-hidden">
-        <div className="max-w-[1280px] mx-auto px-6 md:px-12">
+      <section className="py-24 bg-[#F8F5EF] relative overflow-hidden border-t border-forest/10">
+        <div className="max-w-[1280px] mx-auto px-6 md:px-12 text-center">
           
-          {/* Section Header */}
-          <RevealSection className="text-center max-w-2xl mx-auto space-y-4 mb-16">
+          <RevealSection className="text-center max-w-2xl mx-auto space-y-4 mb-20">
             <div className="flex items-center justify-center gap-3">
               <span className="w-8 h-[1px] bg-gold" />
-              <span className="text-xs tracking-[0.3em] uppercase text-gold font-semibold">Our Clean Food Categories</span>
+              <span className="text-xs tracking-[0.3em] uppercase text-gold font-bold">The Purity Pipeline</span>
               <span className="w-8 h-[1px] bg-gold" />
             </div>
-            <h2 className="text-4xl md:text-5xl font-serif text-forest tracking-tight font-semibold uppercase">
-              Explore Our Farm Offerings
+            <h2 className="text-4xl md:text-5xl font-serif text-forest tracking-tight font-bold uppercase leading-tight">
+              Farm to Family Journey
             </h2>
-            <p className="text-sm text-dark/60 font-sans">
-              Select a category to discover raw, pure, farm-fresh ingredients.
+            <p className="text-sm text-dark/60 font-sans max-w-md mx-auto">
+              How we harvest, press, filter, and deliver uncompromised goodness directly to your home.
             </p>
           </RevealSection>
 
-          {/* Category Selector Tabs */}
-          <RevealSection className="flex justify-center gap-6 mb-16 border-b border-forest/10 pb-4">
-            <button
-              onClick={() => setSelectedCategory("oils")}
-              className={`pb-4 px-6 text-xs uppercase tracking-widest font-semibold border-b-2 transition-all cursor-pointer ${
-                selectedCategory === "oils" 
-                  ? "border-forest text-forest scale-105" 
-                  : "border-transparent text-dark/40 hover:text-forest"
-              }`}
-            >
-              Wood Pressed Oils
-            </button>
-            <button
-              onClick={() => setSelectedCategory("grains")}
-              className={`pb-4 px-6 text-xs uppercase tracking-widest font-semibold border-b-2 transition-all cursor-pointer ${
-                selectedCategory === "grains" 
-                  ? "border-forest text-forest scale-105" 
-                  : "border-transparent text-dark/40 hover:text-forest"
-              }`}
-            >
-              Traditional Grains
-            </button>
-          </RevealSection>
+          <RevealSection className="relative grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-6 items-start">
+            {/* Desktop Timeline connector */}
+            <div className="hidden lg:block absolute top-7 left-12 right-12 h-[1px] bg-forest/10 z-0" />
 
-          {/* Render Active Category */}
-          <RevealSection>
-            {selectedCategory === "oils" ? (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              { num: "01", step: "FARM", title: "Sustainable Sourcing", desc: "Premium seeds grown on trusted, chemical-free family farms." },
+              { num: "02", step: "CAREFUL SOURCING", title: "Hand Selection", desc: "Sun-drying and manually sorting seeds for absolute quality." },
+              { num: "03", step: "TRADITIONAL PROCESS", title: "Wooden Ghani Press", desc: "Slow pressing under 14 RPM in Vagai wood to protect nutrients." },
+              { num: "04", step: "QUALITY CHECK", title: "Natural Filtering", desc: "Sediment filtered through gravity and certified for pristine purity." },
+              { num: "05", step: "YOUR FAMILY", title: "Direct Delivery", desc: "Fresh small batches shipped directly to your door, traceably." }
+            ].map((item, idx) => (
+              <div key={idx} className="relative z-10 flex flex-col items-center space-y-4 lg:space-y-6 group">
+                <div className="w-14 h-14 rounded-full bg-white border-2 border-forest/10 flex items-center justify-center font-serif text-sm font-bold text-forest group-hover:border-gold group-hover:bg-forest group-hover:text-white transition-all duration-300 shadow-sm">
+                  {item.num}
+                </div>
                 
-                {/* Active Oil: Groundnut Oil */}
-                <div className="bg-white border border-forest/5 p-6 hover:shadow-lg transition-all flex flex-col justify-between">
-                  <div className="space-y-4">
-                    <div className="relative aspect-[3/4] w-full bg-white border border-forest/10 flex items-center justify-center p-4">
-                      <Image src="/images/groundnut-oil-1l.jpg" alt="Wood Pressed Groundnut Oil" fill className="object-contain p-4" />
-                    </div>
-                    <h3 className="text-xl font-serif text-forest font-semibold mt-4">Wood Pressed Groundnut Oil</h3>
-                    <p className="text-xs text-dark/60 font-light leading-relaxed font-sans">
-                      100% natural, single-source bold groundnuts slowly wood-pressed. Perfect for everyday Indian deep frying.
-                    </p>
-                    <p className="font-serif text-lg text-forest font-semibold pt-2">From ₹249.00</p>
-                  </div>
-                  <div className="pt-6">
-                    <Link
-                      href="/products/groundnut-oil"
-                      className="block w-full py-3 bg-forest hover:bg-forest-light text-white text-center text-xs uppercase tracking-widest font-semibold transition-colors"
-                    >
-                      View Details &amp; Reviews
-                    </Link>
-                  </div>
-                </div>
-
-                {/* Active Oil: Sesame Oil */}
-                <div className="bg-white border border-forest/5 p-6 hover:shadow-lg transition-all flex flex-col justify-between">
-                  <div className="space-y-4">
-                    <div className="relative aspect-[3/4] w-full bg-white border border-forest/10 flex items-center justify-center p-4">
-                      <Image src="/images/sesame-oil-1l.jpg" alt="Wood Pressed Sesame Oil" fill className="object-contain p-4" />
-                    </div>
-                    <h3 className="text-xl font-serif text-forest font-semibold mt-4">Wood Pressed Sesame Oil</h3>
-                    <p className="text-xs text-dark/60 font-light leading-relaxed font-sans">
-                      Slow-pressed rich sesame oil, unrefined, zero preservatives. Highly aromatic and ideal for nourishing health.
-                    </p>
-                    <p className="font-serif text-lg text-forest font-semibold pt-2">From ₹319.00</p>
-                  </div>
-                  <div className="pt-6">
-                    <Link
-                      href="/products/sesame-oil"
-                      className="block w-full py-3 bg-forest hover:bg-forest-light text-white text-center text-xs uppercase tracking-widest font-semibold transition-colors"
-                    >
-                      View Details &amp; Reviews
-                    </Link>
-                  </div>
-                </div>
-
-                {/* Coming Soon Oil: Sunflower Oil */}
-                <div className="bg-white border border-forest/5 p-6 relative overflow-hidden flex flex-col justify-between opacity-80">
-                  <div className="space-y-4">
-                    <div className="relative aspect-[3/4] w-full bg-white border border-forest/10 flex items-center justify-center p-4">
-                      <Image src="/images/sunflower-oil-1l.jpg" alt="Wood Pressed Sunflower Oil" fill className="object-contain p-4 blur-[2px]" />
-                      <div className="absolute inset-0 bg-white/20 backdrop-blur-xs flex flex-col items-center justify-center gap-2">
-                        <Lock className="w-5 h-5 text-forest/40" />
-                        <span className="bg-forest text-white text-[10px] uppercase tracking-widest font-bold px-3 py-1.5 shadow">Coming Soon</span>
-                      </div>
-                    </div>
-                    <h3 className="text-xl font-serif text-forest/50 font-semibold mt-4">Wood Pressed Sunflower Oil</h3>
-                    <p className="text-xs text-dark/40 font-light leading-relaxed font-sans">
-                      Slow-pressed premium seeds, unrefined, lightweight and rich in Vitamin E. Perfect for daily cooking.
-                    </p>
-                    <p className="font-serif text-lg text-dark/40 font-semibold pt-2">Launching Soon</p>
-                  </div>
-                </div>
-
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {/* Active Grain: Organic Raw Groundnuts */}
-                <div className="bg-white border border-forest/5 p-6 hover:shadow-lg transition-all flex flex-col justify-between">
-                  <div className="space-y-4">
-                    <div className="relative aspect-[3/4] w-full bg-white border border-forest/10 flex items-center justify-center p-4">
-                      <Image src="/images/groundnuts.jpg" alt="Organic Raw Groundnuts" fill className="object-contain p-4" />
-                    </div>
-                    <h3 className="text-xl font-serif text-forest font-semibold mt-4">Organic Raw Groundnuts</h3>
-                    <p className="text-xs text-dark/60 font-light leading-relaxed font-sans">
-                      Premium, pesticide-free bold peanuts sourced directly from rain-fed family farms. Hand-shelled and sun-dried.
-                    </p>
-                    <p className="font-serif text-lg text-forest font-semibold pt-2">From ₹99.00</p>
-                  </div>
-                  <div className="pt-6">
-                    <Link
-                      href="/products/groundnuts"
-                      className="block w-full py-3 bg-forest hover:bg-forest-light text-white text-center text-xs uppercase tracking-widest font-semibold transition-colors"
-                    >
-                      View Details &amp; Reviews
-                    </Link>
-                  </div>
-                </div>
-
-                {/* Active Grain: Jai Sriram Unpolished Rice */}
-                <div className="bg-white border border-forest/5 p-6 hover:shadow-lg transition-all flex flex-col justify-between">
-                  <div className="space-y-4">
-                    <div className="relative aspect-[3/4] w-full bg-white border border-forest/10 flex items-center justify-center p-4">
-                      <Image src="/images/jaisriram-unpolished-rice.jpg" alt="Jai Sriram Unpolished Rice" fill className="object-contain p-4" />
-                    </div>
-                    <h3 className="text-xl font-serif text-forest font-semibold mt-4">Jai Sriram Unpolished Rice</h3>
-                    <p className="text-xs text-dark/60 font-light leading-relaxed font-sans">
-                      Heritage unpolished Jai Sriram rice variety. High fiber, rich in vitamins, with authentic earthy flavor.
-                    </p>
-                    <p className="font-serif text-lg text-forest font-semibold pt-2">From ₹95.00</p>
-                  </div>
-                  <div className="pt-6">
-                    <Link
-                      href="/products/jaisriram-unpolished-rice"
-                      className="block w-full py-3 bg-forest hover:bg-forest-light text-white text-center text-xs uppercase tracking-widest font-semibold transition-colors"
-                    >
-                      View Details &amp; Reviews
-                    </Link>
-                  </div>
-                </div>
-
-                {/* Active Grain: Jai Sriram Polished Rice */}
-                <div className="bg-white border border-forest/5 p-6 hover:shadow-lg transition-all flex flex-col justify-between">
-                  <div className="space-y-4">
-                    <div className="relative aspect-[3/4] w-full bg-white border border-forest/10 flex items-center justify-center p-4">
-                      <Image src="/images/jaisriram-polished-rice.jpg" alt="Jai Sriram Polished Rice" fill className="object-contain p-4" />
-                    </div>
-                    <h3 className="text-xl font-serif text-forest font-semibold mt-4">Jai Sriram Polished Rice</h3>
-                    <p className="text-xs text-dark/60 font-light leading-relaxed font-sans">
-                      Gently polished fine-grain premium rice variety. Sweet natural taste, cooks into light and fluffy grains.
-                    </p>
-                    <p className="font-serif text-lg text-forest font-semibold pt-2">From ₹88.00</p>
-                  </div>
-                  <div className="pt-6">
-                    <Link
-                      href="/products/jaisriram-polished-rice"
-                      className="block w-full py-3 bg-forest hover:bg-forest-light text-white text-center text-xs uppercase tracking-widest font-semibold transition-colors"
-                    >
-                      View Details &amp; Reviews
-                    </Link>
-                  </div>
+                <div className="space-y-2 max-w-[200px] text-center">
+                  <span className="text-[10px] tracking-[0.25em] font-bold text-gold uppercase block leading-none">{item.step}</span>
+                  <h4 className="text-base font-serif font-bold text-forest uppercase leading-tight">{item.title}</h4>
+                  <p className="text-[10px] text-dark/50 leading-relaxed font-sans font-medium">{item.desc}</p>
                 </div>
               </div>
-            )}
+            ))}
+          </RevealSection>
+        </div>
+      </section>
+
+      {/* ============================================================
+          8. OUR PROMISE (Brand Infographic)
+          ============================================================ */}
+      <section className="py-24 bg-white relative overflow-hidden border-t border-forest/10">
+        <div className="max-w-[1280px] mx-auto px-6 md:px-12">
+          
+          <RevealSection className="text-center max-w-2xl mx-auto space-y-4 mb-16">
+            <div className="flex items-center justify-center gap-3">
+              <span className="w-8 h-[1px] bg-gold" />
+              <span className="text-xs tracking-[0.3em] uppercase text-gold font-bold">Our Pledge</span>
+              <span className="w-8 h-[1px] bg-gold" />
+            </div>
+            <h2 className="text-4xl md:text-5xl font-serif text-forest tracking-tight font-bold uppercase leading-tight">
+              Our Promise
+            </h2>
+            <p className="text-sm text-dark/60 font-sans max-w-md mx-auto">
+              Our extraction, quality checks, and delivery methods are transparent and lab-certified.
+            </p>
           </RevealSection>
 
+          <RevealSection className="w-full flex flex-col items-center">
+            <div className="relative w-full aspect-[1.85] border-4 border-forest shadow-md overflow-hidden bg-white rounded-md max-w-[1100px]">
+              <Image
+                src="/images/brand-story-banner-v2.png"
+                alt="Root & Harvest Brand Story Infographic"
+                fill
+                className="object-contain"
+                sizes="(max-width: 1280px) 100vw, 1100px"
+              />
+            </div>
+          </RevealSection>
         </div>
       </section>
 
       {/* ============================================================
-          4.8 BRAND STORY BANNER — Farm Infographic
+          9. CUSTOMER REVIEWS ("LOVED BY FAMILIES")
           ============================================================ */}
-      <section className="py-12 bg-[#F8F5EF] flex flex-col items-center border-t border-forest/10">
-        <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 md:px-12">
-          <div className="relative w-full aspect-[1.85] border-4 border-forest shadow-md overflow-hidden bg-white rounded-md">
-            <Image
-              src="/images/brand-story-banner-v2.png"
-              alt="Root & Harvest Brand Story Infographic"
-              fill
-              className="object-contain"
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* ============================================================
-          5. TESTIMONIALS - Reviews Grid
-          ============================================================ */}
-      <section className="py-20 bg-white relative overflow-hidden border-t border-forest/5">
+      <section className="py-24 bg-[#F8F5EF] relative overflow-hidden border-t border-forest/10">
         <div className="max-w-[1280px] mx-auto px-6 md:px-12 space-y-12">
-          {/* Centered header and star rating */}
-          <div className="text-center flex flex-col items-center justify-center space-y-6 max-w-2xl mx-auto border-b border-forest/10 pb-10">
-            <div className="space-y-2">
-              <div className="flex items-center justify-center gap-2">
-                <span className="w-4 h-[1px] bg-gold" />
-                <span className="text-[10px] tracking-[0.25em] uppercase text-gold font-semibold">Customer Voices</span>
-                <span className="w-4 h-[1px] bg-gold" />
-              </div>
-              <h2 className="text-3xl md:text-4xl lg:text-5xl font-serif text-forest tracking-tight uppercase">What Our Customers Say</h2>
-              <p className="text-sm text-dark/60 max-w-lg mx-auto leading-relaxed font-sans">
-                Real feedback from verified buyers. Your reviews help us maintain our commitment to unrefined, wood-pressed purity.
-              </p>
+          
+          <div className="text-center flex flex-col items-center justify-center space-y-4 max-w-2xl mx-auto border-b border-forest/10 pb-10">
+            <div className="flex items-center justify-center gap-2">
+              <span className="w-4 h-[1px] bg-gold" />
+              <span className="text-[10px] tracking-[0.25em] uppercase text-gold font-bold">Loved by Families</span>
+              <span className="w-4 h-[1px] bg-gold" />
             </div>
+            <h2 className="text-4xl font-serif text-forest tracking-tight uppercase font-bold">Customer Voices</h2>
+            <p className="text-sm text-dark/60 max-w-lg mx-auto leading-relaxed font-sans">
+              Real feedback from verified buyers. Your reviews help us maintain our commitment to unrefined, wood-pressed purity.
+            </p>
             
-            <div className="flex flex-col items-center gap-3">
-              {/* 5 Stars */}
-              <div className="flex items-center gap-1 text-gold pt-1">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} size={18} className="fill-current text-gold" />
-                ))}
-              </div>
+            <div className="flex items-center gap-1 text-gold pt-2">
+              {[...Array(5)].map((_, i) => (
+                <Star key={i} size={18} className="fill-current text-gold" />
+              ))}
             </div>
           </div>
 
-          {/* Reviews Grid */}
           {loadingReviews ? (
-            <div className="text-center py-12 text-sm text-dark/50 font-sans">Loading customer reviews...</div>
+            <div className="text-center py-12 text-sm text-dark/50 font-sans font-medium">Loading customer reviews...</div>
           ) : reviews.length === 0 ? (
-            <div className="text-center py-12 text-sm text-dark/50 font-sans">No reviews yet. Be the first to share your experience!</div>
+            <div className="text-center py-12 text-sm text-dark/50 font-sans font-medium">No reviews yet. Be the first to share your experience!</div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {reviews.map((r) => (
@@ -488,97 +606,38 @@ export default function HomePage() {
       </section>
 
       {/* ============================================================
-          5.5 TOP PICKS FOR YOU — In-stock products showcase
+          10. FINAL CTA BANNER
           ============================================================ */}
-      <section className="py-24 bg-[#F8F5EF] relative overflow-hidden border-t border-forest/10">
-        <div className="max-w-[1280px] mx-auto px-6 md:px-12">
-          
-          {/* Section Header */}
-          <RevealSection className="text-center max-w-2xl mx-auto space-y-4 mb-16">
-            <div className="flex items-center justify-center gap-3">
-              <span className="w-8 h-[1px] bg-gold" />
-              <span className="text-xs tracking-[0.3em] uppercase text-gold font-semibold">Fresh In Stock</span>
-              <span className="w-8 h-[1px] bg-gold" />
-            </div>
-            <h2 className="text-4xl md:text-5xl font-serif text-forest tracking-tight font-semibold uppercase">
-              Top Picks For You
-            </h2>
-            <p className="text-sm text-dark/60 font-sans">
-              Handpicked premium products fresh from our Ghani, currently available in stock.
-            </p>
-          </RevealSection>
-
-          {/* Products Grid */}
-          <RevealSection className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 justify-center">
-            {INITIAL_PRODUCTS.filter(p => !p.isComingSoon).map((product) => (
-              <div 
-                key={product.id}
-                className="bg-white border border-forest/5 p-6 hover:shadow-lg transition-all flex flex-col justify-between group"
-              >
-                <div className="space-y-4">
-                  <div className="relative aspect-[3/4] w-full bg-white border border-forest/10 flex items-center justify-center p-4 overflow-hidden">
-                    <Image 
-                      src={product.image} 
-                      alt={product.name} 
-                      fill 
-                      className="object-contain p-4 group-hover:scale-105 transition-transform duration-500" 
-                    />
-                  </div>
-                  <div className="flex items-center gap-1.5 text-gold">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="w-4 h-4 fill-current" />
-                    ))}
-                    <span className="text-xs text-dark/50 font-sans ml-1">({product.reviewsCount})</span>
-                  </div>
-                  <h3 className="text-xl font-serif text-forest font-semibold">{product.name}</h3>
-                  <p className="text-xs text-dark/65 font-light leading-relaxed font-sans line-clamp-2">
-                    {product.shortDescription}
-                  </p>
-                  <p className="font-serif text-lg text-forest font-semibold">From ₹{product.sizePrices ? Object.values(product.sizePrices)[0] : "249"}.00</p>
-                </div>
-                <div className="pt-6">
-                  <Link
-                    href={`/products/${product.id}`}
-                    className="block w-full py-3 bg-forest hover:bg-forest-light text-white text-center text-xs uppercase tracking-widest font-semibold transition-colors"
-                  >
-                    View Details &amp; Reviews
-                  </Link>
-                </div>
-              </div>
-            ))}
-          </RevealSection>
-
-        </div>
-      </section>
-
-      {/* ============================================================
-          6. CTA BANNER — Forest green (not pitch black)
-          ============================================================ */}
-      <section className="py-24 bg-forest relative overflow-hidden">
+      <section className="py-28 bg-forest relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_50%,rgba(200,161,74,0.12),transparent_65%)] pointer-events-none" />
         <div className="absolute left-0 right-0 top-6 h-[1px] bg-gradient-to-r from-transparent via-gold/20 to-transparent" />
         <div className="absolute left-0 right-0 bottom-6 h-[1px] bg-gradient-to-r from-transparent via-gold/20 to-transparent" />
 
         <RevealSection className="relative max-w-[860px] mx-auto px-6 text-center space-y-8">
           <div className="flex items-center justify-center gap-3">
-            <span className="w-12 h-[1px] bg-gold/40" />
-            <span className="text-xs tracking-[0.3em] uppercase text-gold font-semibold">Limited Batches</span>
-            <span className="w-12 h-[1px] bg-gold/40" />
+            <div className="w-12 h-[1px] bg-gold/40" />
+            <span className="text-xs tracking-[0.3em] uppercase text-gold font-bold">Limited Batches</span>
+            <div className="w-12 h-[1px] bg-gold/40" />
           </div>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-serif text-white tracking-tight leading-tight uppercase font-semibold">
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-serif text-white tracking-tight leading-tight uppercase font-bold">
             Taste the purity your<br />
             <span className="shimmer-gold">family deserves.</span>
           </h2>
-          <p className="text-white/60 text-lg max-w-md mx-auto leading-relaxed font-sans">
-            Switch to real, raw, wood-pressed goodness for your kitchen.
+          <p className="text-white/60 text-lg max-w-md mx-auto leading-relaxed font-sans font-light">
+            Bring home traditional goodness, thoughtfully made for everyday cooking.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+            <Link
+              href="/products?category=oils"
+              className="inline-flex items-center justify-center bg-gold hover:bg-gold-light text-forest font-bold uppercase tracking-[0.2em] text-xs h-14 px-10 transition-colors shadow-lg"
+            >
+              SHOP WOOD PRESSED OILS
+            </Link>
             <Link
               href="/products"
-              className="group inline-flex items-center justify-center gap-2 bg-gold hover:bg-gold-light text-forest font-bold uppercase tracking-widest text-sm h-14 px-10 transition-all duration-300 shadow-[0_8px_32px_rgba(200,161,74,0.25)] hover:shadow-[0_12px_40px_rgba(200,161,74,0.4)]"
+              className="inline-flex items-center justify-center bg-transparent border border-white/20 hover:border-white text-white font-bold uppercase tracking-[0.2em] text-xs h-14 px-10 transition-colors"
             >
-              Shop Our Collection
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform"/>
+              EXPLORE ALL PRODUCTS
             </Link>
           </div>
         </RevealSection>

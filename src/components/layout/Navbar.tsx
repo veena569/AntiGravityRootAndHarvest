@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ShoppingBag, Heart, Menu, X, User, ArrowRight } from "lucide-react";
+import { ShoppingBag, Heart, Menu, X, User, ArrowRight, Search } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { NAVIGATION_LINKS } from "@/constants";
 import { BRAND } from "@/config/brand";
@@ -31,37 +31,41 @@ export const Navbar: React.FC = () => {
   return (
     <>
       {/* Top Announcement Banner */}
-      <div className="w-full bg-forest text-gold text-[10px] sm:text-xs uppercase tracking-[0.2em] py-2.5 px-4 text-center font-semibold z-50">
+      <div className="w-full bg-forest text-gold text-[9px] uppercase tracking-[0.25em] py-2 px-4 text-center font-bold z-50">
         10% OFF &amp; FREE SHIPPING FOR THE FIRST 100 ORDERS IN HYDERABAD
       </div>
 
       <header
         className={`sticky top-0 z-50 transition-all duration-300 h-20 flex items-center bg-brand-bg/95 backdrop-blur-md border-b border-forest/10 shadow-sm`}
       >
-        <div className="w-full max-w-[1280px] mx-auto px-3.5 md:px-12 flex items-center justify-between">
-          {/* Mobile menu toggle */}
-          <button
-            onClick={() => setIsOpen(true)}
-            className="md:hidden p-1.5 text-forest hover:opacity-85"
-            aria-label="Open menu"
-          >
-            <Menu className="w-6 h-6" />
-          </button>
+        <div className="w-full max-w-[1280px] mx-auto px-3.5 md:px-12 flex items-center justify-between relative">
+          
+          {/* Left: Mobile Toggle & Logo */}
+          <div className="flex items-center gap-2 md:gap-0">
+            {/* Mobile menu toggle */}
+            <button
+              onClick={() => setIsOpen(true)}
+              className="md:hidden p-1.5 text-forest hover:opacity-85"
+              aria-label="Open menu"
+            >
+              <Menu className="w-6 h-6" />
+            </button>
 
-          {/* Logo */}
-          <Link href="/" className="flex items-center">
-            <BrandLogo />
-          </Link>
+            {/* Logo */}
+            <Link href="/" className="flex items-center">
+              <BrandLogo />
+            </Link>
+          </div>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-10">
+          {/* Center: Desktop Navigation */}
+          <nav className="hidden md:flex items-center space-x-10 absolute left-1/2 -translate-x-1/2">
             {NAVIGATION_LINKS.map((link) => {
               const isActive = pathname === link.href;
               return (
                 <Link
                   key={link.name}
                   href={link.href}
-                  className={`text-sm tracking-widest uppercase font-medium transition-colors hover:text-gold ${
+                  className={`text-xs tracking-[0.25em] uppercase font-bold transition-colors hover:text-gold ${
                     isActive ? "text-gold" : "text-forest"
                   }`}
                 >
@@ -71,8 +75,16 @@ export const Navbar: React.FC = () => {
             })}
           </nav>
 
-          {/* Icons Bar */}
-          <div className="flex items-center space-x-2 md:space-x-6">
+          {/* Right: Icons Bar */}
+          <div className="flex items-center space-x-1 md:space-x-4">
+            {/* Search Icon */}
+            <Link
+              href="/products"
+              className="p-1.5 md:p-2 text-forest hover:text-gold transition-colors"
+              title="Search Products"
+            >
+              <Search className="w-5 h-5" />
+            </Link>
 
             <Link
               href="/account"

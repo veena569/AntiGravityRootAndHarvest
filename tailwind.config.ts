@@ -24,8 +24,8 @@ const config: Config = {
         grey: "var(--color-grey)",
       },
       fontFamily: {
-        serif: ["Arial", "sans-serif"],
-        sans: ["Arial", "sans-serif"],
+        serif: ["var(--font-cormorant)", "Georgia", "serif"],
+        sans: ["var(--font-inter)", "Arial", "sans-serif"],
       },
       keyframes: {
         "fade-in-up": {
