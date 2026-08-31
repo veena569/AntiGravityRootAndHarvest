@@ -8,6 +8,7 @@ import { ShoppingBag, Heart, Menu, X, User, ArrowRight, Search } from "lucide-re
 import { useApp } from "@/context/AppContext";
 import { NAVIGATION_LINKS } from "@/constants";
 import { BRAND } from "@/config/brand";
+import { SHIPPING_CONFIG } from "@/config/shipping";
 import { Button } from "@/components/ui/Button";
 import { BrandLogo } from "@/components/ui/BrandLogo";
 
@@ -31,8 +32,8 @@ export const Navbar: React.FC = () => {
   return (
     <>
       {/* Top Announcement Banner */}
-      <div className="w-full bg-forest text-gold text-[9px] uppercase tracking-[0.25em] py-2 px-4 text-center font-bold z-50">
-        10% OFF &amp; FREE SHIPPING FOR THE FIRST 100 ORDERS IN HYDERABAD
+      <div className="w-full bg-forest text-gold text-[9px] sm:text-[10px] uppercase tracking-[0.25em] py-2 px-4 text-center font-bold z-50">
+        {SHIPPING_CONFIG.announcementPromo}
       </div>
 
       <header

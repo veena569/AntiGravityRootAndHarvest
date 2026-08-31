@@ -54,15 +54,15 @@ export const Footer: React.FC = () => {
         </div>
 
         {/* Links Grid */}
-        <div className="lg:col-span-7 grid grid-cols-2 sm:grid-cols-3 gap-12 lg:gap-8 pt-2">
+        <div className="lg:col-span-7 grid grid-cols-2 sm:grid-cols-4 gap-8 pt-2">
           
           {/* Shop */}
-          <div className="space-y-6">
-            <h4 className="text-[10px] uppercase tracking-[0.2em] text-brand-bg/40 font-semibold">Explore</h4>
-            <ul className="space-y-4">
+          <div className="space-y-4">
+            <h4 className="text-[10px] uppercase tracking-[0.2em] text-gold font-bold">Shop</h4>
+            <ul className="space-y-2.5">
               {FOOTER_LINKS.shop.map((link) => (
                 <li key={link.href}>
-                  <Link href={link.href} className="text-sm text-brand-bg/70 hover:text-gold transition-colors">
+                  <Link href={link.href} className="text-xs text-brand-bg/80 hover:text-gold transition-colors">
                     {link.name}
                   </Link>
                 </li>
@@ -70,13 +70,13 @@ export const Footer: React.FC = () => {
             </ul>
           </div>
 
-          {/* Support / Policies */}
-          <div className="space-y-6">
-            <h4 className="text-[10px] uppercase tracking-[0.2em] text-brand-bg/40 font-semibold">Policies</h4>
-            <ul className="space-y-4">
-              {FOOTER_LINKS.support.map((link) => (
+          {/* About */}
+          <div className="space-y-4">
+            <h4 className="text-[10px] uppercase tracking-[0.2em] text-gold font-bold">About</h4>
+            <ul className="space-y-2.5">
+              {FOOTER_LINKS.about.map((link) => (
                 <li key={link.href}>
-                  <Link href={link.href} className="text-sm text-brand-bg/70 hover:text-gold transition-colors">
+                  <Link href={link.href} className="text-xs text-brand-bg/80 hover:text-gold transition-colors">
                     {link.name}
                   </Link>
                 </li>
@@ -84,32 +84,48 @@ export const Footer: React.FC = () => {
             </ul>
           </div>
 
-          {/* Connect */}
-          <div className="space-y-6 col-span-2 sm:col-span-1">
-            <h4 className="text-[10px] uppercase tracking-[0.2em] text-brand-bg/40 font-semibold">Connect</h4>
-            <ul className="space-y-4">
-              <li>
-                <a href={`mailto:${BRAND.contact.email}`} className="text-sm text-brand-bg/70 hover:text-gold transition-colors flex items-center gap-3">
-                  <Mail className="w-4 h-4 text-brand-bg/40" />
-                  Email Us
-                </a>
-              </li>
-              <li>
-                <a href={BRAND.socials.instagram} className="text-sm text-brand-bg/70 hover:text-gold transition-colors flex items-center gap-3">
-                  <Camera className="w-4 h-4 text-brand-bg/40" />
-                  Instagram
-                </a>
-              </li>
-              <li>
-                <a href={BRAND.socials.youtube} target="_blank" rel="noopener noreferrer" className="text-sm text-brand-bg/70 hover:text-gold transition-colors flex items-center gap-3">
-                  <svg className="w-4 h-4 text-brand-bg/40 fill-current" viewBox="0 0 24 24">
-                    <path d="M23.498 6.163a3.003 3.003 0 0 0-2.11-2.11C19.518 3.545 12 3.545 12 3.545s-7.518 0-9.388.508a3.003 3.003 0 0 0-2.11 2.11C0 8.033 0 12 0 12s0 3.967.502 5.837a3.003 3.003 0 0 0 2.11 2.11c1.87.508 9.388.508 9.388.508s7.518 0 9.388-.508a3.003 3.003 0 0 0 2.11-2.11C24 15.967 24 12 24 12s0-3.967-.502-5.837zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-                  </svg>
-                  YouTube
-                </a>
-              </li>
+          {/* Help */}
+          <div className="space-y-4">
+            <h4 className="text-[10px] uppercase tracking-[0.2em] text-gold font-bold">Help</h4>
+            <ul className="space-y-2.5">
+              {FOOTER_LINKS.help.map((link) => (
+                <li key={link.href}>
+                  <Link href={link.href} className="text-xs text-brand-bg/80 hover:text-gold transition-colors">
+                    {link.name}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
+
+          {/* Legal & Social */}
+          <div className="space-y-6">
+            <div className="space-y-3">
+              <h4 className="text-[10px] uppercase tracking-[0.2em] text-gold font-bold">Legal</h4>
+              <ul className="space-y-2.5">
+                {FOOTER_LINKS.legal.map((link) => (
+                  <li key={link.href}>
+                    <Link href={link.href} className="text-xs text-brand-bg/80 hover:text-gold transition-colors">
+                      {link.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="space-y-3">
+              <h4 className="text-[10px] uppercase tracking-[0.2em] text-gold font-bold">Social</h4>
+              <ul className="space-y-2.5">
+                {FOOTER_LINKS.social.map((link) => (
+                  <li key={link.name}>
+                    <a href={link.href} target="_blank" rel="noopener noreferrer" className="text-xs text-brand-bg/80 hover:text-gold transition-colors">
+                      {link.name}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+          </div>
+        </div>
 
         </div>
       </div>

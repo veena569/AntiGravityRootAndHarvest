@@ -43,9 +43,9 @@ export const INITIAL_PRODUCTS: Product[] = [
   {
     id: "groundnut-oil",
     name: "Wood Pressed Groundnut Oil",
-    tagline: "Slow-pressed in vagai wood, keeping nutrients pristine.",
-    description: "Our signature oil is made from premium bold-variety groundnuts sourced from trusted rain-fed farms. Cold pressed using traditional wood-pressing (Lakdi Ghani) methods in seasoned Vagai (Black Siris) wood pestles at speeds under 14 RPM, keeping the extraction temperature below 38°C to retain all natural antioxidants, phytosterols, and the authentic sweet nutty aroma of premium groundnuts.",
-    shortDescription: "Traditional wood-pressed groundnut oil. 100% natural, single-source groundnuts, zero chemical refining, sediment-filtered.",
+    tagline: "Slow-pressed in traditional wooden Ghani, keeping natural nutrients pristine.",
+    description: "Our signature Wood Pressed Groundnut Oil is extracted from premium bold-variety groundnuts sourced from rain-fed farms. Extracted using traditional wooden Ghani methods (Lakdi Ghani) with seasoned Vagai wood pestles at low speeds under 14 RPM. This gentle extraction keeps temperatures below 38°C, preserving natural antioxidants, Vitamin E, and the authentic sweet nutty aroma of fresh groundnuts.",
+    shortDescription: "Traditional wood-pressed groundnut oil. 100% natural, single-source groundnuts, unrefined, zero chemical additives.",
     image: "/images/groundnut-oil-1l.jpg",
     gallery: [
       "/images/groundnut-oil-1l.jpg",
@@ -66,14 +66,14 @@ export const INITIAL_PRODUCTS: Product[] = [
       "5 L": 2499
     },
     benefits: [
-      "Rich in Monounsaturated Fatty Acids (MUFA) which support healthy cholesterol levels.",
-      "Naturally high in Vitamin E, a powerful antioxidant that protects cells from oxidative stress.",
-      "High smoke point (~232°C) makes it ideal for everyday Indian deep frying, sautéing, and baking.",
-      "Zero trans fats, zero hydrogenated fats, completely free of chemical preservatives or mineral oils.",
-      "Traditional wood extraction preserves native bioactive compounds (resveratrol and phytosterols)."
+      "Rich in Monounsaturated Fatty Acids (MUFA) which support healthy lipid levels.",
+      "Naturally contains Vitamin E, a known dietary antioxidant.",
+      "High smoke point (~232°C) makes it ideal for everyday Indian deep frying, sautéing, and tempering.",
+      "Zero trans fats, zero hydrogenated fats, free of chemical refining or mineral oils.",
+      "Traditional wooden Ghani extraction preserves native aroma and natural fats."
     ],
-    ingredients: "100% Pure Cold Pressed Groundnut Oil (from select bold-grade raw peanuts).",
-    storage: "Store in a cool, dry place away from direct sunlight. Close the lid tightly after use. Since it is unrefined, natural sedimentation may occur at the bottom, which is a hallmark of absolute purity.",
+    ingredients: "100% Pure Wood Pressed Groundnut Oil (from select bold-grade raw peanuts).",
+    storage: "Store in a cool, dry place away from direct sunlight. Close the cap tightly after use. Since it is unrefined, natural sedimentation may settle at the bottom, which is a hallmark of authentic wood-pressed purity.",
     nutrition: [
       { label: "Energy", value: "898 kcal" },
       { label: "Total Fat", value: "99.8 g" },
@@ -126,8 +126,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     ],
     faqs: [
       {
-        q: "What does 'wood pressed' or 'cold pressed' actually mean?",
-        a: "Wood pressing is the traditional Indian method (Lakdi Ghani) of oil extraction. We use a massive mortar and wooden pestle (vagai wood) that slowly crushes the groundnuts. Because it operates at under 14 RPM, no heat is generated, ensuring all sensitive vitamins, antioxidants, and pure flavors remain undamaged."
+        q: "What does 'wood pressed' mean?",
+        a: "Wood pressing (Lakdi Ghani) is the traditional Indian method of oil extraction. A massive mortar and wooden pestle slowly crush the seeds under 14 RPM. No external heat or chemicals are used, preserving the natural nutrients, antioxidants, and authentic taste."
       }
     ],
     category: "Oils",
@@ -137,7 +137,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     id: "sesame-oil",
     name: "Wood Pressed Sesame Oil",
     tagline: "Ancient Indian superfood oil. Rich, nutty, deeply nourishing.",
-    description: "Our premium Sesame Oil (Til Oil) is slowly extracted using organic sesame seeds from select farms in southern India. Cold pressed in traditional wooden Ghani mills at speeds below 14 RPM to preserve natural sesamol, sesamolin, and rich lignans. It possesses an authentic golden color, high smoke point, and a highly aromatic nutty flavor.",
+    description: "Our premium Wood Pressed Sesame Oil (Til Oil) is slowly extracted using natural sesame seeds sourced from select farms in southern India. Pressed in traditional wooden Ghani mills at low speeds below 14 RPM to preserve natural sesamol, sesamolin, and rich lignans. It possesses an authentic golden color, high thermal stability, and a rich nutty aroma.",
     shortDescription: "Traditional wood-pressed sesame oil. 100% natural, single-source sesame seeds, unrefined, zero preservatives.",
     image: "/images/sesame-oil-1l.jpg",
     gallery: [
@@ -157,12 +157,12 @@ export const INITIAL_PRODUCTS: Product[] = [
       "5 L": 3100
     },
     benefits: [
-      "Rich in powerful antioxidants (sesamol and sesamolin) that support heart health.",
-      "Excellent source of healthy unsaturated fats and vitamin E.",
-      "Traditional extraction retains native flavor and key bioactive compounds.",
-      "Highly stable for everyday cooking, sautéing, and oil pulling."
+      "Rich in natural sesame antioxidants (sesamol and sesamolin).",
+      "Good source of healthy unsaturated fatty acids and Vitamin E.",
+      "Traditional wooden Ghani extraction retains authentic flavor and native oil density.",
+      "Versatile for everyday South Indian cooking, tempering, and Ayurvedic oil pulling."
     ],
-    ingredients: "100% Pure Cold Pressed Sesame Oil.",
+    ingredients: "100% Pure Wood Pressed Sesame Oil.",
     storage: "Store in a cool, dry place away from direct sunlight. Close the cap tightly after use.",
     nutrition: [
       { label: "Energy", value: "898 kcal" },
@@ -179,21 +179,21 @@ export const INITIAL_PRODUCTS: Product[] = [
     bestBefore: "December 22, 2026 (6 Months from Packing)",
     batchNumber: "RH-SES-2506A",
     rating: 4.8,
-    reviewsCount: 64,
+    reviewsCount: 4,
     reviews: [
       {
         author: "Meera Krishnan",
         rating: 5,
         date: "2026-06-28",
         title: "Smells wonderful!",
-        comment: "The aroma of this sesame oil is so rich and authentic. It matches the quality of stone-pressed oil from Tamil Nadu perfectly. Excellent for cooking and oil pulling.",
+        comment: "The aroma of this sesame oil is so rich and authentic. It matches the quality of traditional wood pressed oil perfectly.",
         verified: true
       }
     ],
     faqs: [
       {
         q: "What is sesame oil commonly used for?",
-        a: "Sesame oil is a staple in Asian and South Indian cooking, known for its deep nutty aroma and nutritional density. It is also highly recommended in Ayurveda for daily oil pulling (Kavala)."
+        a: "Sesame oil is a staple in South Indian cooking, known for its deep nutty aroma and nutritional density. It is also traditional for daily oil pulling (Kavala)."
       }
     ],
     category: "Oils",
@@ -202,8 +202,8 @@ export const INITIAL_PRODUCTS: Product[] = [
   {
     id: "sunflower-oil",
     name: "Wood Pressed Sunflower Oil",
-    tagline: "Slow-pressed in vagai wood, keeping nutrients pristine.",
-    description: "Our signature oil is made from premium sunflower seeds sourced from trusted rain-fed farms. Cold pressed using traditional wood-pressing (Lakdi Ghani) methods in seasoned Vagai wood pestles, crushing seeds gently to retain natural antioxidants and vitamin E.",
+    tagline: "Slow-pressed in wooden Ghani, keeping natural goodness intact.",
+    description: "Our Wood Pressed Sunflower Oil is extracted from premium sunflower seeds sourced from trusted rain-fed farms. Pressed gently using traditional wooden Ghani pestles at low temperatures, retaining natural Vitamin E and unsaturated fats without chemical refining.",
     shortDescription: "Traditional wood-pressed sunflower oil. 100% natural, single-source sunflower seeds, unrefined, zero preservatives.",
     image: "/images/sunflower-oil-1l.jpg",
     gallery: ["/images/sunflower-oil-1l.jpg"],
@@ -217,11 +217,11 @@ export const INITIAL_PRODUCTS: Product[] = [
       "1 L": 510
     },
     benefits: [
-      "Naturally high in Vitamin E, a powerful antioxidant.",
-      "Rich in unsaturated fats which support heart health.",
-      "Excellent high smoke point makes it highly stable for daily cooking."
+      "High in Vitamin E, a natural dietary antioxidant.",
+      "Rich in unsaturated fats for balanced daily cooking.",
+      "Light texture and high smoke point for sautéing and roasting."
     ],
-    ingredients: "100% Pure Cold Pressed Sunflower Oil.",
+    ingredients: "100% Pure Wood Pressed Sunflower Oil.",
     storage: "Store in a cool dry place. Keep airtight.",
     nutrition: [
       { label: "Energy", value: "898 kcal" },
@@ -234,7 +234,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     bestBefore: "6 Months from Packing",
     batchNumber: "RH-SFL-2606A",
     rating: 5.0,
-    reviewsCount: 38,
+    reviewsCount: 2,
     reviews: [],
     faqs: [],
     category: "Oils",
@@ -243,9 +243,9 @@ export const INITIAL_PRODUCTS: Product[] = [
   {
     id: "groundnuts",
     name: "Organic Raw Groundnuts",
-    tagline: "Bold variety farm-fresh organic peanuts.",
-    description: "Sourced directly from rain-fed family farms in Andhra Pradesh and Telangana. Hand-shelled, sun-dried, and pesticide-free peanuts of premium quality.",
-    shortDescription: "Organic raw groundnuts. Hand-shelled, pesticide-free, rich in protein and healthy fats.",
+    tagline: "Bold variety farm-fresh peanuts.",
+    description: "Sourced directly from rain-fed family farms in Telangana and Andhra Pradesh. Hand-shelled and sun-dried, these premium raw groundnuts offer a rich nutty taste, natural crunchy texture, and high protein density. Perfect for roasting, making homemade wood-pressed peanut butter, or adding to traditional poha, upma, and chutneys.",
+    shortDescription: "Hand-shelled organic raw peanuts. Sun-dried, protein-dense, rich in healthy unsaturated fats.",
     image: "/images/groundnuts.jpg",
     gallery: ["/images/groundnuts.jpg"],
     sizes: ["500 g", "1 kg", "2 kg", "5 kg"],
@@ -262,13 +262,11 @@ export const INITIAL_PRODUCTS: Product[] = [
       "5 kg": 1199
     },
     benefits: [
-      "Good source of plant protein – supports muscle and tissue maintenance.",
-      "Contains healthy unsaturated fats – especially monounsaturated and polyunsaturated fats.",
-      "Rich in fibre – supports healthy digestion and helps with fullness.",
-      "Provides energy – calorie-dense and useful as an energy-rich food.",
-      "Contains important nutrients – including magnesium, phosphorus, niacin, vitamin E and folate.",
-      "Contains antioxidants – including vitamin E and other plant compounds.",
-      "May support heart health when eaten as part of an overall healthy diet."
+      "Rich Source of Plant Protein: Supports muscle maintenance and balanced daily nutrition.",
+      "Contains Healthy Unsaturated Fats: Monounsaturated and polyunsaturated fats for energy.",
+      "Good Source of Dietary Fibre: Supports healthy digestion and satiety.",
+      "Essential Minerals & Micronutrients: Provides magnesium, phosphorus, niacin, and folate.",
+      "Sun-Dried & Hand-Shelled: Carefully selected without chemical preservatives or artificial treatments."
     ],
     ingredients: "100% Organic Raw Peanuts / Groundnuts.",
     storage: "Store in an airtight container in a cool, dry place.",
@@ -276,16 +274,31 @@ export const INITIAL_PRODUCTS: Product[] = [
       { label: "Energy", value: "567 kcal" },
       { label: "Protein", value: "25.8 g" },
       { label: "Total Fat", value: "49.2 g" },
-      { label: "Carbohydrates", value: "16.1 g" }
+      { label: "Carbohydrates", value: "16.1 g" },
+      { label: "Dietary Fibre", value: "8.5 g" }
     ],
     pressedOn: "N/A",
     packedOn: "N/A",
     bestBefore: "6 Months from Packing",
     batchNumber: "RH-GNT-RAW",
     rating: 5.0,
-    reviewsCount: 12,
-    reviews: [],
-    faqs: [],
+    reviewsCount: 3,
+    reviews: [
+      {
+        author: "Venkatesh Rao",
+        rating: 5,
+        date: "2026-07-12",
+        title: "Fresh and Bold Quality Peanuts",
+        comment: "Very clean raw groundnuts without any empty shells or bad seeds. Roasted them for snacks and the flavor is amazing.",
+        verified: true
+      }
+    ],
+    faqs: [
+      {
+        q: "Are these groundnuts raw or roasted?",
+        a: "These are 100% raw, sun-dried groundnuts. You can roast them, boil them, or use them directly in daily recipes."
+      }
+    ],
     category: "Grains",
     isComingSoon: false
   },
@@ -293,8 +306,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     id: "jaisriram-unpolished-rice",
     name: "Jai Sriram Unpolished Rice",
     tagline: "Heritage premium unpolished rice variety.",
-    description: "At Root & Harvest, we believe rice should be more than just a staple — it should be clean, wholesome, and naturally good. Our Jai Sri Ram Rice is carefully selected for its quality, grain consistency, taste, and aroma. We focus on bringing you rice that is handled with care and processed thoughtfully, so you can enjoy the natural character of the grain in your everyday meals.",
-    shortDescription: "Jai Sriram traditional unpolished rice. High fiber, rich in vitamins and minerals.",
+    description: "At Root & Harvest, we select our Jai Sriram Unpolished Rice for its natural bran layer, rich fiber content, and traditional grain character. Unpolished rice retains its outer nutrient layer, providing a hearty texture, natural earthy flavor, and wholesome goodness for healthy everyday family meals.",
+    shortDescription: "Traditional Jai Sriram unpolished rice. Retains natural bran layer, high fiber, rich in minerals.",
     image: "/images/jaisriram-unpolished-rice.jpg",
     gallery: ["/images/jaisriram-unpolished-rice.jpg", "/images/why-jaisriram-rice.jpg"],
     sizes: ["1 kg", "5 kg"],
@@ -307,11 +320,10 @@ export const INITIAL_PRODUCTS: Product[] = [
       "5 kg": 520
     },
     benefits: [
-      "Carefully Selected Grains: We choose quality grains with good size, texture, and consistency.",
-      "Thoughtfully Processed: We avoid unnecessary polishing and processing to retain the natural goodness of the rice.",
-      "Naturally Tasty & Aromatic: Perfect for everyday cooking, with a pleasant texture and traditional rice flavour.",
-      "Clean & Carefully Packed: Handled and packed with attention to cleanliness and quality.",
-      "From Our Selection to Your Kitchen: We believe in bringing trusted, quality staples from our source to your family."
+      "Retains Natural Bran Layer: High in natural dietary fiber which aids healthy digestion.",
+      "Unpolished & Unrefined: Free of harsh chemical polishing to protect natural grain character.",
+      "Rich in Minerals: Provides natural B-vitamins, iron, and magnesium.",
+      "Nourishing Daily Staple: Delicious earthy flavor and satisfying firm texture."
     ],
     ingredients: "100% Raw Jai Sriram Unpolished Rice.",
     storage: "Store in a cool dry place. Keep airtight.",
@@ -319,16 +331,31 @@ export const INITIAL_PRODUCTS: Product[] = [
       { label: "Energy", value: "354 kcal" },
       { label: "Protein", value: "7.5 g" },
       { label: "Total Fat", value: "1.8 g" },
-      { label: "Carbohydrates", value: "77.2 g" }
+      { label: "Carbohydrates", value: "77.2 g" },
+      { label: "Dietary Fibre", value: "3.4 g" }
     ],
     pressedOn: "N/A",
     packedOn: "N/A",
     bestBefore: "12 Months from Packing",
     batchNumber: "RH-JSR-UNP",
     rating: 5.0,
-    reviewsCount: 18,
-    reviews: [],
-    faqs: [],
+    reviewsCount: 4,
+    reviews: [
+      {
+        author: "Kavitha N",
+        rating: 5,
+        date: "2026-07-15",
+        title: "Wholesome & Healthy Rice",
+        comment: "Excellent unpolished rice! Cooks well with a nice texture and keeps us full for longer.",
+        verified: true
+      }
+    ],
+    faqs: [
+      {
+        q: "How should I cook unpolished rice?",
+        a: "Soak the unpolished rice in water for 30 minutes before cooking. Use 1:2.5 ratio of rice to water for optimal fluffy texture."
+      }
+    ],
     category: "Grains",
     isComingSoon: false
   },
@@ -336,8 +363,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     id: "jaisriram-polished-rice",
     name: "Jai Sriram Polished Rice",
     tagline: "Fine-grain premium polished white rice.",
-    description: "At Root & Harvest, we believe rice should be more than just a staple — it should be clean, wholesome, and naturally good. Our Jai Sri Ram Rice is carefully selected for its quality, grain consistency, taste, and aroma. We focus on bringing you rice that is handled with care and processed thoughtfully, so you can enjoy the natural character of the grain in your everyday meals.",
-    shortDescription: "Premium Jai Sriram polished white rice. Fluffy, fragrant, and highly digestible.",
+    description: "Our Jai Sriram Polished Rice is carefully milled to deliver clean, fluffy white rice grains that cook evenly and digest easily. Selected from premium farm harvests, this polished white rice is thoroughly cleaned and processed under strict hygiene standards, offering a soft texture and delicate aroma perfect for everyday family meals, biryanis, and traditional curries.",
+    shortDescription: "Premium Jai Sriram polished white rice. Light, fluffy texture, easy to digest, perfect for daily meals.",
     image: "/images/jaisriram-polished-rice.jpg",
     gallery: ["/images/jaisriram-polished-rice.jpg", "/images/why-jaisriram-rice.jpg"],
     sizes: ["1 kg", "5 kg"],
@@ -350,28 +377,42 @@ export const INITIAL_PRODUCTS: Product[] = [
       "5 kg": 490
     },
     benefits: [
-      "Carefully Selected Grains: We choose quality grains with good size, texture, and consistency.",
-      "Thoughtfully Processed: We avoid unnecessary processing and focus on retaining the natural character of the rice.",
-      "Naturally Tasty & Aromatic: Perfect for everyday cooking, with a pleasant texture and traditional rice flavour.",
-      "Clean & Carefully Packed: Handled and packed with attention to cleanliness and quality.",
-      "From Our Selection to Your Kitchen: We believe in bringing trusted, quality staples from our source to your family."
+      "Clean & Easy to Digest: Light on digestion, making it ideal for daily family meals.",
+      "Uniform Fluffy Grains: Cooks up non-sticky with excellent grain separation.",
+      "Hygienically Processed: Thoroughly de-stoned, cleaned, and packed under strict quality standards.",
+      "Aromatic & Versatile: Pairs delightfully with sambar, rasam, dal, and everyday South Indian curries."
     ],
-    ingredients: "100% Raw Jai Sriram Polished Rice.",
+    ingredients: "100% Raw Jai Sriram Polished White Rice.",
     storage: "Store in a cool dry place. Keep airtight.",
     nutrition: [
       { label: "Energy", value: "351 kcal" },
       { label: "Protein", value: "6.8 g" },
       { label: "Total Fat", value: "0.4 g" },
-      { label: "Carbohydrates", value: "80.0 g" }
+      { label: "Carbohydrates", value: "80.0 g" },
+      { label: "Dietary Fibre", value: "0.6 g" }
     ],
     pressedOn: "N/A",
     packedOn: "N/A",
     bestBefore: "12 Months from Packing",
     batchNumber: "RH-JSR-POL",
     rating: 5.0,
-    reviewsCount: 15,
-    reviews: [],
-    faqs: [],
+    reviewsCount: 3,
+    reviews: [
+      {
+        author: "Suresh P",
+        rating: 5,
+        date: "2026-07-20",
+        title: "Very soft and aromatic",
+        comment: "Great quality white rice. Grains are long and cook softly. Perfect for daily lunch.",
+        verified: true
+      }
+    ],
+    faqs: [
+      {
+        q: "Is this rice suitable for daily cooking?",
+        a: "Yes, Jai Sriram Polished Rice is a staple white rice variety prized for its light digestion, soft texture, and versatility."
+      }
+    ],
     category: "Grains",
     isComingSoon: false
   }

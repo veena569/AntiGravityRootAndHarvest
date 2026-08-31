@@ -90,15 +90,15 @@ function ProductsContent() {
   const showGrains = !categoryFilter || categoryFilter === "Grains";
 
   const pageTitle = categoryFilter === "Oils" 
-    ? "Wood Pressed Oils" 
+    ? "WOOD PRESSED OILS" 
     : categoryFilter === "Grains" 
-      ? "Traditional Grains" 
-      : "Our Collection";
+      ? "TRADITIONAL GRAINS & RICE" 
+      : "OUR COLLECTION";
 
   const pageTagline = categoryFilter === "Oils"
-    ? "100% natural, unrefined, single-source cold-pressed Ghani oils."
+    ? "Traditional wooden Ghani extracted oils, keeping natural nutrients pristine."
     : categoryFilter === "Grains"
-      ? "Pesticide-free heritage grains, raw groundnuts, and traditional rice."
+      ? "Wholesome staples, thoughtfully sourced for everyday cooking."
       : "Purity isn't what we add. It's what we leave out.";
 
   return (

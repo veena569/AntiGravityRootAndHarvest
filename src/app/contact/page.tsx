@@ -72,7 +72,7 @@ export default function ContactPage() {
             <div className="lg:col-span-5 space-y-6">
               
               <div className="bg-white border border-forest/5 p-8 space-y-6 shadow-sm rounded-sm">
-                <h3 className="text-lg font-serif text-forest font-semibold border-b border-forest/5 pb-3">Our Coordinates</h3>
+                <h3 className="text-lg font-serif text-forest font-semibold border-b border-forest/5 pb-3">We're Here to Help</h3>
                 
                 <div className="space-y-6">
                   

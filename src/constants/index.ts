@@ -1,6 +1,7 @@
 export const SIZES = {
   OILS: ["500 ml", "1 L", "2 L", "5 L"],
-  HONEY: ["250 g", "500 g"],
+  GRAINS: ["1 kg", "5 kg"],
+  GROUNDNUTS: ["500 g", "1 kg", "2 kg", "5 kg"],
 };
 
 export const COLORS = {
@@ -23,26 +24,36 @@ export const NAVIGATION_LINKS = [
   { name: "Wood Pressed Oils", href: "/products?category=oils" },
   { name: "Traditional Grains", href: "/products?category=grains" },
   { name: "Our Story", href: "/about" },
+  { name: "Contact Us", href: "/contact" },
 ];
 
 export const FOOTER_LINKS = {
   shop: [
-    { name: "Groundnut Oil", href: "/products/groundnut-oil" },
-    { name: "Sesame Oil", href: "/products/sesame-oil" },
+    { name: "All Products", href: "/products" },
+    { name: "Wood Pressed Oils", href: "/products?category=oils" },
+    { name: "Wood Pressed Groundnut Oil", href: "/products/groundnut-oil" },
+    { name: "Wood Pressed Sesame Oil", href: "/products/sesame-oil" },
+    { name: "Traditional Grains & Rice", href: "/products?category=grains" },
+    { name: "Jai Sriram Unpolished Rice", href: "/products/jaisriram-unpolished-rice" },
+    { name: "Jai Sriram Polished Rice", href: "/products/jaisriram-polished-rice" },
+    { name: "Organic Raw Groundnuts", href: "/products/groundnuts" },
   ],
-  support: [
-    { name: "Track Order", href: "/account" },
-    { name: "FAQ", href: "/faq" },
-    { name: "Shipping Policy", href: "/shipping" },
-    { name: "Returns & Refunds", href: "/returns" },
-    { name: "Privacy Policy", href: "/privacy" },
-    { name: "Terms of Service", href: "/terms" },
+  about: [
+    { name: "Our Story", href: "/about" },
     { name: "Contact Us", href: "/contact" },
   ],
-  company: [
-    { name: "About Us", href: "/about" },
-    { name: "Our Farms", href: "/farms" },
+  help: [
+    { name: "FAQ", href: "/faq" },
+    { name: "Track Order / Account", href: "/account" },
+    { name: "Shipping Policy", href: "/shipping" },
+    { name: "Returns & Refunds", href: "/returns" },
+  ],
+  legal: [
     { name: "Privacy Policy", href: "/privacy" },
     { name: "Terms of Service", href: "/terms" },
+  ],
+  social: [
+    { name: "Instagram", href: "https://www.instagram.com/rootandharvest.in/" },
+    { name: "YouTube", href: "https://www.youtube me/" },
   ],
 };
