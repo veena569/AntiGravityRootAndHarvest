@@ -186,6 +186,18 @@ ${orderTime}`;
         }
 
         // 2. Send Customer Notification
+        const hasOil = order.items.some((i: any) => i.name.toLowerCase().includes("oil"));
+        const hasNonOil = order.items.some((i: any) => !i.name.toLowerCase().includes("oil"));
+
+        let prepText = "Our team will freshly prepare your order and update you when it is dispatched.";
+        if (hasOil && !hasNonOil) {
+          prepText = "Our team will freshly prepare your wood-pressed oils and update you when your order is dispatched.";
+        } else if (!hasOil && hasNonOil) {
+          prepText = "Our team will carefully select and pack your farm-fresh items and update you when your order is dispatched.";
+        } else if (hasOil && hasNonOil) {
+          prepText = "Our team will freshly prepare and pack your items and update you when your order is dispatched.";
+        }
+
         const customerMessage = `🌿 Thank you for choosing Root & Harvest.
 
 We've received your order successfully.
@@ -196,7 +208,7 @@ ${order.orderNumber}
 Amount:
 ₹${order.total}
 
-Our team will freshly prepare your wood-pressed oils and update you when your order is dispatched.
+${prepText}
 
 Thank you for supporting a small business ❤️`;
 
