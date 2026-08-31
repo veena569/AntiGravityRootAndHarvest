@@ -182,7 +182,7 @@ function OrderSuccessContent() {
               className="bg-white shadow-2xl overflow-y-auto max-h-[90vh] w-full max-w-3xl border border-forest/10 p-8 md:p-12 text-left rounded-sm z-50 relative print:static print:max-h-none print:border-none print:shadow-none print:w-full"
             >
               <div className="flex justify-between items-center mb-8 border-b border-forest/10 pb-4 print:hidden">
-                <span className="text-xs uppercase tracking-widest text-forest font-bold">Tax Invoice Receipt</span>
+                <span className="text-xs uppercase tracking-widest text-forest font-bold">Order Invoice Receipt</span>
                 <div className="flex gap-4">
                   <button
                     onClick={handlePrint}
@@ -212,7 +212,7 @@ function OrderSuccessContent() {
                     </p>
                   </div>
                   <div className="text-right">
-                    <h3 className="text-lg font-serif text-forest uppercase font-bold tracking-wider">TAX INVOICE</h3>
+                    <h3 className="text-lg font-serif text-forest uppercase font-bold tracking-wider">ORDER RECEIPT</h3>
                     <p className="mt-2 text-[11px] text-dark/70">
                       Invoice No: <span className="font-mono font-semibold">{order.orderNumber}</span><br />
                       Date: {new Date(order.createdAt).toLocaleDateString()}<br />

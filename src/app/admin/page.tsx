@@ -737,13 +737,13 @@ export default function AdminPage() {
             {/* Printable Invoice Header */}
             <div className="flex justify-between items-start border-b-2 border-forest pb-6">
               <div>
-                <h2 className="text-2xl font-serif text-forest font-bold tracking-wider">ROOT & HARVEST</h2>
+                <h2 className="text-2xl font-serif text-forest font-bold tracking-wider">ROOT &amp; HARVEST</h2>
                 <p className="text-[10px] text-dark/60 uppercase tracking-widest mt-1">Honest Food, Naturally Crafted</p>
                 <p className="text-[10px] text-dark/60 mt-1">Hyderabad Operations Hub, India</p>
-                <p className="text-[10px] text-dark/60">GSTIN: 36AAACR1234F1Z9 | support@rootandharvest.in</p>
+                <p className="text-[10px] text-dark/60">support@rootandharvest.in | www.rootandharvest.in</p>
               </div>
               <div className="text-right">
-                <span className="text-xs font-bold uppercase tracking-widest text-forest block">TAX INVOICE</span>
+                <span className="text-xs font-bold uppercase tracking-widest text-forest block">ORDER INVOICE</span>
                 <p className="font-mono text-sm font-bold text-forest mt-1">{selectedInvoiceOrder.orderNumber}</p>
                 <p className="text-[10px] font-mono text-dark/60">
                   Date: {new Date(selectedInvoiceOrder.createdAt).toLocaleDateString("en-IN")}
@@ -812,17 +812,13 @@ export default function AdminPage() {
             {/* Totals Breakdown */}
             <div className="border-t border-forest/20 pt-4 flex justify-between items-start text-xs">
               <div className="text-[10px] text-dark/60 space-y-1">
-                <p>Thank you for choosing 100% natural, farm-fresh produce from Root & Harvest!</p>
-                <p>This is a computer-generated tax invoice.</p>
+                <p>Thank you for choosing 100% natural, farm-fresh produce from Root &amp; Harvest!</p>
+                <p>This is a computer-generated order receipt.</p>
               </div>
               <div className="space-y-1 text-right w-48 font-mono">
                 <div className="flex justify-between text-dark/70">
                   <span>Subtotal:</span>
                   <span>₹{selectedInvoiceOrder.total}</span>
-                </div>
-                <div className="flex justify-between text-dark/70">
-                  <span>GST (5% Included):</span>
-                  <span>₹{Math.round(selectedInvoiceOrder.total * 0.05)}</span>
                 </div>
                 <div className="flex justify-between text-dark/70">
                   <span>Shipping Fee:</span>
