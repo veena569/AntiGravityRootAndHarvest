@@ -169,15 +169,62 @@ export default function AdminPage() {
       prev.map((item) => (item.sku === sku ? { ...item, stock: Math.max(0, item.stock - 5) } : item))
     );
   };
-  // Raw Material Rates & Grains Inventory State (Persisted in LocalStorage)
-  const [rates, setRates] = useState({
-    groundnutSeedCost: 125, // ₹125/kg (2.5kg = 1L)
-    sesameSeedCost: 125,    // ₹125/kg (2.5kg = 1L)
-    sunflowerSeedCost: 110, // ₹110/kg (2.5kg = 1L)
-    pressingCostPerKg: 30,  // ₹30 per 1kg of seeds (2.5kg * 30 = ₹75 for 1L)
-    bottleCost: 35,          // ₹35 per bottle
-    capLabelCost: 10,        // ₹10 per unit
-  });
+  // Dynamic Oil & Grain Master Rate Registers
+  const [oilRates, setOilRates] = useState<any[]>([
+    {
+      id: "groundnut-oil",
+      name: "Wood Pressed Groundnut Oil",
+      seedCostPerKg: 125,
+      seedRatioPerLiter: 2.5,
+      pressingCostPerKg: 30,
+      packagingCostPerLiter: 45, // ₹35 bottle + ₹10 cap & label
+      sellingPricePerLiter: 449,
+    },
+    {
+      id: "sesame-oil",
+      name: "Wood Pressed Sesame Oil",
+      seedCostPerKg: 125,
+      seedRatioPerLiter: 2.5,
+      pressingCostPerKg: 30,
+      packagingCostPerLiter: 45,
+      sellingPricePerLiter: 599,
+    },
+    {
+      id: "sunflower-oil",
+      name: "Wood Pressed Sunflower Oil",
+      seedCostPerKg: 110,
+      seedRatioPerLiter: 2.5,
+      pressingCostPerKg: 30,
+      packagingCostPerLiter: 45,
+      sellingPricePerLiter: 465,
+    },
+  ]);
+
+  // Form State for Adding New Custom Oils
+  const [newOilName, setNewOilName] = useState("");
+  const [newOilSeedCost, setNewOilSeedCost] = useState("");
+  const [newOilSeedRatio, setNewOilSeedRatio] = useState("2.5");
+  const [newOilPressingCost, setNewOilPressingCost] = useState("30");
+  const [newOilPackagingCost, setNewOilPackagingCost] = useState("45");
+  const [newOilSellingPrice, setNewOilSellingPrice] = useState("");
+
+  const handleAddOil = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newOilName || !newOilSeedCost || !newOilSellingPrice) return;
+    const newOil = {
+      id: newOilName.toLowerCase().replace(/[^a-z0-9]/g, "-"),
+      name: newOilName.trim(),
+      seedCostPerKg: Number(newOilSeedCost),
+      seedRatioPerLiter: Number(newOilSeedRatio || 2.5),
+      pressingCostPerKg: Number(newOilPressingCost || 30),
+      packagingCostPerLiter: Number(newOilPackagingCost || 45),
+      sellingPricePerLiter: Number(newOilSellingPrice),
+    };
+    setOilRates([...oilRates, newOil]);
+    setNewOilName("");
+    setNewOilSeedCost("");
+    setNewOilSellingPrice("");
+  };
 
   const [grainRates, setGrainRates] = useState<any[]>([
     { id: "groundnuts", name: "Organic Raw Groundnuts", purchaseCostPerKg: 140, packingCostPerKg: 20, sellingPricePerKg: 199 },
@@ -208,66 +255,61 @@ export default function AdminPage() {
     setNewGrainSellingPrice("");
   };
 
-  // Helper: Calculate item-level COGS based on production formula (2.5kg seeds = 1L oil)
-  const calculateOrderItemCOGS = (item: any) => {
-    const nameLower = (item.name || "").toLowerCase();
-    const size = (item.size || "").toLowerCase();
-    const qty = item.quantity || 1;
+  // Helper: Calculate item-level COGS dynamically using Oil & Grain Rate Cards
+  const calculateOrderItemCOGS = (item: any): number => {
+    if (!item) return 0;
+    const nameLower = String(item.name || "").toLowerCase();
+    const sizeLower = String(item.size || "").toLowerCase();
+    const qty = Number(item.quantity || 1);
 
-    if (nameLower.includes("groundnut oil")) {
-      let multiplier = 2.5; // 1L default = 2.5kg seeds
-      if (size.includes("500") || size.includes("0.5")) multiplier = 1.25;
-      else if (size.includes("2 l")) multiplier = 5.0;
-      else if (size.includes("5 l")) multiplier = 12.5;
+    // Check Oil Matches
+    for (let i = 0; i < oilRates.length; i++) {
+      const oil = oilRates[i];
+      const oilNameLower = String(oil.name || "").toLowerCase();
+      const oilIdLower = String(oil.id || "").toLowerCase();
+      if (nameLower.includes(oilNameLower) || nameLower.includes(oilIdLower.replace(/-/g, " "))) {
+        let literMultiplier = 1.0;
+        if (sizeLower.includes("500") || sizeLower.includes("0.5")) literMultiplier = 0.5;
+        else if (sizeLower.includes("2 l")) literMultiplier = 2.0;
+        else if (sizeLower.includes("5 l")) literMultiplier = 5.0;
 
-      const seedCost = multiplier * rates.groundnutSeedCost;
-      const pressingCost = multiplier * rates.pressingCostPerKg;
-      const bottleCost = size.includes("5 l") ? 80 : size.includes("2 l") ? 50 : rates.bottleCost;
-      const totalPerUnit = seedCost + pressingCost + bottleCost + rates.capLabelCost;
-      return Math.round(totalPerUnit * qty);
+        const seedsNeededKg = (oil.seedRatioPerLiter || 2.5) * literMultiplier;
+        const seedCost = seedsNeededKg * (oil.seedCostPerKg || 0);
+        const pressingCost = seedsNeededKg * (oil.pressingCostPerKg || 30);
+        const packCost = (oil.packagingCostPerLiter || 45) * literMultiplier;
+
+        return Math.round((seedCost + pressingCost + packCost) * qty);
+      }
     }
 
-    if (nameLower.includes("sesame oil")) {
-      let multiplier = 2.5;
-      if (size.includes("500") || size.includes("0.5")) multiplier = 1.25;
-      else if (size.includes("2 l")) multiplier = 5.0;
-      else if (size.includes("5 l")) multiplier = 12.5;
+    // Check Grain Matches
+    for (let i = 0; i < grainRates.length; i++) {
+      const grain = grainRates[i];
+      const grainNameLower = String(grain.name || "").toLowerCase();
+      const grainIdLower = String(grain.id || "").toLowerCase();
+      if (nameLower.includes(grainNameLower) || nameLower.includes(grainIdLower)) {
+        let weightKg = 1.0;
+        if (sizeLower.includes("500 g") || sizeLower.includes("0.5 kg")) weightKg = 0.5;
+        else if (sizeLower.includes("2 kg")) weightKg = 2.0;
+        else if (sizeLower.includes("5 kg")) weightKg = 5.0;
 
-      const seedCost = multiplier * rates.sesameSeedCost;
-      const pressingCost = multiplier * rates.pressingCostPerKg;
-      const bottleCost = size.includes("5 l") ? 80 : size.includes("2 l") ? 50 : rates.bottleCost;
-      const totalPerUnit = seedCost + pressingCost + bottleCost + rates.capLabelCost;
-      return Math.round(totalPerUnit * qty);
+        const unitCogs = ((grain.purchaseCostPerKg || 0) + (grain.packingCostPerKg || 0)) * weightKg;
+        return Math.round(unitCogs * qty);
+      }
     }
 
-    if (nameLower.includes("sunflower oil")) {
-      let multiplier = 2.5;
-      if (size.includes("500") || size.includes("0.5")) multiplier = 1.25;
-
-      const seedCost = multiplier * rates.sunflowerSeedCost;
-      const pressingCost = multiplier * rates.pressingCostPerKg;
-      const totalPerUnit = seedCost + pressingCost + rates.bottleCost + rates.capLabelCost;
-      return Math.round(totalPerUnit * qty);
-    }
-
-    // Matching Grains Logic
-    const matchingGrain = grainRates.find(g => nameLower.includes(g.name.toLowerCase()) || nameLower.includes(g.id));
-    if (matchingGrain) {
-      let weightKg = 1.0;
-      if (size.includes("500 g") || size.includes("0.5 kg")) weightKg = 0.5;
-      else if (size.includes("2 kg")) weightKg = 2.0;
-      else if (size.includes("5 kg")) weightKg = 5.0;
-
-      const unitCogs = (matchingGrain.purchaseCostPerKg + matchingGrain.packingCostPerKg) * weightKg;
-      return Math.round(unitCogs * qty);
-    }
-
-    return Math.round(item.price * qty * 0.6); // Default 60% fallback
+    return Math.round((Number(item.price) || 0) * qty * 0.6);
   };
 
-  const calculateOrderTotalCOGS = (order: any) => {
-    if (!order.items || order.items.length === 0) return Math.round(order.total * 0.6);
-    return order.items.reduce((acc: number, item: any) => acc + calculateOrderItemCOGS(item), 0);
+  const calculateOrderTotalCOGS = (order: any): number => {
+    if (!order || !order.items || !Array.isArray(order.items) || order.items.length === 0) {
+      return Math.round(Number(order?.total || 0) * 0.6);
+    }
+    let total = 0;
+    for (let i = 0; i < order.items.length; i++) {
+      total += calculateOrderItemCOGS(order.items[i]);
+    }
+    return total;
   };
 
   return (
@@ -698,80 +740,154 @@ export default function AdminPage() {
                     </div>
                   </div>
 
-                  {/* 1. MASTER OIL EXTRACTION RATES */}
+                  {/* 1. DYNAMIC OILS COST REGISTER */}
                   <div className="space-y-4 bg-brand-bg/30 border border-forest/10 p-6 rounded-sm">
                     <div className="flex justify-between items-center border-b border-forest/10 pb-3">
-                      <h4 className="text-sm font-serif font-bold text-forest uppercase tracking-wider">1. Wood Pressed Oils Rate Card (2.5 kg Seeds = 1 Liter Oil)</h4>
-                      <span className="text-[10px] text-gold font-semibold uppercase">40% Extraction Yield Standard</span>
+                      <h4 className="text-sm font-serif font-bold text-forest uppercase tracking-wider">1. Wood Pressed Oils Master Cost Register</h4>
+                      <span className="text-[10px] text-gold font-semibold uppercase">Seeds + Pressing + Packaging COGS</span>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-forest/70 uppercase block">Groundnut Seed Cost (₹/kg)</label>
-                        <input
-                          type="number"
-                          value={rates.groundnutSeedCost}
-                          onChange={(e) => setRates({ ...rates, groundnutSeedCost: Number(e.target.value) })}
-                          className="w-full p-2.5 border border-forest/20 font-bold text-forest bg-white outline-none"
-                        />
-                        <span className="text-[9px] text-dark/50 block">1L Oil Seed Cost = ₹{rates.groundnutSeedCost * 2.5}</span>
-                      </div>
+                    {/* Oils List */}
+                    <div className="space-y-3">
+                      {oilRates.map((o, idx) => {
+                        const seedCostFor1L = o.seedRatioPerLiter * o.seedCostPerKg;
+                        const pressingCostFor1L = o.seedRatioPerLiter * o.pressingCostPerKg;
+                        const totalCogsFor1L = seedCostFor1L + pressingCostFor1L + o.packagingCostPerLiter;
+                        const profitFor1L = o.sellingPricePerLiter - totalCogsFor1L;
+                        const marginPct = Math.round((profitFor1L / o.sellingPricePerLiter) * 100);
 
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-forest/70 uppercase block">Sesame Seed Cost (₹/kg)</label>
-                        <input
-                          type="number"
-                          value={rates.sesameSeedCost}
-                          onChange={(e) => setRates({ ...rates, sesameSeedCost: Number(e.target.value) })}
-                          className="w-full p-2.5 border border-forest/20 font-bold text-forest bg-white outline-none"
-                        />
-                        <span className="text-[9px] text-dark/50 block">1L Oil Seed Cost = ₹{rates.sesameSeedCost * 2.5}</span>
-                      </div>
+                        return (
+                          <div key={o.id} className="grid grid-cols-1 sm:grid-cols-7 gap-3 items-center p-3.5 border border-forest/10 bg-white text-xs rounded-xs">
+                            <div className="sm:col-span-2 space-y-0.5">
+                              <span className="font-bold text-forest text-sm block">{o.name}</span>
+                              <span className="text-[10px] text-dark/50 font-mono">ID: {o.id} | {o.seedRatioPerLiter}kg seeds/L</span>
+                            </div>
 
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-forest/70 uppercase block">Sunflower Seed Cost (₹/kg)</label>
-                        <input
-                          type="number"
-                          value={rates.sunflowerSeedCost}
-                          onChange={(e) => setRates({ ...rates, sunflowerSeedCost: Number(e.target.value) })}
-                          className="w-full p-2.5 border border-forest/20 font-bold text-forest bg-white outline-none"
-                        />
-                        <span className="text-[9px] text-dark/50 block">1L Oil Seed Cost = ₹{rates.sunflowerSeedCost * 2.5}</span>
-                      </div>
+                            <div>
+                              <label className="text-[9px] text-dark/50 uppercase block font-semibold">Seed Rate (₹/kg)</label>
+                              <input
+                                type="number"
+                                value={o.seedCostPerKg}
+                                onChange={(e) => {
+                                  const updated = [...oilRates];
+                                  updated[idx].seedCostPerKg = Number(e.target.value);
+                                  setOilRates(updated);
+                                }}
+                                className="w-20 p-1 border border-forest/20 font-mono font-bold text-dark outline-none text-xs"
+                              />
+                            </div>
 
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-forest/70 uppercase block">Pressing / Labor Cost (₹/kg Seeds)</label>
-                        <input
-                          type="number"
-                          value={rates.pressingCostPerKg}
-                          onChange={(e) => setRates({ ...rates, pressingCostPerKg: Number(e.target.value) })}
-                          className="w-full p-2.5 border border-forest/20 font-bold text-forest bg-white outline-none"
-                        />
-                        <span className="text-[9px] text-dark/50 block">₹{rates.pressingCostPerKg * 2.5} pressing fee for 1L oil (2.5kg seeds)</span>
-                      </div>
+                            <div>
+                              <label className="text-[9px] text-dark/50 uppercase block font-semibold">Pressing (₹/kg)</label>
+                              <input
+                                type="number"
+                                value={o.pressingCostPerKg}
+                                onChange={(e) => {
+                                  const updated = [...oilRates];
+                                  updated[idx].pressingCostPerKg = Number(e.target.value);
+                                  setOilRates(updated);
+                                }}
+                                className="w-20 p-1 border border-forest/20 font-mono font-bold text-dark outline-none text-xs"
+                              />
+                            </div>
 
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-forest/70 uppercase block">1L Bottle Container Cost (₹)</label>
-                        <input
-                          type="number"
-                          value={rates.bottleCost}
-                          onChange={(e) => setRates({ ...rates, bottleCost: Number(e.target.value) })}
-                          className="w-full p-2.5 border border-forest/20 font-bold text-forest bg-white outline-none"
-                        />
-                        <span className="text-[9px] text-dark/50 block">Glass or PET bottle unit price</span>
-                      </div>
+                            <div>
+                              <label className="text-[9px] text-dark/50 uppercase block font-semibold">Bottle &amp; Pack (₹/L)</label>
+                              <input
+                                type="number"
+                                value={o.packagingCostPerLiter}
+                                onChange={(e) => {
+                                  const updated = [...oilRates];
+                                  updated[idx].packagingCostPerLiter = Number(e.target.value);
+                                  setOilRates(updated);
+                                }}
+                                className="w-20 p-1 border border-forest/20 font-mono font-bold text-dark outline-none text-xs"
+                              />
+                            </div>
 
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-forest/70 uppercase block">Cap, Seal &amp; Label Cost (₹)</label>
-                        <input
-                          type="number"
-                          value={rates.capLabelCost}
-                          onChange={(e) => setRates({ ...rates, capLabelCost: Number(e.target.value) })}
-                          className="w-full p-2.5 border border-forest/20 font-bold text-forest bg-white outline-none"
-                        />
-                        <span className="text-[9px] text-dark/50 block">Sticker label &amp; cap seal per bottle</span>
-                      </div>
+                            <div>
+                              <span className="text-[9px] text-dark/50 uppercase block font-semibold">Total 1L COGS</span>
+                              <span className="font-mono font-bold text-forest text-sm">₹{Math.round(totalCogsFor1L)}</span>
+                            </div>
+
+                            <div className="text-right sm:text-left">
+                              <span className="text-[9px] text-dark/50 uppercase block font-semibold">1L Margin</span>
+                              <span className="font-mono font-bold text-green-700 text-sm">₹{Math.round(profitFor1L)} ({marginPct}%)</span>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
+
+                    {/* Form to Add New Oil */}
+                    <form onSubmit={handleAddOil} className="border-t border-forest/10 pt-4 space-y-3">
+                      <span className="text-xs font-serif font-bold text-forest uppercase tracking-wider block">+ Add New Wood Pressed Oil</span>
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-6 gap-3 items-end text-xs">
+                        <div className="space-y-1 sm:col-span-2">
+                          <label className="text-[10px] text-forest/70 uppercase font-semibold block">Oil Name</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. Wood Pressed Coconut Oil"
+                            value={newOilName}
+                            onChange={(e) => setNewOilName(e.target.value)}
+                            className="w-full p-2 border border-forest/20 bg-white outline-none"
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-forest/70 uppercase font-semibold block">Seed Cost (₹/kg)</label>
+                          <input
+                            type="number"
+                            placeholder="160"
+                            value={newOilSeedCost}
+                            onChange={(e) => setNewOilSeedCost(e.target.value)}
+                            className="w-full p-2 border border-forest/20 bg-white outline-none"
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-forest/70 uppercase font-semibold block">Seeds/L (kg)</label>
+                          <input
+                            type="number"
+                            step="0.1"
+                            placeholder="2.5"
+                            value={newOilSeedRatio}
+                            onChange={(e) => setNewOilSeedRatio(e.target.value)}
+                            className="w-full p-2 border border-forest/20 bg-white outline-none"
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-forest/70 uppercase font-semibold block">Pressing (₹/kg)</label>
+                          <input
+                            type="number"
+                            placeholder="30"
+                            value={newOilPressingCost}
+                            onChange={(e) => setNewOilPressingCost(e.target.value)}
+                            className="w-full p-2 border border-forest/20 bg-white outline-none"
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-forest/70 uppercase font-semibold block">1L Sell Price (₹)</label>
+                          <input
+                            type="number"
+                            placeholder="599"
+                            value={newOilSellingPrice}
+                            onChange={(e) => setNewOilSellingPrice(e.target.value)}
+                            className="w-full p-2 border border-forest/20 bg-white outline-none"
+                          />
+                        </div>
+                      </div>
+
+                      <button
+                        type="submit"
+                        className="bg-forest hover:bg-forest-light text-white text-xs font-bold uppercase tracking-wider px-5 py-2 transition-colors"
+                      >
+                        Add Oil Item
+                      </button>
+                    </form>
                   </div>
 
                   {/* 2. GRAINS & PRODUCE REGISTER */}
