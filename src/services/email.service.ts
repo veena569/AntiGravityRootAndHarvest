@@ -128,7 +128,9 @@ export class EmailService {
     // Array of admin emails (easily expandable in the future)
     const adminRecipients = [
       "rootandharvestindia@gmail.com",
-      "vasu446@gmail.com"
+      "vasu446@gmail.com",
+      "admin@rootandharvest.in",
+      "hello@rootandharvest.in"
     ];
 
     const transporter = this.getTransporter();
