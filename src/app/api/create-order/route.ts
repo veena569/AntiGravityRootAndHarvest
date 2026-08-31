@@ -133,13 +133,26 @@ export async function POST(req: Request) {
 
 
 
-    // If Cash on Delivery, send the SMS immediately and return success (skipping Razorpay)
+    // If Cash on Delivery, send SMS, WhatsApp and Emails immediately and return success
     if (isCOD) {
+      const orderItems = await prisma.orderItem.findMany({
+        where: { orderId: order.id },
+      });
       await SmsService.sendAdminOrderSMS(order);
       try {
         await WhatsappMetaService.queueOrderPlacedNotification(order.id);
       } catch (waErr) {
         console.error("[COD_WHATSAPP_NOTIFICATION_FAILED]", waErr);
+      }
+      try {
+        await EmailService.sendOrderConfirmationEmail(order, orderItems);
+      } catch (emailErr) {
+        console.error("[COD_CUSTOMER_EMAIL_NOTIFICATION_FAILED]", emailErr);
+      }
+      try {
+        await EmailService.sendOrderAdminNotification(order, orderItems);
+      } catch (emailErr) {
+        console.error("[COD_ADMIN_EMAIL_NOTIFICATION_FAILED]", emailErr);
       }
       return NextResponse.json({
         success: true,

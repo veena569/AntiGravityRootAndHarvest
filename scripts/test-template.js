@@ -49,6 +49,10 @@ async function sendTemplateTest(recipientPhone) {
   }
 }
 
-sendTemplateTest("9666913832")
-  .catch(console.error)
-  .finally(() => prisma.$disconnect());
+async function main() {
+  await sendTemplateTest("8008076707");
+  await sendTemplateTest("9666913832");
+  await prisma.$disconnect();
+}
+
+main();
