@@ -32,8 +32,9 @@ export default function AdminPage() {
       id: "exp-1",
       date: "2026-08-01",
       category: "Seeds",
-      item: "Organic Groundnut Seeds (500 kg)",
+      item: "Organic Groundnut Seeds",
       quantity: "500 kg",
+      unitCost: 125,
       amount: 62500,
       notes: "Saurashtra Farm Direct Purchase @ ₹125/kg",
     },
@@ -41,19 +42,21 @@ export default function AdminPage() {
       id: "exp-2",
       date: "2026-08-05",
       category: "Bottles",
-      item: "1L Food Grade Oil Bottles (500 pcs)",
+      item: "1L Food Grade Oil Bottles",
       quantity: "500 pcs",
+      unitCost: 35,
       amount: 17500,
-      notes: "PET Bottles @ ₹35/unit",
+      notes: "PET Bottles Batch @ ₹35/pc",
     },
     {
       id: "exp-3",
       date: "2026-08-10",
       category: "Cardboard Boxes",
-      item: "Corrugated Shipping Boxes (300 pcs)",
+      item: "Corrugated Shipping Boxes",
       quantity: "300 pcs",
+      unitCost: 25,
       amount: 7500,
-      notes: "Heavy-duty 5-ply shipping boxes",
+      notes: "Heavy-duty 5-ply shipping boxes @ ₹25/pc",
     },
     {
       id: "exp-4",
@@ -61,8 +64,9 @@ export default function AdminPage() {
       category: "Label Printing",
       item: "Custom Waterproof Bottle Labels & Cap Seals",
       quantity: "2000 pcs",
+      unitCost: 4,
       amount: 8000,
-      notes: "Metallic foil sticker printing batch",
+      notes: "Metallic foil sticker printing @ ₹4/pc",
     },
     {
       id: "exp-5",
@@ -70,6 +74,7 @@ export default function AdminPage() {
       category: "Travelling",
       item: "Farm Visit & Seed Transport Freight",
       quantity: "1 Trip",
+      unitCost: 4500,
       amount: 4500,
       notes: "Transport from Rajkot mandi to pressing unit",
     },
@@ -79,8 +84,9 @@ export default function AdminPage() {
       category: "Covers & Packing",
       item: "Bubble Wrap & Outer Poly Covers",
       quantity: "2 Rolls",
+      unitCost: 1100,
       amount: 2200,
-      notes: "Protective packaging for shipments",
+      notes: "Protective packaging for shipments @ ₹1100/roll",
     },
   ]);
 
@@ -89,24 +95,34 @@ export default function AdminPage() {
   const [newExpCategory, setNewExpCategory] = useState("Seeds");
   const [newExpItem, setNewExpItem] = useState("");
   const [newExpQty, setNewExpQty] = useState("");
+  const [newExpUnitCost, setNewExpUnitCost] = useState("");
   const [newExpAmount, setNewExpAmount] = useState("");
   const [newExpNotes, setNewExpNotes] = useState("");
 
   const handleAddExpense = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newExpItem || !newExpAmount) return;
+    if (!newExpItem) return;
+
+    const unitCostNum = Number(newExpUnitCost) || 0;
+    const qtyNum = parseFloat(newExpQty) || 1;
+    const computedAmount = Number(newExpAmount) || Math.round(unitCostNum * qtyNum);
+
+    if (!computedAmount) return;
+
     const newEntry = {
       id: `exp-${Date.now()}`,
       date: newExpDate || new Date().toISOString().split("T")[0],
       category: newExpCategory,
       item: newExpItem.trim(),
-      quantity: newExpQty.trim() || "-",
-      amount: Number(newExpAmount),
+      quantity: newExpQty.trim() || "1",
+      unitCost: unitCostNum || (qtyNum > 0 ? Math.round(computedAmount / qtyNum) : computedAmount),
+      amount: computedAmount,
       notes: newExpNotes.trim(),
     };
     setBusinessExpenses([newEntry, ...businessExpenses]);
     setNewExpItem("");
     setNewExpQty("");
+    setNewExpUnitCost("");
     setNewExpAmount("");
     setNewExpNotes("");
   };
@@ -1282,38 +1298,61 @@ export default function AdminPage() {
                         </select>
                       </div>
 
-                      <div className="space-y-1 sm:col-span-2">
-                        <label className="text-[10px] text-forest/70 uppercase font-semibold block">Expense Description / Item</label>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-forest/70 uppercase font-semibold block">Item / Description</label>
                         <input
                           type="text"
                           required
-                          placeholder="e.g. 500 kg Groundnut Seeds or 1000 Labels"
+                          placeholder="e.g. Organic Groundnut Seeds"
                           value={newExpItem}
                           onChange={(e) => setNewExpItem(e.target.value)}
-                          className="w-full p-2 border border-forest/20 bg-white outline-none"
+                          className="w-full p-2 border border-forest/20 bg-white outline-none text-xs"
                         />
                       </div>
 
                       <div className="space-y-1">
-                        <label className="text-[10px] text-forest/70 uppercase font-semibold block">Quantity / Units</label>
+                        <label className="text-[10px] text-forest/70 uppercase font-semibold block">Quantity / Weight</label>
                         <input
                           type="text"
-                          placeholder="e.g. 500 kg / 1000 pcs"
+                          placeholder="500 kg / 1000 pcs"
                           value={newExpQty}
-                          onChange={(e) => setNewExpQty(e.target.value)}
-                          className="w-full p-2 border border-forest/20 bg-white outline-none"
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setNewExpQty(val);
+                            const q = parseFloat(val);
+                            const u = parseFloat(newExpUnitCost);
+                            if (q > 0 && u > 0) setNewExpAmount(String(Math.round(q * u)));
+                          }}
+                          className="w-full p-2 border border-forest/20 bg-white outline-none text-xs"
                         />
                       </div>
 
                       <div className="space-y-1">
-                        <label className="text-[10px] text-forest/70 uppercase font-semibold block">Amount Spent (₹)</label>
+                        <label className="text-[10px] text-forest/70 uppercase font-semibold block">Rate (₹/kg or ₹/pc)</label>
+                        <input
+                          type="number"
+                          placeholder="125"
+                          value={newExpUnitCost}
+                          onChange={(e) => {
+                            const uVal = e.target.value;
+                            setNewExpUnitCost(uVal);
+                            const u = parseFloat(uVal);
+                            const q = parseFloat(newExpQty);
+                            if (q > 0 && u > 0) setNewExpAmount(String(Math.round(q * u)));
+                          }}
+                          className="w-full p-2 border border-forest/20 bg-white font-mono outline-none text-xs"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-forest/70 uppercase font-semibold block">Total Amount (₹)</label>
                         <input
                           type="number"
                           required
                           placeholder="62500"
                           value={newExpAmount}
                           onChange={(e) => setNewExpAmount(e.target.value)}
-                          className="w-full p-2 border border-forest/20 bg-white font-bold font-mono outline-none"
+                          className="w-full p-2 border border-forest/20 bg-white font-bold font-mono outline-none text-xs"
                         />
                       </div>
                     </div>
@@ -1354,7 +1393,8 @@ export default function AdminPage() {
                             <th className="p-3 text-left">Category</th>
                             <th className="p-3 text-left">Item Description</th>
                             <th className="p-3 text-left">Quantity</th>
-                            <th className="p-3 text-right">Amount (₹)</th>
+                            <th className="p-3 text-right">Cost / Rate (₹/unit)</th>
+                            <th className="p-3 text-right">Total Amount (₹)</th>
                             <th className="p-3 text-left">Notes / Supplier</th>
                             <th className="p-3 text-center">Action</th>
                           </tr>
@@ -1364,18 +1404,21 @@ export default function AdminPage() {
                             <tr key={exp.id} className="hover:bg-forest/5 transition-colors">
                               <td className="p-3 text-[11px] font-semibold text-dark/70">{exp.date}</td>
                               <td className="p-3">
-                                <span className="bg-forest/10 text-forest text-[10px] uppercase font-bold px-2 py-0.5 rounded-xs">
+                                <span className="bg-forest/10 text-forest text-[10px] uppercase font-bold px-2 py-0.5 rounded-xs font-sans">
                                   {exp.category}
                                 </span>
                               </td>
                               <td className="p-3 font-sans font-semibold text-forest">{exp.item}</td>
                               <td className="p-3 text-dark/70">{exp.quantity}</td>
+                              <td className="p-3 text-right text-dark/80">
+                                {exp.unitCost ? `₹${exp.unitCost}` : "—"}
+                              </td>
                               <td className="p-3 text-right font-bold text-red-700">₹{exp.amount.toLocaleString("en-IN")}</td>
                               <td className="p-3 font-sans text-[11px] text-dark/60 max-w-xs truncate">{exp.notes || "-"}</td>
                               <td className="p-3 text-center">
                                 <button
                                   onClick={() => setBusinessExpenses(businessExpenses.filter((e) => e.id !== exp.id))}
-                                  className="text-red-600 hover:text-red-800 text-[10px] uppercase font-bold"
+                                  className="text-red-600 hover:text-red-800 text-[10px] uppercase font-bold font-sans"
                                 >
                                   Remove
                                 </button>
