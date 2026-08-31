@@ -174,7 +174,7 @@ export default function AdminPage() {
     groundnutSeedCost: 125, // ₹125/kg (2.5kg = 1L)
     sesameSeedCost: 125,    // ₹125/kg (2.5kg = 1L)
     sunflowerSeedCost: 110, // ₹110/kg (2.5kg = 1L)
-    pressingCostPerBatch: 35, // ₹35 per 2.5kg batch
+    pressingCostPerKg: 30,  // ₹30 per 1kg of seeds (2.5kg * 30 = ₹75 for 1L)
     bottleCost: 35,          // ₹35 per bottle
     capLabelCost: 10,        // ₹10 per unit
   });
@@ -221,7 +221,7 @@ export default function AdminPage() {
       else if (size.includes("5 l")) multiplier = 12.5;
 
       const seedCost = multiplier * rates.groundnutSeedCost;
-      const pressingCost = (multiplier / 2.5) * rates.pressingCostPerBatch;
+      const pressingCost = multiplier * rates.pressingCostPerKg;
       const bottleCost = size.includes("5 l") ? 80 : size.includes("2 l") ? 50 : rates.bottleCost;
       const totalPerUnit = seedCost + pressingCost + bottleCost + rates.capLabelCost;
       return Math.round(totalPerUnit * qty);
@@ -234,7 +234,7 @@ export default function AdminPage() {
       else if (size.includes("5 l")) multiplier = 12.5;
 
       const seedCost = multiplier * rates.sesameSeedCost;
-      const pressingCost = (multiplier / 2.5) * rates.pressingCostPerBatch;
+      const pressingCost = multiplier * rates.pressingCostPerKg;
       const bottleCost = size.includes("5 l") ? 80 : size.includes("2 l") ? 50 : rates.bottleCost;
       const totalPerUnit = seedCost + pressingCost + bottleCost + rates.capLabelCost;
       return Math.round(totalPerUnit * qty);
@@ -245,7 +245,7 @@ export default function AdminPage() {
       if (size.includes("500") || size.includes("0.5")) multiplier = 1.25;
 
       const seedCost = multiplier * rates.sunflowerSeedCost;
-      const pressingCost = (multiplier / 2.5) * rates.pressingCostPerBatch;
+      const pressingCost = multiplier * rates.pressingCostPerKg;
       const totalPerUnit = seedCost + pressingCost + rates.bottleCost + rates.capLabelCost;
       return Math.round(totalPerUnit * qty);
     }
@@ -740,14 +740,14 @@ export default function AdminPage() {
                       </div>
 
                       <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-forest/70 uppercase block">Pressing / Labor Cost (₹/2.5kg Batch)</label>
+                        <label className="text-[10px] font-bold text-forest/70 uppercase block">Pressing / Labor Cost (₹/kg Seeds)</label>
                         <input
                           type="number"
-                          value={rates.pressingCostPerBatch}
-                          onChange={(e) => setRates({ ...rates, pressingCostPerBatch: Number(e.target.value) })}
+                          value={rates.pressingCostPerKg}
+                          onChange={(e) => setRates({ ...rates, pressingCostPerKg: Number(e.target.value) })}
                           className="w-full p-2.5 border border-forest/20 font-bold text-forest bg-white outline-none"
                         />
-                        <span className="text-[9px] text-dark/50 block">Per 1L batch pressing fee</span>
+                        <span className="text-[9px] text-dark/50 block">₹{rates.pressingCostPerKg * 2.5} pressing fee for 1L oil (2.5kg seeds)</span>
                       </div>
 
                       <div className="space-y-1">
