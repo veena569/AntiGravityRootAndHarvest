@@ -398,10 +398,6 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
                     Rs. {selectedVariant.originalPrice}.00
                   </span>
                 )}
-
-                <div className="px-3 py-1 bg-[#E8F3EB] border border-forest/20 rounded-full text-xs text-[#123025] font-semibold flex items-center gap-1">
-                  <span>Members Price Rs. {Math.round(selectedVariant.price * 0.88)}</span>
-                </div>
               </div>
 
               {/* Rating Stars */}
