@@ -356,6 +356,9 @@ export default function AdminPage() {
     setNewGrainSellingPrice("");
   };
 
+  // Estimated Courier / Shipping Cost per Order
+  const [estimatedShippingCostPerOrder, setEstimatedShippingCostPerOrder] = useState(70);
+
   // Helper: Calculate item-level COGS dynamically using Oil & Grain Rate Cards
   const calculateOrderItemCOGS = (item: any): number => {
     if (!item) return 0;
@@ -404,13 +407,13 @@ export default function AdminPage() {
 
   const calculateOrderTotalCOGS = (order: any): number => {
     if (!order || !order.items || !Array.isArray(order.items) || order.items.length === 0) {
-      return Math.round(Number(order?.total || 0) * 0.6);
+      return Math.round(Number(order?.total || 0) * 0.6) + estimatedShippingCostPerOrder;
     }
-    let total = 0;
+    let productCogs = 0;
     for (let i = 0; i < order.items.length; i++) {
-      total += calculateOrderItemCOGS(order.items[i]);
+      productCogs += calculateOrderItemCOGS(order.items[i]);
     }
-    return total;
+    return productCogs + estimatedShippingCostPerOrder;
   };
 
   return (
@@ -1132,32 +1135,42 @@ export default function AdminPage() {
                   {(() => {
                     const totalRevenue = dbOrders.reduce((sum, o) => sum + (o.total || 0), 0);
                     const totalCogs = dbOrders.reduce((sum, o) => sum + calculateOrderTotalCOGS(o), 0);
+                    const totalShipping = dbOrders.length * estimatedShippingCostPerOrder;
                     const netProfit = totalRevenue - totalCogs;
                     const overallMargin = totalRevenue > 0 ? Math.round((netProfit / totalRevenue) * 100) : 0;
 
                     return (
                       <div className="space-y-6">
-                        <div className="border-b border-forest/10 pb-3">
+                        <div className="border-b border-forest/10 pb-3 flex justify-between items-center">
                           <h4 className="text-sm font-serif font-bold text-forest uppercase tracking-wider">3. Live Order Profitability Summary ({dbOrders.length} Orders)</h4>
+                          <div className="flex items-center gap-2 bg-white border border-forest/20 px-3 py-1 text-xs">
+                            <span className="text-[10px] text-dark/70 font-semibold uppercase">Courier / Shipping Fee (₹/Order):</span>
+                            <input
+                              type="number"
+                              value={estimatedShippingCostPerOrder}
+                              onChange={(e) => setEstimatedShippingCostPerOrder(Number(e.target.value))}
+                              className="w-16 p-1 border border-forest/30 font-mono font-bold text-forest text-xs outline-none"
+                            />
+                          </div>
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 text-left">
                           <div className="p-4 border border-forest/10 bg-white shadow-xs">
                             <span className="text-[10px] text-dark/60 uppercase font-semibold block">Total Revenue</span>
-                            <span className="text-2xl font-serif font-bold text-forest mt-1 block">₹{totalRevenue}</span>
+                            <span className="text-2xl font-serif font-bold text-forest mt-1 block">₹{totalRevenue.toLocaleString("en-IN")}</span>
                             <span className="text-[9px] text-dark/40">Gross customer payments</span>
                           </div>
 
                           <div className="p-4 border border-forest/10 bg-white shadow-xs">
                             <span className="text-[10px] text-dark/60 uppercase font-semibold block">Total Direct COGS</span>
-                            <span className="text-2xl font-serif font-bold text-amber-700 mt-1 block">₹{totalCogs}</span>
-                            <span className="text-[9px] text-dark/40">Seeds + Pressing + Packing</span>
+                            <span className="text-2xl font-serif font-bold text-amber-700 mt-1 block">₹{totalCogs.toLocaleString("en-IN")}</span>
+                            <span className="text-[9px] text-dark/40">Includes ₹{totalShipping.toLocaleString("en-IN")} total shipping</span>
                           </div>
 
                           <div className="p-4 border border-forest/10 bg-white shadow-xs">
                             <span className="text-[10px] text-dark/60 uppercase font-semibold block">Net Store Profit</span>
-                            <span className="text-2xl font-serif font-bold text-green-700 mt-1 block">₹{netProfit}</span>
-                            <span className="text-[9px] text-dark/40">Revenue minus Direct COGS</span>
+                            <span className="text-2xl font-serif font-bold text-green-700 mt-1 block">₹{netProfit.toLocaleString("en-IN")}</span>
+                            <span className="text-[9px] text-dark/40">Revenue minus COGS &amp; Shipping</span>
                           </div>
 
                           <div className="p-4 border border-forest/10 bg-white shadow-xs">
@@ -1176,17 +1189,20 @@ export default function AdminPage() {
                                 <tr>
                                   <th className="p-3 text-left">Order ID</th>
                                   <th className="p-3 text-left">Customer</th>
-                                  <th className="p-3 text-left">Products</th>
-                                  <th className="p-3 text-right">Revenue (₹)</th>
-                                  <th className="p-3 text-right">COGS (₹)</th>
-                                  <th className="p-3 text-right">Profit (₹)</th>
-                                  <th className="p-3 text-right">Margin (%)</th>
+                                  <th className="p-3 text-left">Order Items</th>
+                                  <th className="p-3 text-right">Order Total</th>
+                                  <th className="p-3 text-right">Prod COGS</th>
+                                  <th className="p-3 text-right">Shipping</th>
+                                  <th className="p-3 text-right">Total COGS</th>
+                                  <th className="p-3 text-right">Net Profit</th>
+                                  <th className="p-3 text-right">Margin %</th>
                                 </tr>
                               </thead>
                               <tbody className="divide-y divide-forest/5 font-light">
                                 {dbOrders.map((ord) => {
-                                  const cogs = calculateOrderTotalCOGS(ord);
-                                  const profit = ord.total - cogs;
+                                  const totalCogs = calculateOrderTotalCOGS(ord);
+                                  const prodCogs = totalCogs - estimatedShippingCostPerOrder;
+                                  const profit = ord.total - totalCogs;
                                   const margin = ord.total > 0 ? Math.round((profit / ord.total) * 100) : 0;
                                   const itemsText = ord.items?.map((i: any) => `${i.name} (${i.size}) x${i.quantity}`).join(", ") || "—";
 
@@ -1196,7 +1212,9 @@ export default function AdminPage() {
                                       <td className="p-3">{ord.shippingName}</td>
                                       <td className="p-3 text-[11px] text-dark/70 max-w-xs truncate">{itemsText}</td>
                                       <td className="p-3 text-right font-mono font-bold">₹{ord.total}</td>
-                                      <td className="p-3 text-right font-mono text-amber-800">₹{cogs}</td>
+                                      <td className="p-3 text-right font-mono text-amber-800">₹{prodCogs}</td>
+                                      <td className="p-3 text-right font-mono text-dark/70">₹{estimatedShippingCostPerOrder}</td>
+                                      <td className="p-3 text-right font-mono font-bold text-amber-900">₹{totalCogs}</td>
                                       <td className="p-3 text-right font-mono font-bold text-green-700">₹{profit}</td>
                                       <td className="p-3 text-right font-mono font-bold text-gold">{margin}%</td>
                                     </tr>
