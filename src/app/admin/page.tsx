@@ -353,8 +353,8 @@ export default function AdminPage() {
               {[
                 { id: "orders", label: "Orders & Addresses", icon: <ShoppingBag className="w-4 h-4" /> },
                 { id: "bills", label: "Bills & Invoices", icon: <FileText className="w-4 h-4" /> },
+                { id: "inventory", label: "Inventory & Profit Calculator", icon: <Database className="w-4 h-4 text-gold" /> },
                 { id: "analytics", label: "Complete Site Hits", icon: <Activity className="w-4 h-4" /> },
-                { id: "inventory", label: "Inventory Logs", icon: <Database className="w-4 h-4" /> },
                 { id: "coupons", label: "Coupons Manager", icon: <Tag className="w-4 h-4" /> },
                 { id: "content", label: "Blogs & Recipes", icon: <Newspaper className="w-4 h-4" /> },
               ].map((tab) => {
