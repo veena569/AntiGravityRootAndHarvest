@@ -899,36 +899,68 @@ export default function AdminPage() {
 
                     {/* Grain List */}
                     <div className="space-y-3">
-                      {grainRates.map((g) => {
+                      {grainRates.map((g, idx) => {
                         const totalCogsPerKg = g.purchaseCostPerKg + g.packingCostPerKg;
                         const profitPerKg = g.sellingPricePerKg - totalCogsPerKg;
-                        const marginPct = Math.round((profitPerKg / g.sellingPricePerKg) * 100);
+                        const marginPct = g.sellingPricePerKg > 0 ? Math.round((profitPerKg / g.sellingPricePerKg) * 100) : 0;
 
                         return (
-                          <div key={g.id} className="grid grid-cols-1 sm:grid-cols-6 gap-3 items-center p-3 border border-forest/10 bg-white text-xs rounded-xs">
+                          <div key={g.id} className="grid grid-cols-1 sm:grid-cols-7 gap-3 items-center p-3.5 border border-forest/10 bg-white text-xs rounded-xs">
                             <div className="sm:col-span-2 space-y-0.5">
                               <span className="font-bold text-forest text-sm block">{g.name}</span>
                               <span className="text-[10px] text-dark/50 font-mono">ID: {g.id}</span>
                             </div>
 
                             <div>
-                              <span className="text-[9px] text-dark/50 uppercase block font-semibold">Raw Cost / kg</span>
-                              <span className="font-mono font-bold text-dark">₹{g.purchaseCostPerKg}</span>
+                              <label className="text-[9px] text-dark/50 uppercase block font-semibold">Raw Cost (₹/kg)</label>
+                              <input
+                                type="number"
+                                value={g.purchaseCostPerKg}
+                                onChange={(e) => {
+                                  const updated = [...grainRates];
+                                  updated[idx].purchaseCostPerKg = Number(e.target.value);
+                                  setGrainRates(updated);
+                                }}
+                                className="w-20 p-1 border border-forest/20 font-mono font-bold text-dark outline-none text-xs"
+                              />
                             </div>
 
                             <div>
-                              <span className="text-[9px] text-dark/50 uppercase block font-semibold">Packing / kg</span>
-                              <span className="font-mono font-bold text-dark">₹{g.packingCostPerKg}</span>
+                              <label className="text-[9px] text-dark/50 uppercase block font-semibold">Packing (₹/kg)</label>
+                              <input
+                                type="number"
+                                value={g.packingCostPerKg}
+                                onChange={(e) => {
+                                  const updated = [...grainRates];
+                                  updated[idx].packingCostPerKg = Number(e.target.value);
+                                  setGrainRates(updated);
+                                }}
+                                className="w-20 p-1 border border-forest/20 font-mono font-bold text-dark outline-none text-xs"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="text-[9px] text-dark/50 uppercase block font-semibold">Sell Price (₹/kg)</label>
+                              <input
+                                type="number"
+                                value={g.sellingPricePerKg}
+                                onChange={(e) => {
+                                  const updated = [...grainRates];
+                                  updated[idx].sellingPricePerKg = Number(e.target.value);
+                                  setGrainRates(updated);
+                                }}
+                                className="w-20 p-1 border border-forest/20 font-mono font-bold text-dark outline-none text-xs"
+                              />
                             </div>
 
                             <div>
                               <span className="text-[9px] text-dark/50 uppercase block font-semibold">Total COGS / kg</span>
-                              <span className="font-mono font-bold text-forest">₹{totalCogsPerKg}</span>
+                              <span className="font-mono font-bold text-forest text-sm">₹{totalCogsPerKg}</span>
                             </div>
 
                             <div className="text-right sm:text-left">
                               <span className="text-[9px] text-dark/50 uppercase block font-semibold">Margin / kg</span>
-                              <span className="font-mono font-bold text-green-700">₹{profitPerKg} ({marginPct}%)</span>
+                              <span className="font-mono font-bold text-green-700 text-sm">₹{profitPerKg} ({marginPct}%)</span>
                             </div>
                           </div>
                         );
