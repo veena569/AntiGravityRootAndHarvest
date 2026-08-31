@@ -23,8 +23,93 @@ import { Footer } from "@/components/layout/Footer";
 export default function AdminPage() {
   const { products, orders: contextOrders } = useApp();
   const [activeTab, setActiveTab] = useState<
-    "orders" | "bills" | "analytics" | "inventory" | "coupons" | "content"
+    "orders" | "bills" | "inventory" | "expenses" | "analytics" | "coupons" | "content"
   >("orders");
+
+  // Business Expenses & Procurement Ledger State
+  const [businessExpenses, setBusinessExpenses] = useState<any[]>([
+    {
+      id: "exp-1",
+      date: "2026-08-01",
+      category: "Seeds",
+      item: "Organic Groundnut Seeds (500 kg)",
+      quantity: "500 kg",
+      amount: 62500,
+      notes: "Saurashtra Farm Direct Purchase @ ₹125/kg",
+    },
+    {
+      id: "exp-2",
+      date: "2026-08-05",
+      category: "Bottles",
+      item: "1L Food Grade Oil Bottles (500 pcs)",
+      quantity: "500 pcs",
+      amount: 17500,
+      notes: "PET Bottles @ ₹35/unit",
+    },
+    {
+      id: "exp-3",
+      date: "2026-08-10",
+      category: "Cardboard Boxes",
+      item: "Corrugated Shipping Boxes (300 pcs)",
+      quantity: "300 pcs",
+      amount: 7500,
+      notes: "Heavy-duty 5-ply shipping boxes",
+    },
+    {
+      id: "exp-4",
+      date: "2026-08-12",
+      category: "Label Printing",
+      item: "Custom Waterproof Bottle Labels & Cap Seals",
+      quantity: "2000 pcs",
+      amount: 8000,
+      notes: "Metallic foil sticker printing batch",
+    },
+    {
+      id: "exp-5",
+      date: "2026-08-15",
+      category: "Travelling",
+      item: "Farm Visit & Seed Transport Freight",
+      quantity: "1 Trip",
+      amount: 4500,
+      notes: "Transport from Rajkot mandi to pressing unit",
+    },
+    {
+      id: "exp-6",
+      date: "2026-08-18",
+      category: "Covers & Packing",
+      item: "Bubble Wrap & Outer Poly Covers",
+      quantity: "2 Rolls",
+      amount: 2200,
+      notes: "Protective packaging for shipments",
+    },
+  ]);
+
+  // Form State for Adding New Business Expense
+  const [newExpDate, setNewExpDate] = useState("");
+  const [newExpCategory, setNewExpCategory] = useState("Seeds");
+  const [newExpItem, setNewExpItem] = useState("");
+  const [newExpQty, setNewExpQty] = useState("");
+  const [newExpAmount, setNewExpAmount] = useState("");
+  const [newExpNotes, setNewExpNotes] = useState("");
+
+  const handleAddExpense = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newExpItem || !newExpAmount) return;
+    const newEntry = {
+      id: `exp-${Date.now()}`,
+      date: newExpDate || new Date().toISOString().split("T")[0],
+      category: newExpCategory,
+      item: newExpItem.trim(),
+      quantity: newExpQty.trim() || "-",
+      amount: Number(newExpAmount),
+      notes: newExpNotes.trim(),
+    };
+    setBusinessExpenses([newEntry, ...businessExpenses]);
+    setNewExpItem("");
+    setNewExpQty("");
+    setNewExpAmount("");
+    setNewExpNotes("");
+  };
 
   // Orders State
   const [dbOrders, setDbOrders] = useState<any[]>([]);
@@ -396,6 +481,7 @@ export default function AdminPage() {
                 { id: "orders", label: "Orders & Addresses", icon: <ShoppingBag className="w-4 h-4" /> },
                 { id: "bills", label: "Bills & Invoices", icon: <FileText className="w-4 h-4" /> },
                 { id: "inventory", label: "Inventory & Profit Calculator", icon: <Database className="w-4 h-4 text-gold" /> },
+                { id: "expenses", label: "Business Expenses & Ledger", icon: <BarChart3 className="w-4 h-4 text-emerald-600" /> },
                 { id: "analytics", label: "Complete Site Hits", icon: <Activity className="w-4 h-4" /> },
                 { id: "coupons", label: "Coupons Manager", icon: <Tag className="w-4 h-4" /> },
                 { id: "content", label: "Blogs & Recipes", icon: <Newspaper className="w-4 h-4" /> },
@@ -1108,6 +1194,198 @@ export default function AdminPage() {
                     );
                   })()}
 
+                </div>
+              )}
+
+              {/* BUSINESS EXPENSES & CAPITAL LEDGER TAB */}
+              {activeTab === "expenses" && (
+                <div className="space-y-8 text-left">
+                  {/* Header */}
+                  <div className="border-b border-forest/10 pb-4 flex justify-between items-center">
+                    <div>
+                      <h3 className="text-xl font-serif text-forest font-semibold">Day 1 Business Expenses &amp; Capital Ledger</h3>
+                      <p className="text-xs text-dark/60">
+                        Log every rupee spent on seeds, bottles, boxes, travel, label printing, poly covers, and operational costs from Day 1
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Summary Metric Cards */}
+                  {(() => {
+                    const totalExpenses = businessExpenses.reduce((acc, e) => acc + (Number(e.amount) || 0), 0);
+                    const totalRevenue = dbOrders.reduce((acc, o) => acc + (Number(o.total) || 0), 0);
+                    const netCashFlow = totalRevenue - totalExpenses;
+
+                    return (
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="bg-brand-bg/40 border border-forest/15 p-4 rounded-sm">
+                          <span className="text-[10px] text-dark/60 uppercase font-semibold block">Total Capital Spent (Day 1 - Now)</span>
+                          <span className="text-2xl font-serif font-bold text-red-700 font-mono mt-1 block">
+                            ₹{totalExpenses.toLocaleString("en-IN")}
+                          </span>
+                          <span className="text-[9px] text-dark/50 block mt-1">Total operational &amp; capital procurement</span>
+                        </div>
+
+                        <div className="bg-brand-bg/40 border border-forest/15 p-4 rounded-sm">
+                          <span className="text-[10px] text-dark/60 uppercase font-semibold block">Total Store Sales Revenue</span>
+                          <span className="text-2xl font-serif font-bold text-forest font-mono mt-1 block">
+                            ₹{totalRevenue.toLocaleString("en-IN")}
+                          </span>
+                          <span className="text-[9px] text-dark/50 block mt-1">From {dbOrders.length} online orders</span>
+                        </div>
+
+                        <div className="bg-brand-bg/40 border border-forest/15 p-4 rounded-sm">
+                          <span className="text-[10px] text-dark/60 uppercase font-semibold block">Net Business Surplus / Position</span>
+                          <span className={`text-2xl font-serif font-bold font-mono mt-1 block ${netCashFlow >= 0 ? "text-green-700" : "text-amber-700"}`}>
+                            {netCashFlow >= 0 ? `+₹${netCashFlow.toLocaleString("en-IN")}` : `-₹${Math.abs(netCashFlow).toLocaleString("en-IN")}`}
+                          </span>
+                          <span className="text-[9px] text-dark/50 block mt-1">Total Store Revenue minus Total Expenses</span>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Form to Add New Expense Log */}
+                  <form onSubmit={handleAddExpense} className="bg-brand-bg/20 border border-forest/10 p-5 rounded-sm space-y-4">
+                    <span className="text-xs font-serif font-bold text-forest uppercase tracking-wider block">
+                      + Log New Business Expense / Procurement
+                    </span>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-6 gap-3 items-end text-xs">
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-forest/70 uppercase font-semibold block">Date</label>
+                        <input
+                          type="date"
+                          value={newExpDate}
+                          onChange={(e) => setNewExpDate(e.target.value)}
+                          className="w-full p-2 border border-forest/20 bg-white outline-none font-mono"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-forest/70 uppercase font-semibold block">Category</label>
+                        <select
+                          value={newExpCategory}
+                          onChange={(e) => setNewExpCategory(e.target.value)}
+                          className="w-full p-2 border border-forest/20 bg-white outline-none font-semibold"
+                        >
+                          <option value="Seeds">Seeds &amp; Raw Grain</option>
+                          <option value="Bottles">Oil Bottles &amp; Jars</option>
+                          <option value="Cardboard Boxes">Cardboard Shipping Boxes</option>
+                          <option value="Label Printing">Label &amp; Sticker Printing</option>
+                          <option value="Covers &amp; Packing">Poly Covers &amp; Bubble Wrap</option>
+                          <option value="Travelling">Travelling &amp; Freight</option>
+                          <option value="Labor &amp; Pressing">Pressing &amp; Labor Charges</option>
+                          <option value="Machinery">Machinery &amp; Equipment</option>
+                          <option value="Marketing">Marketing &amp; Branding</option>
+                          <option value="Misc">Miscellaneous Expense</option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-1 sm:col-span-2">
+                        <label className="text-[10px] text-forest/70 uppercase font-semibold block">Expense Description / Item</label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="e.g. 500 kg Groundnut Seeds or 1000 Labels"
+                          value={newExpItem}
+                          onChange={(e) => setNewExpItem(e.target.value)}
+                          className="w-full p-2 border border-forest/20 bg-white outline-none"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-forest/70 uppercase font-semibold block">Quantity / Units</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. 500 kg / 1000 pcs"
+                          value={newExpQty}
+                          onChange={(e) => setNewExpQty(e.target.value)}
+                          className="w-full p-2 border border-forest/20 bg-white outline-none"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-forest/70 uppercase font-semibold block">Amount Spent (₹)</label>
+                        <input
+                          type="number"
+                          required
+                          placeholder="62500"
+                          value={newExpAmount}
+                          onChange={(e) => setNewExpAmount(e.target.value)}
+                          className="w-full p-2 border border-forest/20 bg-white font-bold font-mono outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+                      <div className="space-y-1 sm:col-span-3">
+                        <label className="text-[10px] text-forest/70 uppercase font-semibold block">Supplier / Notes (Optional)</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Purchased from Saurashtra farm direct mandi batch #4"
+                          value={newExpNotes}
+                          onChange={(e) => setNewExpNotes(e.target.value)}
+                          className="w-full p-2 text-xs border border-forest/20 bg-white outline-none"
+                        />
+                      </div>
+
+                      <button
+                        type="submit"
+                        className="bg-forest hover:bg-forest-light text-white text-xs font-bold uppercase tracking-wider px-5 py-2 transition-colors w-full"
+                      >
+                        Log Business Expense
+                      </button>
+                    </div>
+                  </form>
+
+                  {/* Expenses Ledger Table */}
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center border-b border-forest/10 pb-2">
+                      <h4 className="text-sm font-serif font-bold text-forest uppercase tracking-wider">Day 1 Expense &amp; Procurement Log</h4>
+                      <span className="text-[10px] text-gold font-semibold uppercase">{businessExpenses.length} Expense Records</span>
+                    </div>
+
+                    <div className="overflow-x-auto border border-forest/10 bg-white">
+                      <table className="w-full text-xs font-light text-dark divide-y divide-forest/10">
+                        <thead className="bg-brand-bg/50 text-[9px] uppercase font-bold text-forest">
+                          <tr>
+                            <th className="p-3 text-left">Date</th>
+                            <th className="p-3 text-left">Category</th>
+                            <th className="p-3 text-left">Item Description</th>
+                            <th className="p-3 text-left">Quantity</th>
+                            <th className="p-3 text-right">Amount (₹)</th>
+                            <th className="p-3 text-left">Notes / Supplier</th>
+                            <th className="p-3 text-center">Action</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-forest/5 font-mono">
+                          {businessExpenses.map((exp) => (
+                            <tr key={exp.id} className="hover:bg-forest/5 transition-colors">
+                              <td className="p-3 text-[11px] font-semibold text-dark/70">{exp.date}</td>
+                              <td className="p-3">
+                                <span className="bg-forest/10 text-forest text-[10px] uppercase font-bold px-2 py-0.5 rounded-xs">
+                                  {exp.category}
+                                </span>
+                              </td>
+                              <td className="p-3 font-sans font-semibold text-forest">{exp.item}</td>
+                              <td className="p-3 text-dark/70">{exp.quantity}</td>
+                              <td className="p-3 text-right font-bold text-red-700">₹{exp.amount.toLocaleString("en-IN")}</td>
+                              <td className="p-3 font-sans text-[11px] text-dark/60 max-w-xs truncate">{exp.notes || "-"}</td>
+                              <td className="p-3 text-center">
+                                <button
+                                  onClick={() => setBusinessExpenses(businessExpenses.filter((e) => e.id !== exp.id))}
+                                  className="text-red-600 hover:text-red-800 text-[10px] uppercase font-bold"
+                                >
+                                  Remove
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
                 </div>
               )}
 
