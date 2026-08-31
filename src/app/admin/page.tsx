@@ -169,6 +169,106 @@ export default function AdminPage() {
       prev.map((item) => (item.sku === sku ? { ...item, stock: Math.max(0, item.stock - 5) } : item))
     );
   };
+  // Raw Material Rates & Grains Inventory State (Persisted in LocalStorage)
+  const [rates, setRates] = useState({
+    groundnutSeedCost: 125, // ₹125/kg (2.5kg = 1L)
+    sesameSeedCost: 125,    // ₹125/kg (2.5kg = 1L)
+    sunflowerSeedCost: 110, // ₹110/kg (2.5kg = 1L)
+    pressingCostPerBatch: 35, // ₹35 per 2.5kg batch
+    bottleCost: 35,          // ₹35 per bottle
+    capLabelCost: 10,        // ₹10 per unit
+  });
+
+  const [grainRates, setGrainRates] = useState<any[]>([
+    { id: "groundnuts", name: "Organic Raw Groundnuts", purchaseCostPerKg: 140, packingCostPerKg: 20, sellingPricePerKg: 199 },
+    { id: "jaisriram-unpolished-rice", name: "Jai Sriram Unpolished Rice", purchaseCostPerKg: 65, packingCostPerKg: 15, sellingPricePerKg: 95 },
+    { id: "jaisriram-polished-rice", name: "Jai Sriram Polished Rice", purchaseCostPerKg: 58, packingCostPerKg: 15, sellingPricePerKg: 88 },
+  ]);
+
+  // Form for Adding New Custom Grains / Products
+  const [newGrainName, setNewGrainName] = useState("");
+  const [newGrainPurchaseCost, setNewGrainPurchaseCost] = useState("");
+  const [newGrainPackingCost, setNewGrainPackingCost] = useState("");
+  const [newGrainSellingPrice, setNewGrainSellingPrice] = useState("");
+
+  const handleAddGrain = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newGrainName || !newGrainPurchaseCost || !newGrainPackingCost || !newGrainSellingPrice) return;
+    const newGrain = {
+      id: newGrainName.toLowerCase().replace(/[^a-z0-9]/g, "-"),
+      name: newGrainName.trim(),
+      purchaseCostPerKg: Number(newGrainPurchaseCost),
+      packingCostPerKg: Number(newGrainPackingCost),
+      sellingPricePerKg: Number(newGrainSellingPrice),
+    };
+    setGrainRates([...grainRates, newGrain]);
+    setNewGrainName("");
+    setNewGrainPurchaseCost("");
+    setNewGrainPackingCost("");
+    setNewGrainSellingPrice("");
+  };
+
+  // Helper: Calculate item-level COGS based on production formula (2.5kg seeds = 1L oil)
+  const calculateOrderItemCOGS = (item: any) => {
+    const nameLower = (item.name || "").toLowerCase();
+    const size = (item.size || "").toLowerCase();
+    const qty = item.quantity || 1;
+
+    if (nameLower.includes("groundnut oil")) {
+      let multiplier = 2.5; // 1L default = 2.5kg seeds
+      if (size.includes("500") || size.includes("0.5")) multiplier = 1.25;
+      else if (size.includes("2 l")) multiplier = 5.0;
+      else if (size.includes("5 l")) multiplier = 12.5;
+
+      const seedCost = multiplier * rates.groundnutSeedCost;
+      const pressingCost = (multiplier / 2.5) * rates.pressingCostPerBatch;
+      const bottleCost = size.includes("5 l") ? 80 : size.includes("2 l") ? 50 : rates.bottleCost;
+      const totalPerUnit = seedCost + pressingCost + bottleCost + rates.capLabelCost;
+      return Math.round(totalPerUnit * qty);
+    }
+
+    if (nameLower.includes("sesame oil")) {
+      let multiplier = 2.5;
+      if (size.includes("500") || size.includes("0.5")) multiplier = 1.25;
+      else if (size.includes("2 l")) multiplier = 5.0;
+      else if (size.includes("5 l")) multiplier = 12.5;
+
+      const seedCost = multiplier * rates.sesameSeedCost;
+      const pressingCost = (multiplier / 2.5) * rates.pressingCostPerBatch;
+      const bottleCost = size.includes("5 l") ? 80 : size.includes("2 l") ? 50 : rates.bottleCost;
+      const totalPerUnit = seedCost + pressingCost + bottleCost + rates.capLabelCost;
+      return Math.round(totalPerUnit * qty);
+    }
+
+    if (nameLower.includes("sunflower oil")) {
+      let multiplier = 2.5;
+      if (size.includes("500") || size.includes("0.5")) multiplier = 1.25;
+
+      const seedCost = multiplier * rates.sunflowerSeedCost;
+      const pressingCost = (multiplier / 2.5) * rates.pressingCostPerBatch;
+      const totalPerUnit = seedCost + pressingCost + rates.bottleCost + rates.capLabelCost;
+      return Math.round(totalPerUnit * qty);
+    }
+
+    // Matching Grains Logic
+    const matchingGrain = grainRates.find(g => nameLower.includes(g.name.toLowerCase()) || nameLower.includes(g.id));
+    if (matchingGrain) {
+      let weightKg = 1.0;
+      if (size.includes("500 g") || size.includes("0.5 kg")) weightKg = 0.5;
+      else if (size.includes("2 kg")) weightKg = 2.0;
+      else if (size.includes("5 kg")) weightKg = 5.0;
+
+      const unitCogs = (matchingGrain.purchaseCostPerKg + matchingGrain.packingCostPerKg) * weightKg;
+      return Math.round(unitCogs * qty);
+    }
+
+    return Math.round(item.price * qty * 0.6); // Default 60% fallback
+  };
+
+  const calculateOrderTotalCOGS = (order: any) => {
+    if (!order.items || order.items.length === 0) return Math.round(order.total * 0.6);
+    return order.items.reduce((acc: number, item: any) => acc + calculateOrderItemCOGS(item), 0);
+  };
 
   return (
     <>
@@ -586,44 +686,280 @@ export default function AdminPage() {
                 </div>
               )}
 
-              {/* INVENTORY LOGS TAB */}
+              {/* INVENTORY LOGS & PROFIT CALCULATOR TAB */}
               {activeTab === "inventory" && (
-                <div className="space-y-6">
-                  <h3 className="text-lg font-serif text-forest font-semibold border-b border-forest/10 pb-3">
-                    Operational Stock Register
-                  </h3>
-                  <div className="space-y-4">
-                    {inventoryList.map((item) => (
-                      <div key={item.sku} className="flex justify-between items-center p-4 border border-forest/5 bg-brand-bg/30 text-xs">
-                        <div className="space-y-1">
-                          <span className="font-semibold text-forest block">{item.name}</span>
-                          <span className="text-[10px] font-mono text-dark/50">SKU: {item.sku}</span>
-                        </div>
-                        <div className="flex items-center gap-6">
-                          <div className="text-right">
-                            <span className="text-[10px] text-dark/60 block">In Stock</span>
-                            <span className={`font-bold ${item.stock <= item.limit ? "text-red-600 animate-pulse" : "text-forest"}`}>
-                              {item.stock} Units
-                            </span>
+                <div className="space-y-8 text-left">
+                  
+                  {/* Title */}
+                  <div className="border-b border-forest/10 pb-4 flex justify-between items-center">
+                    <div>
+                      <h3 className="text-xl font-serif text-forest font-semibold">Inventory Rates &amp; Profit Calculator</h3>
+                      <p className="text-xs text-dark/60">Configure raw seed, pressing, bottle, and grain costs to automatically calculate profit margins across all orders</p>
+                    </div>
+                  </div>
+
+                  {/* 1. MASTER OIL EXTRACTION RATES */}
+                  <div className="space-y-4 bg-brand-bg/30 border border-forest/10 p-6 rounded-sm">
+                    <div className="flex justify-between items-center border-b border-forest/10 pb-3">
+                      <h4 className="text-sm font-serif font-bold text-forest uppercase tracking-wider">1. Wood Pressed Oils Rate Card (2.5 kg Seeds = 1 Liter Oil)</h4>
+                      <span className="text-[10px] text-gold font-semibold uppercase">40% Extraction Yield Standard</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-forest/70 uppercase block">Groundnut Seed Cost (₹/kg)</label>
+                        <input
+                          type="number"
+                          value={rates.groundnutSeedCost}
+                          onChange={(e) => setRates({ ...rates, groundnutSeedCost: Number(e.target.value) })}
+                          className="w-full p-2.5 border border-forest/20 font-bold text-forest bg-white outline-none"
+                        />
+                        <span className="text-[9px] text-dark/50 block">1L Oil Seed Cost = ₹{rates.groundnutSeedCost * 2.5}</span>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-forest/70 uppercase block">Sesame Seed Cost (₹/kg)</label>
+                        <input
+                          type="number"
+                          value={rates.sesameSeedCost}
+                          onChange={(e) => setRates({ ...rates, sesameSeedCost: Number(e.target.value) })}
+                          className="w-full p-2.5 border border-forest/20 font-bold text-forest bg-white outline-none"
+                        />
+                        <span className="text-[9px] text-dark/50 block">1L Oil Seed Cost = ₹{rates.sesameSeedCost * 2.5}</span>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-forest/70 uppercase block">Sunflower Seed Cost (₹/kg)</label>
+                        <input
+                          type="number"
+                          value={rates.sunflowerSeedCost}
+                          onChange={(e) => setRates({ ...rates, sunflowerSeedCost: Number(e.target.value) })}
+                          className="w-full p-2.5 border border-forest/20 font-bold text-forest bg-white outline-none"
+                        />
+                        <span className="text-[9px] text-dark/50 block">1L Oil Seed Cost = ₹{rates.sunflowerSeedCost * 2.5}</span>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-forest/70 uppercase block">Pressing / Labor Cost (₹/2.5kg Batch)</label>
+                        <input
+                          type="number"
+                          value={rates.pressingCostPerBatch}
+                          onChange={(e) => setRates({ ...rates, pressingCostPerBatch: Number(e.target.value) })}
+                          className="w-full p-2.5 border border-forest/20 font-bold text-forest bg-white outline-none"
+                        />
+                        <span className="text-[9px] text-dark/50 block">Per 1L batch pressing fee</span>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-forest/70 uppercase block">1L Bottle Container Cost (₹)</label>
+                        <input
+                          type="number"
+                          value={rates.bottleCost}
+                          onChange={(e) => setRates({ ...rates, bottleCost: Number(e.target.value) })}
+                          className="w-full p-2.5 border border-forest/20 font-bold text-forest bg-white outline-none"
+                        />
+                        <span className="text-[9px] text-dark/50 block">Glass or PET bottle unit price</span>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-forest/70 uppercase block">Cap, Seal &amp; Label Cost (₹)</label>
+                        <input
+                          type="number"
+                          value={rates.capLabelCost}
+                          onChange={(e) => setRates({ ...rates, capLabelCost: Number(e.target.value) })}
+                          className="w-full p-2.5 border border-forest/20 font-bold text-forest bg-white outline-none"
+                        />
+                        <span className="text-[9px] text-dark/50 block">Sticker label &amp; cap seal per bottle</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 2. GRAINS & PRODUCE REGISTER */}
+                  <div className="space-y-4 bg-brand-bg/30 border border-forest/10 p-6 rounded-sm">
+                    <div className="flex justify-between items-center border-b border-forest/10 pb-3">
+                      <h4 className="text-sm font-serif font-bold text-forest uppercase tracking-wider">2. Traditional Grains &amp; Produce Cost Register</h4>
+                      <span className="text-[10px] text-gold font-semibold uppercase">Purchase + Packing COGS</span>
+                    </div>
+
+                    {/* Grain List */}
+                    <div className="space-y-3">
+                      {grainRates.map((g) => {
+                        const totalCogsPerKg = g.purchaseCostPerKg + g.packingCostPerKg;
+                        const profitPerKg = g.sellingPricePerKg - totalCogsPerKg;
+                        const marginPct = Math.round((profitPerKg / g.sellingPricePerKg) * 100);
+
+                        return (
+                          <div key={g.id} className="grid grid-cols-1 sm:grid-cols-6 gap-3 items-center p-3 border border-forest/10 bg-white text-xs rounded-xs">
+                            <div className="sm:col-span-2 space-y-0.5">
+                              <span className="font-bold text-forest text-sm block">{g.name}</span>
+                              <span className="text-[10px] text-dark/50 font-mono">ID: {g.id}</span>
+                            </div>
+
+                            <div>
+                              <span className="text-[9px] text-dark/50 uppercase block font-semibold">Raw Cost / kg</span>
+                              <span className="font-mono font-bold text-dark">₹{g.purchaseCostPerKg}</span>
+                            </div>
+
+                            <div>
+                              <span className="text-[9px] text-dark/50 uppercase block font-semibold">Packing / kg</span>
+                              <span className="font-mono font-bold text-dark">₹{g.packingCostPerKg}</span>
+                            </div>
+
+                            <div>
+                              <span className="text-[9px] text-dark/50 uppercase block font-semibold">Total COGS / kg</span>
+                              <span className="font-mono font-bold text-forest">₹{totalCogsPerKg}</span>
+                            </div>
+
+                            <div className="text-right sm:text-left">
+                              <span className="text-[9px] text-dark/50 uppercase block font-semibold">Margin / kg</span>
+                              <span className="font-mono font-bold text-green-700">₹{profitPerKg} ({marginPct}%)</span>
+                            </div>
                           </div>
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => handleDecrementStock(item.sku)}
-                              className="px-2 py-1 bg-white border border-forest/15 font-bold hover:bg-forest/5"
-                            >
-                              -5
-                            </button>
-                            <button
-                              onClick={() => handleIncrementStock(item.sku)}
-                              className="px-2 py-1 bg-forest text-brand-bg font-bold hover:bg-forest-light"
-                            >
-                              +10
-                            </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Form to Add New Grain */}
+                    <form onSubmit={handleAddGrain} className="border-t border-forest/10 pt-4 space-y-3">
+                      <span className="text-xs font-serif font-bold text-forest uppercase tracking-wider block">+ Add New Grain or Produce Item</span>
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 items-end text-xs">
+                        <div className="space-y-1 sm:col-span-2">
+                          <label className="text-[10px] text-forest/70 uppercase font-semibold block">Grain / Produce Name</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. Foxtail Millet"
+                            value={newGrainName}
+                            onChange={(e) => setNewGrainName(e.target.value)}
+                            className="w-full p-2.5 border border-forest/20 bg-white outline-none"
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-forest/70 uppercase font-semibold block">Purchase (₹/kg)</label>
+                          <input
+                            type="number"
+                            placeholder="140"
+                            value={newGrainPurchaseCost}
+                            onChange={(e) => setNewGrainPurchaseCost(e.target.value)}
+                            className="w-full p-2.5 border border-forest/20 bg-white outline-none"
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-forest/70 uppercase font-semibold block">Packing (₹/kg)</label>
+                          <input
+                            type="number"
+                            placeholder="20"
+                            value={newGrainPackingCost}
+                            onChange={(e) => setNewGrainPackingCost(e.target.value)}
+                            className="w-full p-2.5 border border-forest/20 bg-white outline-none"
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-forest/70 uppercase font-semibold block">Sell Price (₹/kg)</label>
+                          <input
+                            type="number"
+                            placeholder="199"
+                            value={newGrainSellingPrice}
+                            onChange={(e) => setNewGrainSellingPrice(e.target.value)}
+                            className="w-full p-2.5 border border-forest/20 bg-white outline-none"
+                          />
+                        </div>
+                      </div>
+
+                      <button
+                        type="submit"
+                        className="bg-forest hover:bg-forest-light text-white text-xs font-bold uppercase tracking-wider px-5 py-2.5 transition-colors"
+                      >
+                        Add Grain Item
+                      </button>
+                    </form>
+                  </div>
+
+                  {/* 3. STOREWIDE PROFITABILITY SUMMARY */}
+                  {(() => {
+                    const totalRevenue = dbOrders.reduce((sum, o) => sum + (o.total || 0), 0);
+                    const totalCogs = dbOrders.reduce((sum, o) => sum + calculateOrderTotalCOGS(o), 0);
+                    const netProfit = totalRevenue - totalCogs;
+                    const overallMargin = totalRevenue > 0 ? Math.round((netProfit / totalRevenue) * 100) : 0;
+
+                    return (
+                      <div className="space-y-6">
+                        <div className="border-b border-forest/10 pb-3">
+                          <h4 className="text-sm font-serif font-bold text-forest uppercase tracking-wider">3. Live Order Profitability Summary ({dbOrders.length} Orders)</h4>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 text-left">
+                          <div className="p-4 border border-forest/10 bg-white shadow-xs">
+                            <span className="text-[10px] text-dark/60 uppercase font-semibold block">Total Revenue</span>
+                            <span className="text-2xl font-serif font-bold text-forest mt-1 block">₹{totalRevenue}</span>
+                            <span className="text-[9px] text-dark/40">Gross customer payments</span>
+                          </div>
+
+                          <div className="p-4 border border-forest/10 bg-white shadow-xs">
+                            <span className="text-[10px] text-dark/60 uppercase font-semibold block">Total Direct COGS</span>
+                            <span className="text-2xl font-serif font-bold text-amber-700 mt-1 block">₹{totalCogs}</span>
+                            <span className="text-[9px] text-dark/40">Seeds + Pressing + Packing</span>
+                          </div>
+
+                          <div className="p-4 border border-forest/10 bg-white shadow-xs">
+                            <span className="text-[10px] text-dark/60 uppercase font-semibold block">Net Store Profit</span>
+                            <span className="text-2xl font-serif font-bold text-green-700 mt-1 block">₹{netProfit}</span>
+                            <span className="text-[9px] text-dark/40">Revenue minus Direct COGS</span>
+                          </div>
+
+                          <div className="p-4 border border-forest/10 bg-white shadow-xs">
+                            <span className="text-[10px] text-dark/60 uppercase font-semibold block">Store Profit Margin</span>
+                            <span className="text-2xl font-serif font-bold text-gold mt-1 block">{overallMargin}%</span>
+                            <span className="text-[9px] text-dark/40">Net profit percentage</span>
+                          </div>
+                        </div>
+
+                        {/* Order Breakdown Table */}
+                        <div className="space-y-3">
+                          <h4 className="text-xs font-bold text-forest uppercase tracking-wider">Itemized Order Profit Breakdown</h4>
+                          <div className="overflow-x-auto max-h-80 overflow-y-auto border border-forest/10 bg-white">
+                            <table className="w-full text-xs divide-y divide-forest/10">
+                              <thead className="bg-forest text-gold text-[9px] uppercase font-bold sticky top-0">
+                                <tr>
+                                  <th className="p-3 text-left">Order ID</th>
+                                  <th className="p-3 text-left">Customer</th>
+                                  <th className="p-3 text-left">Products</th>
+                                  <th className="p-3 text-right">Revenue (₹)</th>
+                                  <th className="p-3 text-right">COGS (₹)</th>
+                                  <th className="p-3 text-right">Profit (₹)</th>
+                                  <th className="p-3 text-right">Margin (%)</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-forest/5 font-light">
+                                {dbOrders.map((ord) => {
+                                  const cogs = calculateOrderTotalCOGS(ord);
+                                  const profit = ord.total - cogs;
+                                  const margin = ord.total > 0 ? Math.round((profit / ord.total) * 100) : 0;
+                                  const itemsText = ord.items?.map((i: any) => `${i.name} (${i.size}) x${i.quantity}`).join(", ") || "—";
+
+                                  return (
+                                    <tr key={ord.id} className="hover:bg-brand-bg/30 transition-colors">
+                                      <td className="p-3 font-mono font-bold text-forest text-[11px]">{ord.orderNumber}</td>
+                                      <td className="p-3">{ord.shippingName}</td>
+                                      <td className="p-3 text-[11px] text-dark/70 max-w-xs truncate">{itemsText}</td>
+                                      <td className="p-3 text-right font-mono font-bold">₹{ord.total}</td>
+                                      <td className="p-3 text-right font-mono text-amber-800">₹{cogs}</td>
+                                      <td className="p-3 text-right font-mono font-bold text-green-700">₹{profit}</td>
+                                      <td className="p-3 text-right font-mono font-bold text-gold">{margin}%</td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
                           </div>
                         </div>
                       </div>
-                    ))}
-                  </div>
+                    );
+                  })()}
+
                 </div>
               )}
 
