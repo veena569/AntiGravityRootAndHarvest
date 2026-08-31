@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Check, Lock, ChevronRight, MapPin, CreditCard, ShoppingBag, ShieldCheck, RefreshCw, Plus } from "lucide-react";
+import { ArrowLeft, Check, Lock, ChevronRight, MapPin, CreditCard, ShoppingBag, ShieldCheck, RefreshCw, Plus, Truck, Shield } from "lucide-react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -608,7 +608,7 @@ export default function CheckoutPage() {
       <div id="recaptcha-container-checkout" className="invisible absolute"></div>
       {/* Header */}
       <header className="border-b border-forest/10 bg-white py-6 px-6 relative z-10">
-        <div className="max-w-3xl mx-auto flex items-center justify-between">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
           <Link href="/cart" className="text-dark/40 hover:text-forest transition-colors">
             <ArrowLeft className="w-5 h-5" />
           </Link>
@@ -617,8 +617,10 @@ export default function CheckoutPage() {
         </div>
       </header>
 
-      <main className="flex-grow py-16 px-6">
-        <div className="max-w-2xl mx-auto space-y-16">
+      <main className="flex-grow py-8 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            <div className="lg:col-span-7 space-y-6">
 
           {/* Step Indicator */}
           <div className="flex items-center justify-between relative">
@@ -1193,9 +1195,82 @@ export default function CheckoutPage() {
 
             </AnimatePresence>
           </div>
+            </div>
 
-          <div className="text-center text-[10px] uppercase tracking-widest text-dark/40 font-semibold flex items-center justify-center gap-2">
-            <Lock className="w-3 h-3" /> 256-bit Secure Encryption
+            {/* Right Column: Sticky Order Summary Sidebar */}
+            <div className="lg:col-span-5 lg:sticky lg:top-24 space-y-6">
+              <div className="bg-white p-6 border border-forest/10 shadow-sm rounded-lg space-y-5">
+                <div className="flex items-center justify-between pb-3 border-b border-forest/10">
+                  <h3 className="font-serif font-bold text-lg text-forest">Order Summary</h3>
+                  <span className="text-xs font-bold px-2.5 py-1 bg-forest/10 text-forest rounded-full">
+                    {cart.reduce((sum, item) => sum + item.quantity, 0)} Items
+                  </span>
+                </div>
+
+                <div className="divide-y divide-gray-100 max-h-[300px] overflow-y-auto pr-1">
+                  {cart.map((item, idx) => (
+                    <div key={idx} className="py-3 flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="relative w-12 h-14 bg-gray-50 rounded border border-gray-200 overflow-hidden shrink-0">
+                          <Image src={item.product.image} alt={item.product.name} fill className="object-cover" />
+                        </div>
+                        <div>
+                          <p className="font-serif font-bold text-xs text-forest leading-tight">{item.product.name}</p>
+                          <p className="text-[11px] text-gray-500 mt-0.5">
+                            Size: {item.size} {item.bottleType ? `(${item.bottleType})` : ""} × {item.quantity}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="font-bold text-sm text-gray-900 shrink-0">₹{item.price * item.quantity}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="pt-4 border-t border-forest/10 space-y-2.5 text-xs text-gray-700">
+                  <div className="flex justify-between">
+                    <span className="font-medium text-gray-600">Subtotal</span>
+                    <span className="font-bold text-gray-900 text-sm">₹{subtotal}</span>
+                  </div>
+
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium text-gray-600">Shipping Charge</span>
+                    <span className="font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded border border-emerald-200">
+                      {calculateShippingFee(shippingData?.pincode, shippingData?.city, subtotal).shippingLabel}
+                    </span>
+                  </div>
+
+                  <div className="pt-3 border-t border-gray-200 flex justify-between items-center">
+                    <div>
+                      <span className="text-xs font-bold uppercase tracking-wider text-forest block">Total Amount</span>
+                      <span className="text-[10px] text-gray-500">Includes all taxes</span>
+                    </div>
+                    <span className="text-2xl font-serif font-bold text-forest">₹{subtotal + calculateShippingFee(shippingData?.pincode, shippingData?.city, subtotal).shippingCharge}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Trust Badges Card */}
+              <div className="bg-emerald-50/50 p-5 border border-emerald-200/60 rounded-lg space-y-3">
+                <h4 className="text-xs uppercase tracking-wider text-emerald-900 flex items-center gap-1.5 font-bold">
+                  <Shield className="w-4 h-4 text-emerald-700" /> Root &amp; Harvest Guarantee
+                </h4>
+                <ul className="text-xs text-emerald-950 space-y-2 leading-snug">
+                  <li className="flex items-center gap-2">
+                    <Truck className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+                    <span><strong>Free Shipping</strong> in Hyderabad (₹100 flat across India)</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Lock className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+                    <span><strong>100% Secure Checkout</strong> via Razorpay &amp; UPI</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+                    <span><strong>Instant Notifications</strong> on WhatsApp &amp; Email</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
           </div>
         </div>
       </main>
