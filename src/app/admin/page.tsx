@@ -1505,7 +1505,12 @@ export default function AdminPage() {
                                   value={exp.quantity}
                                   onChange={(e) => {
                                     const updated = [...businessExpenses];
-                                    updated[idx].quantity = e.target.value;
+                                    const val = e.target.value;
+                                    updated[idx].quantity = val;
+                                    const q = parseFloat(val) || 1;
+                                    const uCost = Number(updated[idx].unitCost || 0);
+                                    const sCost = Number(updated[idx].shippingCost || 0);
+                                    updated[idx].amount = Math.round(uCost * q + sCost);
                                     setBusinessExpenses(updated);
                                   }}
                                   className="w-full p-1 border border-forest/10 bg-white text-xs outline-none"
@@ -1544,16 +1549,26 @@ export default function AdminPage() {
                                 />
                               </td>
                               <td className="p-2">
-                                <input
-                                  type="number"
-                                  value={exp.amount || 0}
-                                  onChange={(e) => {
-                                    const updated = [...businessExpenses];
-                                    updated[idx].amount = Number(e.target.value);
-                                    setBusinessExpenses(updated);
-                                  }}
-                                  className="w-full p-1 border border-forest/10 bg-white text-xs font-mono font-bold text-red-700 outline-none"
-                                />
+                                {(() => {
+                                  const q = parseFloat(exp.quantity) || 1;
+                                  const u = Number(exp.unitCost) || 0;
+                                  const s = Number(exp.shippingCost) || 0;
+                                  const computed = Math.round(u * q + s);
+                                  const displayAmount = exp.amount !== undefined ? exp.amount : computed;
+
+                                  return (
+                                    <input
+                                      type="number"
+                                      value={displayAmount}
+                                      onChange={(e) => {
+                                        const updated = [...businessExpenses];
+                                        updated[idx].amount = Number(e.target.value);
+                                        setBusinessExpenses(updated);
+                                      }}
+                                      className="w-full p-1 border border-forest/10 bg-amber-50 text-xs font-mono font-bold text-red-700 outline-none"
+                                    />
+                                  );
+                                })()}
                               </td>
                               <td className="p-2">
                                 <input
