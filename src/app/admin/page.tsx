@@ -35,8 +35,9 @@ export default function AdminPage() {
       item: "Organic Groundnut Seeds",
       quantity: "500 kg",
       unitCost: 125,
-      amount: 62500,
-      notes: "Saurashtra Farm Direct Purchase @ ₹125/kg",
+      shippingCost: 3500,
+      amount: 66000,
+      notes: "Saurashtra Farm Direct Purchase",
     },
     {
       id: "exp-2",
@@ -45,8 +46,9 @@ export default function AdminPage() {
       item: "1L Food Grade Oil Bottles",
       quantity: "500 pcs",
       unitCost: 35,
-      amount: 17500,
-      notes: "PET Bottles Batch @ ₹35/pc",
+      shippingCost: 1200,
+      amount: 18700,
+      notes: "PET Bottles Batch #1",
     },
     {
       id: "exp-3",
@@ -55,8 +57,9 @@ export default function AdminPage() {
       item: "Corrugated Shipping Boxes",
       quantity: "300 pcs",
       unitCost: 25,
-      amount: 7500,
-      notes: "Heavy-duty 5-ply shipping boxes @ ₹25/pc",
+      shippingCost: 500,
+      amount: 8000,
+      notes: "Heavy-duty 5-ply shipping boxes",
     },
     {
       id: "exp-4",
@@ -65,8 +68,9 @@ export default function AdminPage() {
       item: "Custom Waterproof Bottle Labels & Cap Seals",
       quantity: "2000 pcs",
       unitCost: 4,
-      amount: 8000,
-      notes: "Metallic foil sticker printing @ ₹4/pc",
+      shippingCost: 300,
+      amount: 8300,
+      notes: "Metallic foil sticker printing batch",
     },
     {
       id: "exp-5",
@@ -75,6 +79,7 @@ export default function AdminPage() {
       item: "Farm Visit & Seed Transport Freight",
       quantity: "1 Trip",
       unitCost: 4500,
+      shippingCost: 0,
       amount: 4500,
       notes: "Transport from Rajkot mandi to pressing unit",
     },
@@ -85,8 +90,9 @@ export default function AdminPage() {
       item: "Bubble Wrap & Outer Poly Covers",
       quantity: "2 Rolls",
       unitCost: 1100,
-      amount: 2200,
-      notes: "Protective packaging for shipments @ ₹1100/roll",
+      shippingCost: 200,
+      amount: 2400,
+      notes: "Protective packaging for shipments",
     },
   ]);
 
@@ -96,6 +102,7 @@ export default function AdminPage() {
   const [newExpItem, setNewExpItem] = useState("");
   const [newExpQty, setNewExpQty] = useState("");
   const [newExpUnitCost, setNewExpUnitCost] = useState("");
+  const [newExpShippingCost, setNewExpShippingCost] = useState("");
   const [newExpAmount, setNewExpAmount] = useState("");
   const [newExpNotes, setNewExpNotes] = useState("");
 
@@ -104,8 +111,9 @@ export default function AdminPage() {
     if (!newExpItem) return;
 
     const unitCostNum = Number(newExpUnitCost) || 0;
+    const shippingNum = Number(newExpShippingCost) || 0;
     const qtyNum = parseFloat(newExpQty) || 1;
-    const computedAmount = Number(newExpAmount) || Math.round(unitCostNum * qtyNum);
+    const computedAmount = Number(newExpAmount) || Math.round(unitCostNum * qtyNum + shippingNum);
 
     if (!computedAmount) return;
 
@@ -115,7 +123,8 @@ export default function AdminPage() {
       category: newExpCategory,
       item: newExpItem.trim(),
       quantity: newExpQty.trim() || "1",
-      unitCost: unitCostNum || (qtyNum > 0 ? Math.round(computedAmount / qtyNum) : computedAmount),
+      unitCost: unitCostNum,
+      shippingCost: shippingNum,
       amount: computedAmount,
       notes: newExpNotes.trim(),
     };
@@ -123,6 +132,7 @@ export default function AdminPage() {
     setNewExpItem("");
     setNewExpQty("");
     setNewExpUnitCost("");
+    setNewExpShippingCost("");
     setNewExpAmount("");
     setNewExpNotes("");
   };
@@ -1356,9 +1366,28 @@ export default function AdminPage() {
                             setNewExpUnitCost(uVal);
                             const u = parseFloat(uVal);
                             const q = parseFloat(newExpQty);
-                            if (q > 0 && u > 0) setNewExpAmount(String(Math.round(q * u)));
+                            const s = parseFloat(newExpShippingCost) || 0;
+                            if (q > 0 && u > 0) setNewExpAmount(String(Math.round(q * u + s)));
                           }}
                           className="w-full p-2 border border-forest/20 bg-white font-mono outline-none text-xs"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-forest/70 uppercase font-semibold block">Shipping / Freight (₹)</label>
+                        <input
+                          type="number"
+                          placeholder="3500"
+                          value={newExpShippingCost}
+                          onChange={(e) => {
+                            const sVal = e.target.value;
+                            setNewExpShippingCost(sVal);
+                            const s = parseFloat(sVal) || 0;
+                            const u = parseFloat(newExpUnitCost) || 0;
+                            const q = parseFloat(newExpQty) || 0;
+                            if (q > 0 && u > 0) setNewExpAmount(String(Math.round(q * u + s)));
+                          }}
+                          className="w-full p-2 border border-forest/20 bg-white font-mono outline-none text-xs text-amber-800 font-bold"
                         />
                       </div>
 
@@ -1367,10 +1396,10 @@ export default function AdminPage() {
                         <input
                           type="number"
                           required
-                          placeholder="62500"
+                          placeholder="66000"
                           value={newExpAmount}
                           onChange={(e) => setNewExpAmount(e.target.value)}
-                          className="w-full p-2 border border-forest/20 bg-white font-bold font-mono outline-none text-xs"
+                          className="w-full p-2 border border-forest/20 bg-white font-bold font-mono outline-none text-xs text-red-700"
                         />
                       </div>
                     </div>
@@ -1399,41 +1428,146 @@ export default function AdminPage() {
                   {/* Expenses Ledger Table */}
                   <div className="space-y-3">
                     <div className="flex justify-between items-center border-b border-forest/10 pb-2">
-                      <h4 className="text-sm font-serif font-bold text-forest uppercase tracking-wider">Day 1 Expense &amp; Procurement Log</h4>
+                      <div>
+                        <h4 className="text-sm font-serif font-bold text-forest uppercase tracking-wider">Day 1 Expense &amp; Procurement Log</h4>
+                        <span className="text-[10px] text-dark/50">Edit any past record, date, quantity, rate or shipping cost directly in the table below</span>
+                      </div>
                       <span className="text-[10px] text-gold font-semibold uppercase">{businessExpenses.length} Expense Records</span>
                     </div>
 
                     <div className="overflow-x-auto border border-forest/10 bg-white">
                       <table className="w-full text-xs font-light text-dark divide-y divide-forest/10">
-                        <thead className="bg-brand-bg/50 text-[9px] uppercase font-bold text-forest">
+                        <thead className="bg-brand-bg/50 text-[9px] uppercase font-bold text-forest sticky top-0">
                           <tr>
-                            <th className="p-3 text-left">Date</th>
-                            <th className="p-3 text-left">Category</th>
+                            <th className="p-3 text-left w-28">Date</th>
+                            <th className="p-3 text-left w-36">Category</th>
                             <th className="p-3 text-left">Item Description</th>
-                            <th className="p-3 text-left">Quantity</th>
-                            <th className="p-3 text-right">Cost / Rate (₹/unit)</th>
-                            <th className="p-3 text-right">Total Amount (₹)</th>
+                            <th className="p-3 text-left w-24">Quantity</th>
+                            <th className="p-3 text-left w-24">Rate (₹/unit)</th>
+                            <th className="p-3 text-left w-24">Shipping (₹)</th>
+                            <th className="p-3 text-left w-28">Total Cost (₹)</th>
                             <th className="p-3 text-left">Notes / Supplier</th>
-                            <th className="p-3 text-center">Action</th>
+                            <th className="p-3 text-center w-16">Action</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-forest/5 font-mono">
-                          {businessExpenses.map((exp) => (
+                          {businessExpenses.map((exp, idx) => (
                             <tr key={exp.id} className="hover:bg-forest/5 transition-colors">
-                              <td className="p-3 text-[11px] font-semibold text-dark/70">{exp.date}</td>
-                              <td className="p-3">
-                                <span className="bg-forest/10 text-forest text-[10px] uppercase font-bold px-2 py-0.5 rounded-xs font-sans">
-                                  {exp.category}
-                                </span>
+                              <td className="p-2">
+                                <input
+                                  type="text"
+                                  value={exp.date}
+                                  onChange={(e) => {
+                                    const updated = [...businessExpenses];
+                                    updated[idx].date = e.target.value;
+                                    setBusinessExpenses(updated);
+                                  }}
+                                  className="w-full p-1 border border-forest/10 bg-white text-[11px] font-mono outline-none"
+                                />
                               </td>
-                              <td className="p-3 font-sans font-semibold text-forest">{exp.item}</td>
-                              <td className="p-3 text-dark/70">{exp.quantity}</td>
-                              <td className="p-3 text-right text-dark/80">
-                                {exp.unitCost ? `₹${exp.unitCost}` : "—"}
+                              <td className="p-2">
+                                <select
+                                  value={exp.category}
+                                  onChange={(e) => {
+                                    const updated = [...businessExpenses];
+                                    updated[idx].category = e.target.value;
+                                    setBusinessExpenses(updated);
+                                  }}
+                                  className="w-full p-1 border border-forest/10 bg-white text-[10px] font-bold font-sans uppercase text-forest outline-none"
+                                >
+                                  <option value="Seeds">Seeds &amp; Raw Grain</option>
+                                  <option value="Bottles">Oil Bottles &amp; Jars</option>
+                                  <option value="Cardboard Boxes">Cardboard Shipping Boxes</option>
+                                  <option value="Label Printing">Label &amp; Sticker Printing</option>
+                                  <option value="Covers &amp; Packing">Poly Covers &amp; Bubble Wrap</option>
+                                  <option value="Travelling">Travelling &amp; Freight</option>
+                                  <option value="Labor &amp; Pressing">Pressing &amp; Labor Charges</option>
+                                  <option value="Machinery">Machinery &amp; Equipment</option>
+                                  <option value="Marketing">Marketing &amp; Branding</option>
+                                  <option value="Misc">Miscellaneous Expense</option>
+                                </select>
                               </td>
-                              <td className="p-3 text-right font-bold text-red-700">₹{exp.amount.toLocaleString("en-IN")}</td>
-                              <td className="p-3 font-sans text-[11px] text-dark/60 max-w-xs truncate">{exp.notes || "-"}</td>
-                              <td className="p-3 text-center">
+                              <td className="p-2">
+                                <input
+                                  type="text"
+                                  value={exp.item}
+                                  onChange={(e) => {
+                                    const updated = [...businessExpenses];
+                                    updated[idx].item = e.target.value;
+                                    setBusinessExpenses(updated);
+                                  }}
+                                  className="w-full p-1 border border-forest/10 bg-white font-sans font-semibold text-forest text-xs outline-none"
+                                />
+                              </td>
+                              <td className="p-2">
+                                <input
+                                  type="text"
+                                  value={exp.quantity}
+                                  onChange={(e) => {
+                                    const updated = [...businessExpenses];
+                                    updated[idx].quantity = e.target.value;
+                                    setBusinessExpenses(updated);
+                                  }}
+                                  className="w-full p-1 border border-forest/10 bg-white text-xs outline-none"
+                                />
+                              </td>
+                              <td className="p-2">
+                                <input
+                                  type="number"
+                                  value={exp.unitCost || 0}
+                                  onChange={(e) => {
+                                    const updated = [...businessExpenses];
+                                    const uCost = Number(e.target.value);
+                                    updated[idx].unitCost = uCost;
+                                    const q = parseFloat(updated[idx].quantity) || 1;
+                                    const s = Number(updated[idx].shippingCost || 0);
+                                    updated[idx].amount = Math.round(uCost * q + s);
+                                    setBusinessExpenses(updated);
+                                  }}
+                                  className="w-full p-1 border border-forest/10 bg-white text-xs font-mono font-bold text-dark outline-none"
+                                />
+                              </td>
+                              <td className="p-2">
+                                <input
+                                  type="number"
+                                  value={exp.shippingCost || 0}
+                                  onChange={(e) => {
+                                    const updated = [...businessExpenses];
+                                    const sCost = Number(e.target.value);
+                                    updated[idx].shippingCost = sCost;
+                                    const uCost = Number(updated[idx].unitCost || 0);
+                                    const q = parseFloat(updated[idx].quantity) || 1;
+                                    updated[idx].amount = Math.round(uCost * q + sCost);
+                                    setBusinessExpenses(updated);
+                                  }}
+                                  className="w-full p-1 border border-forest/10 bg-white text-xs font-mono font-bold text-amber-800 outline-none"
+                                />
+                              </td>
+                              <td className="p-2">
+                                <input
+                                  type="number"
+                                  value={exp.amount || 0}
+                                  onChange={(e) => {
+                                    const updated = [...businessExpenses];
+                                    updated[idx].amount = Number(e.target.value);
+                                    setBusinessExpenses(updated);
+                                  }}
+                                  className="w-full p-1 border border-forest/10 bg-white text-xs font-mono font-bold text-red-700 outline-none"
+                                />
+                              </td>
+                              <td className="p-2">
+                                <input
+                                  type="text"
+                                  value={exp.notes || ""}
+                                  onChange={(e) => {
+                                    const updated = [...businessExpenses];
+                                    updated[idx].notes = e.target.value;
+                                    setBusinessExpenses(updated);
+                                  }}
+                                  className="w-full p-1 border border-forest/10 bg-white text-[11px] font-sans text-dark/70 outline-none"
+                                />
+                              </td>
+                              <td className="p-2 text-center">
                                 <button
                                   onClick={() => setBusinessExpenses(businessExpenses.filter((e) => e.id !== exp.id))}
                                   className="text-red-600 hover:text-red-800 text-[10px] uppercase font-bold font-sans"
