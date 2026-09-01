@@ -272,11 +272,48 @@ export default function CheckoutPage() {
     return null;
   }
 
+  // Helper: Live capture of abandoned checkout leads
+  const captureCheckoutLead = async (nameVal?: string, phoneVal?: string, emailVal?: string, stepVal?: string) => {
+    try {
+      const p = phoneVal || watch("phone") || user?.phone || guestPhone;
+      const e = emailVal || watch("email") || user?.email;
+      const n = nameVal || watch("name") || user?.name || guestName;
+      if (!p && !e) return;
+      const cartTotal = cart.reduce((sum, i) => sum + i.price * i.quantity, 0);
+      await fetch("/api/leads/capture", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: n,
+          phone: p,
+          email: e,
+          stage: stepVal || currentStep,
+          cartItems: cart,
+          cartTotal,
+        }),
+      });
+    } catch (err) {}
+  };
+
+  // Auto-capture lead when phone or email is typed (10 digits / valid email)
+  const watchedPhone = watch("phone");
+  const watchedEmail = watch("email");
+  const watchedName = watch("name");
+  useEffect(() => {
+    if ((watchedPhone && watchedPhone.length >= 10) || (watchedEmail && watchedEmail.includes("@"))) {
+      const timer = setTimeout(() => {
+        captureCheckoutLead(watchedName, watchedPhone, watchedEmail, "checkout_shipping");
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [watchedPhone, watchedEmail, watchedName]);
+
   // ── STEP 1: Shipping form submit → go to OTP verify or Review ──
   const onShippingSubmit = async (data: ShippingFormValues) => {
     setShippingData(data);
     setOtpDigits(["", "", "", "", "", ""]);
     setOtpError("");
+    captureCheckoutLead(data.name, data.phone, data.email, "address_completed");
 
     if (user) {
       // User is already logged in -> save address if requested and proceed to review
@@ -300,9 +337,11 @@ export default function CheckoutPage() {
         } catch (e) {}
       }
       setCurrentStep("review");
+      captureCheckoutLead(data.name, data.phone, data.email, "payment_pending");
     } else {
       // Prompt OTP verification using Firebase Phone Auth
       setCurrentStep("verify");
+      captureCheckoutLead(data.name, data.phone, data.email, "checkout_otp");
       await sendOtp(data.phone);
     }
   };

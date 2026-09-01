@@ -15,6 +15,12 @@ import {
   Activity,
   MapPin,
   X,
+  UserX,
+  MessageSquare,
+  Send,
+  Mail,
+  RefreshCw,
+  Trash2,
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { Navbar } from "@/components/layout/Navbar";
@@ -23,8 +29,32 @@ import { Footer } from "@/components/layout/Footer";
 export default function AdminPage() {
   const { products, orders: contextOrders } = useApp();
   const [activeTab, setActiveTab] = useState<
-    "orders" | "bills" | "inventory" | "expenses" | "analytics" | "coupons" | "content"
+    "orders" | "bills" | "inventory" | "expenses" | "analytics" | "coupons" | "content" | "leads"
   >("orders");
+
+  // Checkout Leads State
+  const [checkoutLeads, setCheckoutLeads] = useState<any[]>([]);
+  const [loadingLeads, setLoadingLeads] = useState(false);
+  const [leadActionMsg, setLeadActionMsg] = useState("");
+
+  const fetchCheckoutLeads = async () => {
+    setLoadingLeads(true);
+    try {
+      const res = await fetch("/api/admin/leads");
+      if (res.ok) {
+        const data = await res.json();
+        setCheckoutLeads(data.leads || []);
+      }
+    } catch (e) {
+      console.error("Failed to fetch checkout leads:", e);
+    } finally {
+      setLoadingLeads(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCheckoutLeads();
+  }, []);
 
   // Business Expenses & Procurement Ledger State
   const [businessExpenses, setBusinessExpenses] = useState<any[]>([
@@ -508,6 +538,7 @@ export default function AdminPage() {
             <div className="lg:col-span-3 bg-white border border-forest/10 p-4 space-y-2 shadow-sm">
               {[
                 { id: "orders", label: "Orders & Addresses", icon: <ShoppingBag className="w-4 h-4" /> },
+                { id: "leads", label: "Abandoned Carts & Leads", icon: <UserX className="w-4 h-4 text-red-600" /> },
                 { id: "bills", label: "Bills & Invoices", icon: <FileText className="w-4 h-4" /> },
                 { id: "inventory", label: "Inventory & Profit Calculator", icon: <Database className="w-4 h-4 text-gold" /> },
                 { id: "expenses", label: "Business Expenses & Ledger", icon: <BarChart3 className="w-4 h-4 text-emerald-600" /> },
@@ -1595,6 +1626,249 @@ export default function AdminPage() {
                         </tbody>
                       </table>
                     </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ABANDONED CARTS & CHECKOUT LEADS TAB */}
+              {activeTab === "leads" && (
+                <div className="space-y-6 text-left">
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-forest/10 pb-4">
+                    <div>
+                      <h3 className="text-xl font-serif text-forest font-semibold flex items-center gap-2">
+                        <UserX className="w-5 h-5 text-red-600" />
+                        Abandoned Carts &amp; Checkout Leads
+                      </h3>
+                      <p className="text-xs text-dark/60">
+                        Visitors who reached cart, entered phone/email, or started checkout without completing payment
+                      </p>
+                    </div>
+
+                    <button
+                      onClick={fetchCheckoutLeads}
+                      className="px-3 py-1.5 border border-forest/20 text-forest text-xs font-semibold uppercase flex items-center gap-2 hover:bg-forest/5"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${loadingLeads ? "animate-spin" : ""}`} />
+                      Refresh Leads
+                    </button>
+                  </div>
+
+                  {leadActionMsg && (
+                    <div className="p-3 bg-green-50 border border-green-200 text-green-800 text-xs font-semibold flex justify-between items-center">
+                      <span>{leadActionMsg}</span>
+                      <button onClick={() => setLeadActionMsg("")} className="text-green-800 font-bold">×</button>
+                    </div>
+                  )}
+
+                  {/* Summary Metric Cards */}
+                  {(() => {
+                    const totalLeadsCount = checkoutLeads.length;
+                    const recoverableVal = checkoutLeads.reduce((acc, l) => acc + (Number(l.cartTotal) || 0), 0);
+                    const waSentCount = checkoutLeads.filter((l) => l.whatsappSent).length;
+                    const emailSentCount = checkoutLeads.filter((l) => l.emailSent).length;
+
+                    return (
+                      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                        <div className="bg-brand-bg/40 border border-forest/15 p-4 rounded-sm">
+                          <span className="text-[10px] text-dark/60 uppercase font-semibold block">Total Abandoned Leads</span>
+                          <span className="text-2xl font-serif font-bold text-red-700 font-mono mt-1 block">
+                            {totalLeadsCount}
+                          </span>
+                          <span className="text-[9px] text-dark/50 block mt-1">High-intent visitors tracked</span>
+                        </div>
+
+                        <div className="bg-brand-bg/40 border border-forest/15 p-4 rounded-sm">
+                          <span className="text-[10px] text-dark/60 uppercase font-semibold block">Recoverable Cart Revenue</span>
+                          <span className="text-2xl font-serif font-bold text-amber-800 font-mono mt-1 block">
+                            ₹{recoverableVal.toLocaleString("en-IN")}
+                          </span>
+                          <span className="text-[9px] text-dark/50 block mt-1">Total pending cart value</span>
+                        </div>
+
+                        <div className="bg-brand-bg/40 border border-forest/15 p-4 rounded-sm">
+                          <span className="text-[10px] text-dark/60 uppercase font-semibold block">WhatsApp Alerts Triggered</span>
+                          <span className="text-2xl font-serif font-bold text-emerald-700 font-mono mt-1 block">
+                            {waSentCount}
+                          </span>
+                          <span className="text-[9px] text-dark/50 block mt-1">Direct recovery messages</span>
+                        </div>
+
+                        <div className="bg-brand-bg/40 border border-forest/15 p-4 rounded-sm">
+                          <span className="text-[10px] text-dark/60 uppercase font-semibold block">Email Reminders Sent</span>
+                          <span className="text-2xl font-serif font-bold text-forest font-mono mt-1 block">
+                            {emailSentCount}
+                          </span>
+                          <span className="text-[9px] text-dark/50 block mt-1">Email notifications delivered</span>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Leads Table */}
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <h4 className="text-xs font-bold text-forest uppercase tracking-wider">Live Checkout Lead Register</h4>
+                      <span className="text-[10px] text-dark/50">{checkoutLeads.length} total captured leads</span>
+                    </div>
+
+                    {loadingLeads ? (
+                      <p className="text-xs text-dark/60 py-4">Fetching checkout leads...</p>
+                    ) : checkoutLeads.length === 0 ? (
+                      <div className="p-8 border border-forest/10 bg-brand-bg/20 text-center text-xs text-dark/60 space-y-1">
+                        <p className="font-semibold text-forest">No abandoned leads currently captured.</p>
+                        <p className="text-[10px]">When visitors type their phone or email on checkout without completing payment, they will appear here in real-time.</p>
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto border border-forest/10 bg-white">
+                        <table className="w-full text-xs font-light text-dark divide-y divide-forest/10">
+                          <thead className="bg-forest text-gold text-[9px] uppercase font-bold sticky top-0">
+                            <tr>
+                              <th className="p-3 text-left">Date / Time</th>
+                              <th className="p-3 text-left">Customer Name &amp; Contact</th>
+                              <th className="p-3 text-left">Email Address</th>
+                              <th className="p-3 text-left">Cart Items &amp; Value</th>
+                              <th className="p-3 text-left">Checkout Stage</th>
+                              <th className="p-3 text-center">Status</th>
+                              <th className="p-3 text-center">Follow-Up Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-forest/5">
+                            {checkoutLeads.map((lead) => {
+                              const items = Array.isArray(lead.cartItems) ? lead.cartItems : [];
+                              const itemsText = items.map((i: any) => `${i.name || "Item"} (${i.size || "1L"}) x${i.quantity || 1}`).join(", ") || "—";
+                              const timeStr = new Date(lead.updatedAt).toLocaleString("en-IN", {
+                                dateStyle: "short",
+                                timeStyle: "short",
+                              });
+
+                              // Pre-filled WhatsApp link
+                              const firstItem = items[0]?.name || "Wood Pressed Oil";
+                              const waMessage = `Hi ${lead.name || "there"}! 🌿 We noticed you left ${firstItem} in your Root & Harvest cart.\n\nComplete your order now with FREE Shipping & 100% Pure Cold-Pressed quality: https://www.rootandharvest.in/checkout`;
+                              const waPhoneClean = lead.phone ? lead.phone.replace(/\D/g, "") : "";
+                              const waWebUrl = waPhoneClean ? `https://wa.me/91${waPhoneClean}?text=${encodeURIComponent(waMessage)}` : null;
+
+                              return (
+                                <tr key={lead.id} className="hover:bg-brand-bg/30 transition-colors">
+                                  <td className="p-3 text-[11px] font-mono text-dark/70">{timeStr}</td>
+                                  <td className="p-3">
+                                    <span className="font-semibold text-forest block">{lead.name || "Guest Customer"}</span>
+                                    <span className="font-mono text-dark/80 text-[11px]">{lead.phone || "—"}</span>
+                                  </td>
+                                  <td className="p-3 text-[11px] font-mono text-dark/70">{lead.email || "—"}</td>
+                                  <td className="p-3">
+                                    <span className="text-[11px] font-semibold text-forest block max-w-xs truncate">{itemsText}</span>
+                                    <span className="font-mono font-bold text-amber-800 text-[11px]">₹{lead.cartTotal || 0}</span>
+                                  </td>
+                                  <td className="p-3">
+                                    <span className="bg-amber-100 text-amber-800 text-[9px] uppercase font-bold px-2 py-0.5 rounded-xs">
+                                      {lead.stage || "cart"}
+                                    </span>
+                                  </td>
+                                  <td className="p-3 text-center space-y-1">
+                                    {lead.whatsappSent ? (
+                                      <span className="bg-emerald-100 text-emerald-800 text-[9px] uppercase font-bold px-2 py-0.5 rounded-xs block">
+                                        WhatsApp Sent
+                                      </span>
+                                    ) : (
+                                      <span className="bg-gray-100 text-gray-600 text-[9px] uppercase font-bold px-2 py-0.5 rounded-xs block">
+                                        WA Pending
+                                      </span>
+                                    )}
+                                    {lead.emailSent ? (
+                                      <span className="bg-blue-100 text-blue-800 text-[9px] uppercase font-bold px-2 py-0.5 rounded-xs block">
+                                        Email Sent
+                                      </span>
+                                    ) : (
+                                      <span className="bg-gray-100 text-gray-600 text-[9px] uppercase font-bold px-2 py-0.5 rounded-xs block">
+                                        Email Pending
+                                      </span>
+                                    )}
+                                  </td>
+                                  <td className="p-3 text-center space-x-1 whitespace-nowrap">
+                                    {/* 1-Click WhatsApp Web */}
+                                    {waWebUrl && (
+                                      <a
+                                        href={waWebUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold px-2 py-1 rounded-xs uppercase tracking-wider"
+                                        title="Open WhatsApp Web pre-filled message"
+                                      >
+                                        <MessageSquare className="w-3 h-3" /> WA Web
+                                      </a>
+                                    )}
+
+                                    {/* Send API WhatsApp */}
+                                    {lead.phone && (
+                                      <button
+                                        onClick={async () => {
+                                          try {
+                                            const res = await fetch("/api/admin/leads/remind", {
+                                              method: "POST",
+                                              headers: { "Content-Type": "application/json" },
+                                              body: JSON.stringify({ leadId: lead.id, type: "whatsapp" }),
+                                            });
+                                            if (res.ok) {
+                                              setLeadActionMsg(`WhatsApp reminder sent to ${lead.phone}`);
+                                              fetchCheckoutLeads();
+                                            }
+                                          } catch (e) {}
+                                        }}
+                                        className="inline-flex items-center gap-1 bg-forest hover:bg-forest-light text-white text-[10px] font-bold px-2 py-1 rounded-xs uppercase tracking-wider"
+                                        title="Trigger automated WhatsApp API alert"
+                                      >
+                                        <Send className="w-3 h-3" /> Auto WA
+                                      </button>
+                                    )}
+
+                                    {/* Send Email */}
+                                    {lead.email && (
+                                      <button
+                                        onClick={async () => {
+                                          try {
+                                            const res = await fetch("/api/admin/leads/remind", {
+                                              method: "POST",
+                                              headers: { "Content-Type": "application/json" },
+                                              body: JSON.stringify({ leadId: lead.id, type: "email" }),
+                                            });
+                                            if (res.ok) {
+                                              setLeadActionMsg(`Email reminder sent to ${lead.email}`);
+                                              fetchCheckoutLeads();
+                                            }
+                                          } catch (e) {}
+                                        }}
+                                        className="inline-flex items-center gap-1 bg-amber-700 hover:bg-amber-800 text-white text-[10px] font-bold px-2 py-1 rounded-xs uppercase tracking-wider"
+                                        title="Send Email reminder"
+                                      >
+                                        <Mail className="w-3 h-3" /> Email
+                                      </button>
+                                    )}
+
+                                    {/* Delete Lead */}
+                                    <button
+                                      onClick={async () => {
+                                        if (!confirm("Are you sure you want to remove this lead?")) return;
+                                        try {
+                                          const res = await fetch(`/api/admin/leads?id=${lead.id}`, { method: "DELETE" });
+                                          if (res.ok) {
+                                            setLeadActionMsg("Lead removed");
+                                            fetchCheckoutLeads();
+                                          }
+                                        } catch (e) {}
+                                      }}
+                                      className="p-1 text-red-600 hover:text-red-800"
+                                      title="Delete Lead"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5 inline" />
+                                    </button>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
