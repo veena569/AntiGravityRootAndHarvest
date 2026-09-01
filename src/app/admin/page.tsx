@@ -396,8 +396,17 @@ export default function AdminPage() {
     setNewGrainSellingPrice("");
   };
 
-  // Estimated Courier / Shipping Cost per Order
+  // Estimated & Per-Order Shipping Costs
   const [estimatedShippingCostPerOrder, setEstimatedShippingCostPerOrder] = useState(70);
+  const [customOrderShippingCosts, setCustomOrderShippingCosts] = useState<Record<string, number>>({});
+
+  const getOrderShippingCost = (order: any): number => {
+    if (!order) return estimatedShippingCostPerOrder;
+    if (customOrderShippingCosts[order.id] !== undefined) {
+      return customOrderShippingCosts[order.id];
+    }
+    return estimatedShippingCostPerOrder;
+  };
 
   // Helper: Calculate item-level COGS dynamically using Oil & Grain Rate Cards
   const calculateOrderItemCOGS = (item: any): number => {
@@ -446,14 +455,15 @@ export default function AdminPage() {
   };
 
   const calculateOrderTotalCOGS = (order: any): number => {
+    const shipCost = getOrderShippingCost(order);
     if (!order || !order.items || !Array.isArray(order.items) || order.items.length === 0) {
-      return Math.round(Number(order?.total || 0) * 0.6) + estimatedShippingCostPerOrder;
+      return Math.round(Number(order?.total || 0) * 0.6) + shipCost;
     }
     let productCogs = 0;
     for (let i = 0; i < order.items.length; i++) {
       productCogs += calculateOrderItemCOGS(order.items[i]);
     }
-    return productCogs + estimatedShippingCostPerOrder;
+    return productCogs + shipCost;
   };
 
   return (
@@ -1176,7 +1186,7 @@ export default function AdminPage() {
                   {(() => {
                     const totalRevenue = dbOrders.reduce((sum, o) => sum + (o.total || 0), 0);
                     const totalCogs = dbOrders.reduce((sum, o) => sum + calculateOrderTotalCOGS(o), 0);
-                    const totalShipping = dbOrders.length * estimatedShippingCostPerOrder;
+                    const totalShipping = dbOrders.reduce((sum, o) => sum + getOrderShippingCost(o), 0);
                     const netProfit = totalRevenue - totalCogs;
                     const overallMargin = totalRevenue > 0 ? Math.round((netProfit / totalRevenue) * 100) : 0;
 
@@ -1185,7 +1195,7 @@ export default function AdminPage() {
                         <div className="border-b border-forest/10 pb-3 flex justify-between items-center">
                           <h4 className="text-sm font-serif font-bold text-forest uppercase tracking-wider">3. Live Order Profitability Summary ({dbOrders.length} Orders)</h4>
                           <div className="flex items-center gap-2 bg-white border border-forest/20 px-3 py-1 text-xs">
-                            <span className="text-[10px] text-dark/70 font-semibold uppercase">Courier / Shipping Fee (₹/Order):</span>
+                            <span className="text-[10px] text-dark/70 font-semibold uppercase">Default Courier / Shipping Fee (₹/Order):</span>
                             <input
                               type="number"
                               value={estimatedShippingCostPerOrder}
@@ -1223,7 +1233,10 @@ export default function AdminPage() {
 
                         {/* Order Breakdown Table */}
                         <div className="space-y-3">
-                          <h4 className="text-xs font-bold text-forest uppercase tracking-wider">Itemized Order Profit Breakdown</h4>
+                          <div className="flex justify-between items-center">
+                            <h4 className="text-xs font-bold text-forest uppercase tracking-wider">Itemized Order Profit Breakdown</h4>
+                            <span className="text-[10px] text-dark/50">Edit shipping cost directly in the table below for any order</span>
+                          </div>
                           <div className="overflow-x-auto max-h-80 overflow-y-auto border border-forest/10 bg-white">
                             <table className="w-full text-xs divide-y divide-forest/10">
                               <thead className="bg-forest text-gold text-[9px] uppercase font-bold sticky top-0">
@@ -1233,7 +1246,7 @@ export default function AdminPage() {
                                   <th className="p-3 text-left">Order Items</th>
                                   <th className="p-3 text-right">Order Total</th>
                                   <th className="p-3 text-right">Prod COGS</th>
-                                  <th className="p-3 text-right">Shipping</th>
+                                  <th className="p-3 text-right">Shipping (₹)</th>
                                   <th className="p-3 text-right">Total COGS</th>
                                   <th className="p-3 text-right">Net Profit</th>
                                   <th className="p-3 text-right">Margin %</th>
@@ -1241,8 +1254,9 @@ export default function AdminPage() {
                               </thead>
                               <tbody className="divide-y divide-forest/5 font-light">
                                 {dbOrders.map((ord) => {
+                                  const orderShipCost = getOrderShippingCost(ord);
                                   const totalCogs = calculateOrderTotalCOGS(ord);
-                                  const prodCogs = totalCogs - estimatedShippingCostPerOrder;
+                                  const prodCogs = totalCogs - orderShipCost;
                                   const profit = ord.total - totalCogs;
                                   const margin = ord.total > 0 ? Math.round((profit / ord.total) * 100) : 0;
                                   const itemsText = ord.items?.map((i: any) => `${i.name} (${i.size}) x${i.quantity}`).join(", ") || "—";
@@ -1254,7 +1268,17 @@ export default function AdminPage() {
                                       <td className="p-3 text-[11px] text-dark/70 max-w-xs truncate">{itemsText}</td>
                                       <td className="p-3 text-right font-mono font-bold">₹{ord.total}</td>
                                       <td className="p-3 text-right font-mono text-amber-800">₹{prodCogs}</td>
-                                      <td className="p-3 text-right font-mono text-dark/70">₹{estimatedShippingCostPerOrder}</td>
+                                      <td className="p-2 text-right">
+                                        <input
+                                          type="number"
+                                          value={orderShipCost}
+                                          onChange={(e) => {
+                                            const val = Number(e.target.value);
+                                            setCustomOrderShippingCosts((prev) => ({ ...prev, [ord.id]: val }));
+                                          }}
+                                          className="w-16 p-1 border border-forest/20 text-right font-mono font-bold text-amber-900 outline-none text-xs bg-amber-50 focus:bg-white"
+                                        />
+                                      </td>
                                       <td className="p-3 text-right font-mono font-bold text-amber-900">₹{totalCogs}</td>
                                       <td className="p-3 text-right font-mono font-bold text-green-700">₹{profit}</td>
                                       <td className="p-3 text-right font-mono font-bold text-gold">{margin}%</td>
