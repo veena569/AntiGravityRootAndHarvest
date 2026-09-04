@@ -521,7 +521,12 @@ export default function CheckoutPage() {
     setCurrentStep("payment");
     setPaymentStatus("processing");
     setShowPaymentModal(true);
-    const { shippingCharge } = calculateShippingFee(shippingData?.pincode, shippingData?.city, subtotal);
+    const { shippingCharge } = calculateShippingFee(
+      shippingData?.pincode || getValues("pincode"),
+      isCustomCity ? customCityInput : (shippingData?.city || getValues("city")),
+      subtotal,
+      shippingData?.state || getValues("state")
+    );
     const totalToPay = subtotal + shippingCharge;
 
     try {
@@ -1274,7 +1279,12 @@ export default function CheckoutPage() {
                   <div className="flex justify-between items-center">
                     <span className="font-medium text-gray-600">Shipping Charge</span>
                     <span className="font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded border border-emerald-200">
-                      {calculateShippingFee(shippingData?.pincode, shippingData?.city, subtotal).shippingLabel}
+                      {calculateShippingFee(
+                        shippingData?.pincode || watch("pincode"),
+                        isCustomCity ? customCityInput : (shippingData?.city || watch("city")),
+                        subtotal,
+                        shippingData?.state || watch("state")
+                      ).shippingLabel}
                     </span>
                   </div>
 
@@ -1283,7 +1293,14 @@ export default function CheckoutPage() {
                       <span className="text-xs font-bold uppercase tracking-wider text-forest block">Total Amount</span>
                       <span className="text-[10px] text-gray-500">Includes all taxes</span>
                     </div>
-                    <span className="text-2xl font-serif font-bold text-forest">₹{subtotal + calculateShippingFee(shippingData?.pincode, shippingData?.city, subtotal).shippingCharge}</span>
+                    <span className="text-2xl font-serif font-bold text-forest">
+                      ₹{subtotal + calculateShippingFee(
+                        shippingData?.pincode || watch("pincode"),
+                        isCustomCity ? customCityInput : (shippingData?.city || watch("city")),
+                        subtotal,
+                        shippingData?.state || watch("state")
+                      ).shippingCharge}
+                    </span>
                   </div>
                 </div>
               </div>

@@ -1,4 +1,4 @@
-﻿export interface PincodeInfo {
+export interface PincodeInfo {
   city: string;
   state: string;
   isHyderabad: boolean;
@@ -219,17 +219,36 @@ export async function lookupPincode(pincode: string): Promise<PincodeInfo | null
 }
 
 /**
- * Calculates shipping fee and label based on PIN code, city, and cart subtotal
+ * Calculates shipping fee and label based on PIN code, city, subtotal, and state
  */
-export function calculateShippingFee(pincode: string | undefined, city: string | undefined, subtotal: number) {
+export function calculateShippingFee(
+  pincode: string | undefined,
+  city: string | undefined,
+  subtotal: number,
+  state?: string
+) {
   const cleanPin = (pincode || "").replace(/\D/g, "");
-  const cityName = (city || "").toLowerCase();
+  const cityName = (city || "").toLowerCase().trim();
+  const stateName = (state || "").toLowerCase().trim();
 
   const isHyderabad =
     cleanPin.startsWith("500") ||
     cleanPin.startsWith("501") ||
     cityName.includes("hyderabad") ||
-    cityName.includes("secunderabad");
+    cityName.includes("secunderabad") ||
+    cityName.includes("rangareddy") ||
+    cityName.includes("ranga reddy") ||
+    cityName.includes("cyberabad") ||
+    stateName.includes("hyderabad") ||
+    (stateName.includes("telangana") && (
+      cityName.includes("hyderabad") ||
+      cityName.includes("secunderabad") ||
+      cityName.includes("rangareddy") ||
+      cityName.includes("ranga reddy") ||
+      cityName.includes("other") ||
+      !cityName ||
+      cityName.length === 0
+    ));
 
   if (isHyderabad) {
     return {
