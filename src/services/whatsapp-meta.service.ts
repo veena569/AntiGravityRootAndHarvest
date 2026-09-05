@@ -83,7 +83,10 @@ export class WhatsappMetaService {
           let parsedError = responseText;
           try {
             const errJson = JSON.parse(responseText);
-            if (errJson?.error?.code === 190) {
+            const errCode = errJson?.error?.code;
+            if (errCode === 131030) {
+              parsedError = `Meta App is in Development/Sandbox Mode. Recipient number ${formattedPhone} is not in Meta's allowed recipient list. Switch your Meta App to Live Mode on developers.facebook.com or add this number in Meta Developer Console.`;
+            } else if (errCode === 190) {
               parsedError = "Meta Access Token Expired (OAuthException 190). Please update the WhatsApp Access Token in Admin Portal (/admin/whatsapp).";
             } else {
               parsedError = errJson?.error?.message || responseText;
