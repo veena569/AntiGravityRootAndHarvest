@@ -36,7 +36,7 @@ export const FOOTER_LINKS = {
     { name: "Traditional Grains & Rice", href: "/products?category=grains" },
     { name: "Jai Sriram Unpolished Rice", href: "/products/jaisriram-unpolished-rice" },
     { name: "Jai Sriram Polished Rice", href: "/products/jaisriram-polished-rice" },
-    { name: "Organic Raw Groundnuts", href: "/products/groundnuts" },
+    { name: "Harvest Fresh Raw Groundnuts", href: "/products/groundnuts" },
   ],
   about: [
     { name: "Our Story", href: "/about" },

@@ -242,10 +242,10 @@ export const INITIAL_PRODUCTS: Product[] = [
   },
   {
     id: "groundnuts",
-    name: "Organic Raw Groundnuts",
+    name: "Harvest Fresh Raw Groundnuts",
     tagline: "Bold variety farm-fresh peanuts.",
     description: "Sourced directly from rain-fed family farms in Telangana and Andhra Pradesh. Hand-shelled and sun-dried, these premium raw groundnuts offer a rich nutty taste, natural crunchy texture, and high protein density. Perfect for roasting, making homemade wood-pressed peanut butter, or adding to traditional poha, upma, and chutneys.",
-    shortDescription: "Hand-shelled organic raw peanuts. Sun-dried, protein-dense, rich in healthy unsaturated fats.",
+    shortDescription: "Hand-shelled harvest-fresh raw peanuts. Sun-dried, protein-dense, rich in healthy unsaturated fats.",
     image: "/images/groundnuts.jpg",
     gallery: ["/images/groundnuts.jpg"],
     sizes: ["500 g", "1 kg", "2 kg", "5 kg"],
@@ -268,7 +268,7 @@ export const INITIAL_PRODUCTS: Product[] = [
       "Essential Minerals & Micronutrients: Provides magnesium, phosphorus, niacin, and folate.",
       "Sun-Dried & Hand-Shelled: Carefully selected without chemical preservatives or artificial treatments."
     ],
-    ingredients: "100% Organic Raw Peanuts / Groundnuts.",
+    ingredients: "100% Pure Raw Peanuts / Groundnuts (Harvest-Fresh & Sun-Dried).",
     storage: "Store in an airtight container in a cool, dry place.",
     nutrition: [
       { label: "Energy", value: "567 kcal" },
