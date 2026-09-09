@@ -59,7 +59,7 @@ interface AppContextType {
   promoCode: string | null;
   discountAmount: number;
   shippingCost: number;
-  addToCart: (product: Product, size: string, quantity: number, bottleType?: string) => void;
+  addToCart: (product: Product, size: string, quantity: number, bottleType?: string, customPrice?: number) => void;
   removeFromCart: (productId: string, size: string, bottleType?: string) => void;
   updateCartQuantity: (productId: string, size: string, quantity: number, bottleType?: string) => void;
   clearCart: () => void;
@@ -140,11 +140,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem("rh_subscriptions", JSON.stringify(subscriptions));
   }, [subscriptions]);
 
-  const addToCart = (product: Product, size: string, quantity: number, bottleType?: string) => {
+  const addToCart = (product: Product, size: string, quantity: number, bottleType?: string, customPrice?: number) => {
     setCart((prev) => {
       const existingIdx = prev.findIndex((item) => item.product.id === product.id && item.size === size && item.bottleType === bottleType);
-      let price = product.sizePrices[size] || Object.values(product.sizePrices)[0];
-      if (bottleType === "Lightweight Bottle") {
+      let price = customPrice ?? product.sizePrices[size] ?? Object.values(product.sizePrices)[0];
+      if (customPrice === undefined && bottleType === "Lightweight Bottle") {
         if (size === "500 ml") {
           price = 225;
         } else if (size === "1 L") {
@@ -155,6 +155,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const nextCart = [...prev];
         nextCart[existingIdx] = {
           ...nextCart[existingIdx],
+          price,
           quantity: nextCart[existingIdx].quantity + quantity
         };
         return nextCart;
