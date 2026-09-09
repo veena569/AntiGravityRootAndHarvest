@@ -4,7 +4,7 @@ import { AuthService } from "@/services/auth.service";
 import { z } from "zod";
 
 const sendOtpSchema = z.object({
-  phone: z.string().min(10, "Invalid phone number"),
+  phone: z.string().min(10, "Invalid 10-digit mobile number"),
 });
 
 export async function POST(req: Request) {
@@ -12,13 +12,21 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { phone } = sendOtpSchema.parse(body);
 
-    const { referenceId, code } = await AuthService.requestOtp(phone);
+    const raw = phone.replace(/\D/g, "").slice(-10);
+    if (raw.length !== 10) {
+      return NextResponse.json({ error: "Please enter a valid 10-digit mobile number" }, { status: 400 });
+    }
+    const formattedPhone = `+91${raw}`;
+
+    const { referenceId, code } = await AuthService.requestOtp(formattedPhone);
+
+    const isDev = process.env.NODE_ENV !== "production";
 
     return NextResponse.json({ 
       success: true, 
       message: "OTP sent successfully",
       referenceId,
-      code
+      ...(isDev ? { code } : {})
     });
   } catch (error: any) {
     if (error instanceof z.ZodError) {

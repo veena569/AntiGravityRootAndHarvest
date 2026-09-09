@@ -120,3 +120,55 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Failed to add address" }, { status: 500 });
   }
 }
+
+export async function PUT(req: Request) {
+  try {
+    let userId = headers().get("x-user-id");
+    if (!userId) {
+      const token = cookies().get(authConfig.cookies.accessToken)?.value;
+      if (token) {
+        const payload = await JwtService.verifyToken(token);
+        if (payload && payload.sub) userId = payload.sub;
+      }
+    }
+
+    const body = await req.json();
+    const { id, name, phone, addressLine1, addressLine2, city, state, pincode, type, isDefault } = body;
+
+    if (!id) return NextResponse.json({ error: "Address ID required" }, { status: 400 });
+
+    const existing = await prisma.address.findUnique({ where: { id } });
+    if (!existing) return NextResponse.json({ error: "Address not found" }, { status: 404 });
+
+    if (userId && existing.userId !== userId) {
+      return NextResponse.json({ error: "Unauthorized access to address" }, { status: 403 });
+    }
+
+    if (isDefault && userId) {
+      await prisma.address.updateMany({
+        where: { userId, isDefault: true },
+        data: { isDefault: false }
+      });
+    }
+
+    const updated = await prisma.address.update({
+      where: { id },
+      data: {
+        name,
+        phone,
+        addressLine1,
+        addressLine2: addressLine2 || null,
+        city,
+        state,
+        pincode,
+        type: type || "Home",
+        isDefault: isDefault ?? existing.isDefault,
+      }
+    });
+
+    return NextResponse.json({ address: updated });
+  } catch (error: any) {
+    console.error("[ADDRESSES_PUT]", error);
+    return NextResponse.json({ error: "Failed to update address" }, { status: 500 });
+  }
+}
