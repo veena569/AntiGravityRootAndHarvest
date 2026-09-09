@@ -231,6 +231,16 @@ export function calculateShippingFee(
   const cityName = (city || "").toLowerCase().trim();
   const stateName = (state || "").toLowerCase().trim();
 
+  // If no location has been selected or entered yet, do not calculate/add shipping charge
+  if (!cleanPin && !cityName && !stateName) {
+    return {
+      shippingCharge: 0,
+      isHyderabad: false,
+      shippingLabel: "Calculated at checkout if applicable",
+      description: "Calculated at checkout if applicable",
+    };
+  }
+
   const isHyderabad =
     cleanPin.startsWith("500") ||
     cleanPin.startsWith("501") ||
@@ -259,13 +269,23 @@ export function calculateShippingFee(
     };
   }
 
-  // Outside Hyderabad
+  // Outside Hyderabad but eligible for free shipping
   if (subtotal >= 999) {
     return {
       shippingCharge: 0,
       isHyderabad: false,
       shippingLabel: "Free Delivery (Order > ₹999)",
       description: "Standard National Delivery",
+    };
+  }
+
+  // If pincode is incomplete and not in Hyderabad
+  if (cleanPin.length < 6 && !cityName && !stateName) {
+    return {
+      shippingCharge: 0,
+      isHyderabad: false,
+      shippingLabel: "Calculated at checkout if applicable",
+      description: "Calculated at checkout if applicable",
     };
   }
 

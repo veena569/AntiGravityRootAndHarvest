@@ -1905,9 +1905,9 @@ export default function CheckoutPage() {
                     <span className="font-bold text-gray-900 text-sm">₹{subtotal}</span>
                   </div>
 
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium text-gray-600">Shipping Charge</span>
-                    <span className="font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded border border-emerald-200">
+                  <div className="flex justify-between items-center gap-2">
+                    <span className="font-medium text-gray-600 shrink-0">Shipping Charge</span>
+                    <span className="font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded border border-emerald-200 text-right text-xs">
                       {calculateShippingFee(
                         shippingData?.pincode || watch("pincode"),
                         isCustomCity ? customCityInput : shippingData?.city || watch("city"),
