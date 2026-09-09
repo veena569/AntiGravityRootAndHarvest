@@ -985,10 +985,11 @@ export default function AdminPage() {
                           const unitPrice = Math.round((v.salePrice / v.volume) * 100) / 100;
 
                           const seedsNeededKg = v.volume * oil.seedRatioPerLiter;
-                          const seedCost = seedsNeededKg * oil.seedCostPerKg;
-                          const pressingCost = seedsNeededKg * oil.pressingCostPerKg;
+                          const seedCost = Math.round(seedsNeededKg * oil.seedCostPerKg);
+                          const pressingCost = Math.round(seedsNeededKg * oil.pressingCostPerKg);
+                          const oilBaseCost = seedCost + pressingCost;
                           const packCost = v.packagingCost;
-                          const totalCogs = Math.round(seedCost + pressingCost + packCost);
+                          const totalCogs = Math.round(oilBaseCost + packCost);
                           const profit = Math.round(v.salePrice - totalCogs);
                           const margin = v.salePrice > 0 ? Math.round((profit / v.salePrice) * 100) : 0;
 
@@ -1003,6 +1004,7 @@ export default function AdminPage() {
                             unitPrice,
                             seedCost,
                             pressingCost,
+                            oilBaseCost,
                             totalCogs,
                             profit,
                             margin,
@@ -1025,7 +1027,7 @@ export default function AdminPage() {
                                   </span>
                                 </div>
                                 <span className="text-[10px] text-dark/50 font-mono">
-                                  ID: {oil.id} | Base Yield: {oil.seedRatioPerLiter} kg seeds / L
+                                  ID: {oil.id} | Yield: {oil.seedRatioPerLiter} kg seeds / L
                                 </span>
                               </div>
 
@@ -1162,16 +1164,19 @@ export default function AdminPage() {
                               <table className="w-full text-xs divide-y divide-forest/10">
                                 <thead className="bg-brand-bg/60 text-forest text-[9px] uppercase font-bold text-left">
                                   <tr>
-                                    <th className="p-3 w-36">Variant / Label</th>
+                                    <th className="p-3 w-32">Variant / Label</th>
+                                    <th className="p-3 w-24 text-right">Seed Cost (₹)</th>
+                                    <th className="p-3 w-24 text-right">Pressing (₹)</th>
+                                    <th className="p-3 w-24 text-right">Oil Base COGS (₹)</th>
                                     <th className="p-3 w-24">Packaging</th>
-                                    <th className="p-3 w-28 text-right">Pack Cost (₹)</th>
+                                    <th className="p-3 w-24 text-right">Pack Cost (₹)</th>
+                                    <th className="p-3 w-24 text-right">Total COGS (₹)</th>
                                     <th className="p-3 w-28 text-right">Sale Price (₹)</th>
                                     <th className="p-3 w-24 text-right">MRP (₹)</th>
                                     <th className="p-3 w-20 text-center">Discount</th>
                                     <th className="p-3 w-28 text-right">Sale Price / L</th>
-                                    <th className="p-3 w-28 text-right">Total COGS (₹)</th>
-                                    <th className="p-3 w-28 text-right">Profit / Unit</th>
-                                    <th className="p-3 w-24 text-right">Margin %</th>
+                                    <th className="p-3 w-24 text-right">Profit / Unit</th>
+                                    <th className="p-3 w-20 text-right">Margin %</th>
                                   </tr>
                                 </thead>
                                 <tbody className="divide-y divide-forest/5 font-mono">
@@ -1187,6 +1192,9 @@ export default function AdminPage() {
                                           )}
                                         </div>
                                       </td>
+                                      <td className="p-3 text-right text-dark/70 text-[11px] whitespace-nowrap">₹{v.seedCost}</td>
+                                      <td className="p-3 text-right text-dark/70 text-[11px] whitespace-nowrap">₹{v.pressingCost}</td>
+                                      <td className="p-3 text-right font-bold text-forest text-[11px] whitespace-nowrap">₹{v.oilBaseCost}</td>
                                       <td className="p-3 font-sans text-dark/70 text-[11px] whitespace-nowrap">{v.packaging}</td>
                                       <td className="p-2 text-right whitespace-nowrap">
                                         <input
@@ -1197,8 +1205,11 @@ export default function AdminPage() {
                                             updated[pIdx].variants[vIdx].packagingCost = Number(e.target.value);
                                             setOilRates(updated);
                                           }}
-                                          className="w-20 p-1 border border-forest/20 text-right font-mono font-bold text-amber-900 text-xs outline-none bg-amber-50 focus:bg-white"
+                                          className="w-16 p-1 border border-forest/20 text-right font-mono font-bold text-amber-900 text-xs outline-none bg-amber-50 focus:bg-white"
                                         />
+                                      </td>
+                                      <td className="p-3 text-right font-bold text-amber-800 text-[11px] whitespace-nowrap bg-amber-50/50">
+                                        ₹{v.totalCogs}
                                       </td>
                                       <td className="p-2 text-right whitespace-nowrap">
                                         <input
@@ -1222,9 +1233,6 @@ export default function AdminPage() {
                                       </td>
                                       <td className="p-3 text-right font-bold text-dark/80 text-[11px] whitespace-nowrap">
                                         ₹{v.unitPrice.toFixed(2)}/L
-                                      </td>
-                                      <td className="p-3 text-right font-bold text-amber-800 text-[11px] whitespace-nowrap">
-                                        ₹{v.totalCogs}
                                       </td>
                                       <td className="p-3 text-right font-bold text-green-700 text-[11px] whitespace-nowrap">
                                         ₹{v.profit}
