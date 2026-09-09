@@ -18,10 +18,47 @@ interface VariantOption {
   size: string;
   bottleType: string;
   label: string;
+  name?: string;
   price: number;
-  originalPrice?: number;
+  salePrice: number;
+  mrp: number;
+  originalPrice: number;
+  discountPercent: number;
+  unitPrice: number;
   unitPriceText: string;
   tag?: string;
+}
+
+function makeOilVariant(opts: {
+  id: string;
+  size: string;
+  bottleType: string;
+  label: string;
+  salePrice: number;
+  litres: number;
+  tag?: string;
+}): VariantOption {
+  const salePrice = opts.salePrice;
+  const mrp = Number((salePrice / 0.90).toFixed(2));
+  const discountPercent = 10;
+  const unitPrice = Number((salePrice / opts.litres).toFixed(2));
+  const unitPriceText = `₹${unitPrice.toFixed(2)}/L`;
+
+  return {
+    id: opts.id,
+    size: opts.size,
+    bottleType: opts.bottleType,
+    label: opts.label,
+    name: opts.label,
+    price: salePrice,
+    salePrice,
+    mrp,
+    originalPrice: mrp,
+    discountPercent,
+    unitPrice,
+    unitPriceText,
+    tag: opts.tag,
+  };
 }
 
 export default function ProductDetailsPage({ params }: { params: { id: string } }) {
@@ -61,16 +98,9 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
   const isOil = product.id.includes("oil");
 
   const p1L = product.sizePrices["1 L"] || 500;
-  const p1LOrig = product.originalSizePrices?.["1 L"] || Math.round(p1L * 1.15);
-
   const p500 = product.sizePrices["500 ml"] || Math.round(p1L * 0.52);
-  const p500Orig = product.originalSizePrices?.["500 ml"] || Math.round(p500 * 1.15);
-
   const p2L = product.sizePrices["2 L"] || Math.round(p1L * 1.95);
-  const p2LOrig = product.originalSizePrices?.["2 L"] || Math.round(p2L * 1.15);
-
   const p5L = product.sizePrices["5 L"] || Math.round(p1L * 4.65);
-  const p5LOrig = product.originalSizePrices?.["5 L"] || Math.round(p5L * 1.15);
 
   const glassDiff = 50; // ₹50 difference for Glass Bottle
   const tinDiff = 100;  // ₹100 difference for Tin Metal container
@@ -79,168 +109,45 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
 
   if (product.id === "groundnut-oil") {
     variants = [
-      {
-        id: "500ml-plastic",
-        size: "500 ml",
-        bottleType: "Plastic Bottle",
-        label: "500mL Plastic",
-        price: 245.00,
-        originalPrice: 272.22,
-        unitPriceText: "₹490.00/L",
-      },
-      {
-        id: "500ml-glass",
-        size: "500 ml",
-        bottleType: "Glass Bottle",
-        label: "500mL Glass",
-        price: 295.00,
-        originalPrice: 327.78,
-        unitPriceText: "₹590.00/L",
-      },
-      {
-        id: "1l-plastic",
-        size: "1 L",
-        bottleType: "Plastic Bottle",
-        label: "1L Plastic",
-        price: 469.00,
-        originalPrice: 521.11,
-        unitPriceText: "₹469.00/L",
-        tag: "BESTSELLER",
-      },
-      {
-        id: "1l-glass",
-        size: "1 L",
-        bottleType: "Glass Bottle",
-        label: "1L Glass",
-        price: 519.00,
-        originalPrice: 576.67,
-        unitPriceText: "₹519.00/L",
-      },
-      {
-        id: "1l-tin",
-        size: "1 L",
-        bottleType: "Tin Metal",
-        label: "1L Tin Metal",
-        price: 569.00,
-        originalPrice: 632.22,
-        unitPriceText: "₹569.00/L",
-      },
-      {
-        id: "2l-plastic",
-        size: "2 L",
-        bottleType: "Plastic Can",
-        label: "2L Plastic Can",
-        price: 899.00,
-        originalPrice: 998.89,
-        unitPriceText: "₹449.50/L",
-      },
-      {
-        id: "2l-tin",
-        size: "2 L",
-        bottleType: "Tin Metal",
-        label: "2L Tin Metal",
-        price: 999.00,
-        originalPrice: 1110.00,
-        unitPriceText: "₹499.50/L",
-      },
-      {
-        id: "5l-tin",
-        size: "5 L",
-        bottleType: "Tin Metal",
-        label: "5L Tin Metal",
-        price: 2299.00,
-        originalPrice: 2554.44,
-        unitPriceText: "₹459.80/L",
-        tag: "BEST VALUE",
-      },
+      makeOilVariant({ id: "500ml-plastic", size: "500 ml", bottleType: "Plastic Bottle", label: "500mL Plastic", salePrice: 245.00, litres: 0.5 }),
+      makeOilVariant({ id: "500ml-glass", size: "500 ml", bottleType: "Glass Bottle", label: "500mL Glass", salePrice: 295.00, litres: 0.5 }),
+      makeOilVariant({ id: "1l-plastic", size: "1 L", bottleType: "Plastic Bottle", label: "1L Plastic", salePrice: 469.00, litres: 1.0, tag: "BESTSELLER" }),
+      makeOilVariant({ id: "1l-glass", size: "1 L", bottleType: "Glass Bottle", label: "1L Glass", salePrice: 519.00, litres: 1.0 }),
+      makeOilVariant({ id: "1l-tin", size: "1 L", bottleType: "Tin Metal", label: "1L Tin Metal", salePrice: 569.00, litres: 1.0 }),
+      makeOilVariant({ id: "2l-plastic", size: "2 L", bottleType: "Plastic Can", label: "2L Plastic Can", salePrice: 899.00, litres: 2.0 }),
+      makeOilVariant({ id: "2l-tin", size: "2 L", bottleType: "Tin Metal", label: "2L Tin Metal", salePrice: 999.00, litres: 2.0 }),
+      makeOilVariant({ id: "5l-tin", size: "5 L", bottleType: "Tin Metal", label: "5L Tin Metal", salePrice: 2299.00, litres: 5.0, tag: "BEST VALUE" }),
     ];
   } else if (isOil) {
     variants = [
-      {
-        id: "500ml-plastic",
-        size: "500 ml",
-        bottleType: "Plastic Bottle",
-        label: "500mL Plastic",
-        price: p500,
-        originalPrice: Number((p500 / 0.9).toFixed(2)),
-        unitPriceText: `₹${(p500 / 0.5).toFixed(2)}/L`,
-      },
-      {
-        id: "500ml-glass",
-        size: "500 ml",
-        bottleType: "Glass Bottle",
-        label: "500mL Glass",
-        price: p500 + glassDiff,
-        originalPrice: Number(((p500 + glassDiff) / 0.9).toFixed(2)),
-        unitPriceText: `₹${((p500 + glassDiff) / 0.5).toFixed(2)}/L`,
-      },
-      {
-        id: "1l-plastic",
-        size: "1 L",
-        bottleType: "Plastic Bottle",
-        label: "1L Plastic",
-        price: p1L,
-        originalPrice: Number((p1L / 0.9).toFixed(2)),
-        unitPriceText: `₹${(p1L / 1).toFixed(2)}/L`,
-        tag: "BESTSELLER",
-      },
-      {
-        id: "1l-glass",
-        size: "1 L",
-        bottleType: "Glass Bottle",
-        label: "1L Glass",
-        price: p1L + glassDiff,
-        originalPrice: Number(((p1L + glassDiff) / 0.9).toFixed(2)),
-        unitPriceText: `₹${((p1L + glassDiff) / 1).toFixed(2)}/L`,
-      },
-      {
-        id: "1l-tin",
-        size: "1 L",
-        bottleType: "Tin Metal",
-        label: "1L Tin Metal",
-        price: p1L + tinDiff,
-        originalPrice: Number(((p1L + tinDiff) / 0.9).toFixed(2)),
-        unitPriceText: `₹${((p1L + tinDiff) / 1).toFixed(2)}/L`,
-      },
-      {
-        id: "2l-plastic",
-        size: "2 L",
-        bottleType: "Plastic Can",
-        label: "2L Plastic Can",
-        price: p2L,
-        originalPrice: Number((p2L / 0.9).toFixed(2)),
-        unitPriceText: `₹${(p2L / 2).toFixed(2)}/L`,
-      },
-      {
-        id: "2l-tin",
-        size: "2 L",
-        bottleType: "Tin Metal",
-        label: "2L Tin Metal",
-        price: p2L + tinDiff,
-        originalPrice: Number(((p2L + tinDiff) / 0.9).toFixed(2)),
-        unitPriceText: `₹${((p2L + tinDiff) / 2).toFixed(2)}/L`,
-      },
-      {
-        id: "5l-tin",
-        size: "5 L",
-        bottleType: "Tin Metal",
-        label: "5L Tin Metal",
-        price: p5L + tinDiff,
-        originalPrice: Number(((p5L + tinDiff) / 0.9).toFixed(2)),
-        unitPriceText: `₹${((p5L + tinDiff) / 5).toFixed(2)}/L`,
-        tag: "BEST VALUE",
-      },
+      makeOilVariant({ id: "500ml-plastic", size: "500 ml", bottleType: "Plastic Bottle", label: "500mL Plastic", salePrice: p500, litres: 0.5 }),
+      makeOilVariant({ id: "500ml-glass", size: "500 ml", bottleType: "Glass Bottle", label: "500mL Glass", salePrice: p500 + glassDiff, litres: 0.5 }),
+      makeOilVariant({ id: "1l-plastic", size: "1 L", bottleType: "Plastic Bottle", label: "1L Plastic", salePrice: p1L, litres: 1.0, tag: "BESTSELLER" }),
+      makeOilVariant({ id: "1l-glass", size: "1 L", bottleType: "Glass Bottle", label: "1L Glass", salePrice: p1L + glassDiff, litres: 1.0 }),
+      makeOilVariant({ id: "1l-tin", size: "1 L", bottleType: "Tin Metal", label: "1L Tin Metal", salePrice: p1L + tinDiff, litres: 1.0 }),
+      makeOilVariant({ id: "2l-plastic", size: "2 L", bottleType: "Plastic Can", label: "2L Plastic Can", salePrice: p2L, litres: 2.0 }),
+      makeOilVariant({ id: "2l-tin", size: "2 L", bottleType: "Tin Metal", label: "2L Tin Metal", salePrice: p2L + tinDiff, litres: 2.0 }),
+      makeOilVariant({ id: "5l-tin", size: "5 L", bottleType: "Tin Metal", label: "5L Tin Metal", salePrice: p5L + tinDiff, litres: 5.0, tag: "BEST VALUE" }),
     ];
   } else {
-    variants = product.sizes.map((s) => ({
-      id: s.toLowerCase().replace(/\s+/g, "-"),
-      size: s,
-      bottleType: "Pack",
-      label: s,
-      price: product.sizePrices[s] || Object.values(product.sizePrices)[0] || 200,
-      originalPrice: product.originalSizePrices?.[s] || undefined,
-      unitPriceText: `${s} pack`,
-    }));
+    variants = product.sizes.map((s) => {
+      const salePrice = product.sizePrices[s] || Object.values(product.sizePrices)[0] || 200;
+      const mrp = product.originalSizePrices?.[s] || Number((salePrice / 0.90).toFixed(2));
+      return {
+        id: s.toLowerCase().replace(/\s+/g, "-"),
+        size: s,
+        bottleType: "Pack",
+        label: s,
+        name: s,
+        price: salePrice,
+        salePrice,
+        mrp,
+        originalPrice: mrp,
+        discountPercent: 10,
+        unitPrice: salePrice,
+        unitPriceText: `${s} pack`,
+      };
+    });
   }
 
   const [selectedVariant, setSelectedVariant] = useState<VariantOption>(
@@ -362,13 +269,13 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
 
   const handleAddToCart = () => {
     if (product.isComingSoon) return;
-    addToCart(product, selectedVariant.size, quantity, selectedVariant.bottleType, selectedVariant.price);
+    addToCart(product, selectedVariant.size, quantity, selectedVariant.bottleType, selectedVariant.salePrice);
     router.push("/checkout");
   };
 
   const handleBuyNow = () => {
     if (product.isComingSoon) return;
-    addToCart(product, selectedVariant.size, quantity, selectedVariant.bottleType, selectedVariant.price);
+    addToCart(product, selectedVariant.size, quantity, selectedVariant.bottleType, selectedVariant.salePrice);
     router.push("/checkout");
   };
 
@@ -496,20 +403,20 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
                 {product.name}
               </h1>
 
-              {/* Price & Membership Badge */}
+              {/* Price & Discount Row */}
               <div className="flex flex-wrap items-center gap-3 pt-1">
                 <div className="text-2xl md:text-3xl font-bold text-forest font-serif">
-                  ₹{selectedVariant.price.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  ₹{selectedVariant.salePrice.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </div>
 
-                {selectedVariant.originalPrice && (
+                {selectedVariant.mrp && (
                   <span className="text-base text-dark/40 line-through font-serif">
-                    ₹{selectedVariant.originalPrice.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    ₹{selectedVariant.mrp.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                 )}
 
                 <span className="px-2 py-0.5 bg-green-100 text-forest text-xs font-bold rounded">
-                  10% OFF
+                  {selectedVariant.discountPercent}% OFF
                 </span>
               </div>
 
@@ -557,7 +464,7 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
                         {v.label}
                       </span>
                       <span className="text-xs font-extrabold text-dark mb-0.5">
-                        ₹{v.price.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        ₹{v.salePrice.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </span>
                       <span className="text-[10px] text-dark/50 font-medium">
                         {v.unitPriceText}
