@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound, useRouter } from "next/navigation";
@@ -116,49 +116,9 @@ export function ProductDetailsClient({ productId }: { productId: string }) {
   // Build combined Variant Matrix matching reference design (Size + Bottle + Price Card)
   const isOil = product.id.includes("oil");
 
-  const p1L = product.sizePrices["1 L"] || 500;
-  const p500 = product.sizePrices["500 ml"] || Math.round(p1L * 0.55);
-  const p5L = product.sizePrices["5 L"] || Math.round(p1L * 4.6);
-
-  const oilVariants: VariantOption[] = isOil
-    ? [
-        makeOilVariant({
-          id: "500ml-glass",
-          size: "500 ml",
-          bottleType: "Glass Bottle",
-          label: "500 ml - Glass Bottle",
-          salePrice: p500 + 40,
-          litres: 0.5,
-          tag: "Sample Size",
-        }),
-        makeOilVariant({
-          id: "1l-tin",
-          size: "1 L",
-          bottleType: "Metal Tin",
-          label: "1 Litre - Metal Tin",
-          salePrice: p1L + 60,
-          litres: 1,
-          tag: "Most Popular",
-        }),
-        makeOilVariant({
-          id: "1l-glass",
-          size: "1 L",
-          bottleType: "Glass Bottle",
-          label: "1 Litre - Glass Bottle",
-          salePrice: p1L + 50,
-          litres: 1,
-        }),
-        makeOilVariant({
-          id: "5l-can",
-          size: "5 L",
-          bottleType: "Metal Tin",
-          label: "5 Litre - Metal Can",
-          salePrice: p5L + 120,
-          litres: 5,
-          tag: "Best Value",
-        }),
-      ]
-    : product.sizes.map((s) => {
+  const oilVariants: VariantOption[] = useMemo(() => {
+    if (!isOil) {
+      return product.sizes.map((s) => {
         const salePrice = product.sizePrices[s] || 0;
         const mrp = Number((salePrice / 0.90).toFixed(2));
         return {
@@ -176,13 +136,214 @@ export function ProductDetailsClient({ productId }: { productId: string }) {
           unitPriceText: "",
         };
       });
+    }
 
-  const [selectedVariantId, setSelectedVariantId] = useState<string>(
-    oilVariants[1]?.id || oilVariants[0]?.id || ""
-  );
+    if (product.id === "groundnut-oil") {
+      return [
+        makeOilVariant({
+          id: "gn-500ml-plastic",
+          size: "500 ml",
+          bottleType: "Plastic Bottle",
+          label: "500 ml - Plastic Bottle",
+          salePrice: 245,
+          litres: 0.5,
+        }),
+        makeOilVariant({
+          id: "gn-500ml-glass",
+          size: "500 ml",
+          bottleType: "Glass Bottle",
+          label: "500 ml - Glass Bottle",
+          salePrice: 295,
+          litres: 0.5,
+        }),
+        makeOilVariant({
+          id: "gn-1l-plastic",
+          size: "1 L",
+          bottleType: "Plastic Bottle",
+          label: "1 Litre - Plastic Bottle",
+          salePrice: 469,
+          litres: 1.0,
+          tag: "BESTSELLER",
+        }),
+        makeOilVariant({
+          id: "gn-1l-glass",
+          size: "1 L",
+          bottleType: "Glass Bottle",
+          label: "1 Litre - Glass Bottle",
+          salePrice: 549,
+          litres: 1.0,
+        }),
+        makeOilVariant({
+          id: "gn-1l-tin",
+          size: "1 L",
+          bottleType: "Metal Tin",
+          label: "1 Litre - Metal Tin",
+          salePrice: 569,
+          litres: 1.0,
+          tag: "MOST POPULAR",
+        }),
+        makeOilVariant({
+          id: "gn-2l-tin",
+          size: "2 L",
+          bottleType: "Metal Tin",
+          label: "2 Litre - Metal Tin",
+          salePrice: 999,
+          litres: 2.0,
+        }),
+        makeOilVariant({
+          id: "gn-5l-tin",
+          size: "5 L",
+          bottleType: "Metal Tin",
+          label: "5 Litre - Metal Can",
+          salePrice: 2299,
+          litres: 5.0,
+          tag: "BEST VALUE",
+        }),
+      ];
+    }
+
+    if (product.id === "sesame-oil") {
+      return [
+        makeOilVariant({
+          id: "ses-500ml-plastic",
+          size: "500 ml",
+          bottleType: "Plastic Bottle",
+          label: "500 ml - Plastic Bottle",
+          salePrice: 299,
+          litres: 0.5,
+        }),
+        makeOilVariant({
+          id: "ses-500ml-glass",
+          size: "500 ml",
+          bottleType: "Glass Bottle",
+          label: "500 ml - Glass Bottle",
+          salePrice: 349,
+          litres: 0.5,
+        }),
+        makeOilVariant({
+          id: "ses-1l-plastic",
+          size: "1 L",
+          bottleType: "Plastic Bottle",
+          label: "1 Litre - Plastic Bottle",
+          salePrice: 549,
+          litres: 1.0,
+          tag: "BESTSELLER",
+        }),
+        makeOilVariant({
+          id: "ses-1l-glass",
+          size: "1 L",
+          bottleType: "Glass Bottle",
+          label: "1 Litre - Glass Bottle",
+          salePrice: 569,
+          litres: 1.0,
+        }),
+        makeOilVariant({
+          id: "ses-1l-tin",
+          size: "1 L",
+          bottleType: "Metal Tin",
+          label: "1 Litre - Metal Tin",
+          salePrice: 589,
+          litres: 1.0,
+          tag: "MOST POPULAR",
+        }),
+        makeOilVariant({
+          id: "ses-2l-tin",
+          size: "2 L",
+          bottleType: "Metal Tin",
+          label: "2 Litre - Metal Tin",
+          salePrice: 1199,
+          litres: 2.0,
+        }),
+        makeOilVariant({
+          id: "ses-5l-tin",
+          size: "5 L",
+          bottleType: "Metal Tin",
+          label: "5 Litre - Metal Can",
+          salePrice: 2699,
+          litres: 5.0,
+          tag: "BEST VALUE",
+        }),
+      ];
+    }
+
+    // Default fallback for any other oils (e.g. sunflower-oil)
+    const base1L = product.sizePrices["1 L"] || 500;
+    const base500 = product.sizePrices["500 ml"] || Math.round(base1L * 0.53);
+    const base2L = product.sizePrices["2 L"] || Math.round(base1L * 2 - 30);
+    const base5L = product.sizePrices["5 L"] || Math.round(base1L * 5 - 150);
+
+    return [
+      makeOilVariant({
+        id: `${product.id}-500ml-plastic`,
+        size: "500 ml",
+        bottleType: "Plastic Bottle",
+        label: "500 ml - Plastic Bottle",
+        salePrice: base500,
+        litres: 0.5,
+      }),
+      makeOilVariant({
+        id: `${product.id}-500ml-glass`,
+        size: "500 ml",
+        bottleType: "Glass Bottle",
+        label: "500 ml - Glass Bottle",
+        salePrice: base500 + 50,
+        litres: 0.5,
+      }),
+      makeOilVariant({
+        id: `${product.id}-1l-plastic`,
+        size: "1 L",
+        bottleType: "Plastic Bottle",
+        label: "1 Litre - Plastic Bottle",
+        salePrice: base1L,
+        litres: 1.0,
+        tag: "BESTSELLER",
+      }),
+      makeOilVariant({
+        id: `${product.id}-1l-glass`,
+        size: "1 L",
+        bottleType: "Glass Bottle",
+        label: "1 Litre - Glass Bottle",
+        salePrice: base1L + 50,
+        litres: 1.0,
+      }),
+      makeOilVariant({
+        id: `${product.id}-1l-tin`,
+        size: "1 L",
+        bottleType: "Metal Tin",
+        label: "1 Litre - Metal Tin",
+        salePrice: base1L + 70,
+        litres: 1.0,
+        tag: "MOST POPULAR",
+      }),
+      makeOilVariant({
+        id: `${product.id}-2l-tin`,
+        size: "2 L",
+        bottleType: "Metal Tin",
+        label: "2 Litre - Metal Tin",
+        salePrice: base2L,
+        litres: 2.0,
+      }),
+      makeOilVariant({
+        id: `${product.id}-5l-tin`,
+        size: "5 L",
+        bottleType: "Metal Tin",
+        label: "5 Litre - Metal Can",
+        salePrice: base5L,
+        litres: 5.0,
+        tag: "BEST VALUE",
+      }),
+    ];
+  }, [product, isOil]);
+
+  const [selectedVariantId, setSelectedVariantId] = useState<string>(() => {
+    const bestseller = oilVariants.find((v) => v.id.includes("1l-plastic"));
+    return bestseller?.id || oilVariants[0]?.id || "";
+  });
 
   const selectedVariant =
-    oilVariants.find((v) => v.id === selectedVariantId) || oilVariants[0];
+    oilVariants.find((v) => v.id === selectedVariantId) ||
+    oilVariants.find((v) => v.id.includes("1l-plastic")) ||
+    oilVariants[0];
 
   useEffect(() => {
     async function fetchReviews() {
@@ -416,7 +577,7 @@ export function ProductDetailsClient({ productId }: { productId: string }) {
             </p>
 
             {/* Price Display */}
-            <div className="flex items-baseline gap-3 pt-2">
+            <div className="flex flex-wrap items-baseline gap-3 pt-2">
               <span className="text-2xl sm:text-3xl font-serif font-bold text-forest">
                 ₹{selectedVariant.salePrice}
               </span>
@@ -430,6 +591,11 @@ export function ProductDetailsClient({ productId }: { productId: string }) {
                   </span>
                 </>
               )}
+              {selectedVariant.unitPriceText && (
+                <span className="text-xs font-mono font-medium text-forest/70">
+                  ({selectedVariant.unitPriceText})
+                </span>
+              )}
             </div>
 
             {/* Variant Selector */}
@@ -437,7 +603,7 @@ export function ProductDetailsClient({ productId }: { productId: string }) {
               <label className="text-xs uppercase tracking-wider font-semibold text-forest/70 block">
                 Select Option:
               </label>
-              <div className="grid grid-cols-2 gap-2.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 {oilVariants.map((v) => (
                   <button
                     key={v.id}
