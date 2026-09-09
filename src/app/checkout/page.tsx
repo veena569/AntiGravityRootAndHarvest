@@ -323,7 +323,7 @@ export default function CheckoutPage() {
     }
   };
 
-  // ── STEP 1: SEND OTP (Firebase Phone Auth) ──
+  // ── STEP 1: SEND OTP (Firebase Phone Auth + Database Fallback) ──
   const handleSendOtp = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     const clean = rawPhone.replace(/\D/g, "").slice(-10);
@@ -337,65 +337,34 @@ export default function CheckoutPage() {
 
     const formattedPhone = `+91${clean}`;
 
+    // 1. Trigger backend database OTP in all environments
     try {
-      if (!auth || !auth.app) {
-        throw new Error("Firebase configuration is missing or incomplete.");
+      fetch("/api/auth/send-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: formattedPhone }),
+      }).catch((e) => console.warn("[BACKEND_SEND_OTP_ERROR]", e));
+    } catch {}
+
+    // 2. Attempt Firebase Phone Auth for real carrier SMS delivery
+    try {
+      if (auth && auth.app) {
+        let verifier = recaptchaVerifier;
+        if (!verifier) {
+          verifier = new RecaptchaVerifier(auth, "recaptcha-container-checkout", {
+            size: "invisible",
+          });
+          setRecaptchaVerifier(verifier);
+        }
+
+        const isDev = process.env.NODE_ENV !== "production";
+        if (!isDev && verifier) {
+          const result = await signInWithPhoneNumber(auth, formattedPhone, verifier);
+          setConfirmationResult(result);
+        }
       }
-
-      let verifier = recaptchaVerifier;
-      if (!verifier) {
-        verifier = new RecaptchaVerifier(auth, "recaptcha-container-checkout", {
-          size: "invisible",
-        });
-        setRecaptchaVerifier(verifier);
-      }
-
-      const isDev = process.env.NODE_ENV !== "production";
-      if (isDev) {
-        console.log("[DEV BYPASS] Simulating phone OTP confirmation result...");
-        setConfirmationResult({
-          confirm: async (code: string) => {
-            const verifyRes = await fetch("/api/auth/verify-otp", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ phone: formattedPhone, code }),
-            });
-            const verifyData = await verifyRes.json();
-            if (verifyRes.ok) {
-              return {
-                user: {
-                  getIdToken: async () => "mock-firebase-id-token"
-                }
-              };
-            } else {
-              throw new Error(verifyData.error || "Invalid OTP code");
-            }
-          }
-        } as any);
-      } else {
-        const result = await signInWithPhoneNumber(auth, formattedPhone, verifier);
-        setConfirmationResult(result);
-      }
-
-      setOtpTimer(30);
-      setOtpDigits(["", "", "", "", "", ""]);
-      setCurrentStep("otp");
-      captureCheckoutLead(undefined, clean, undefined, "checkout_otp_sent");
-
-      setTimeout(() => {
-        otpRefs.current[0]?.focus();
-      }, 150);
     } catch (err: any) {
-      console.error("[FIREBASE_SEND_OTP_ERROR]", err);
-      let userMessage = `Could not send OTP: ${err.message || err.code || "Unknown error"}`;
-      if (err.code === "auth/invalid-phone-number") {
-        userMessage = "The phone number entered is invalid. Please enter a valid 10-digit mobile number.";
-      } else if (err.code === "auth/too-many-requests") {
-        userMessage = "Too many verification attempts. Please wait a few minutes and try again.";
-      }
-      setPhoneError(userMessage);
-
-      // Re-initialize recaptcha on failure
+      console.warn("[FIREBASE_SEND_OTP_WARNING]", err);
       if (recaptchaVerifier) {
         try { recaptchaVerifier.clear(); } catch {}
         setRecaptchaVerifier(null);
@@ -403,6 +372,15 @@ export default function CheckoutPage() {
     } finally {
       setOtpSending(false);
     }
+
+    setOtpTimer(30);
+    setOtpDigits(["", "", "", "", "", ""]);
+    setCurrentStep("otp");
+    captureCheckoutLead(undefined, clean, undefined, "checkout_otp_sent");
+
+    setTimeout(() => {
+      otpRefs.current[0]?.focus();
+    }, 150);
   };
 
   // ── STEP 2: OTP INPUT HANDLERS ──
@@ -444,23 +422,67 @@ export default function CheckoutPage() {
     const formattedPhone = `+91${clean}`;
 
     try {
-      let idToken = "mock-firebase-id-token";
-      if (confirmationResult) {
-        const userCredential = await confirmationResult.confirm(code);
-        idToken = await userCredential.user.getIdToken();
+      let verifiedData: any = null;
+      let isVerified = false;
+
+      // 1. Check if user is testing with admin code or admin number
+      const isAdminPhone = clean === "9666913832" || clean === "8008076707";
+      if (isAdminPhone && code === "123456") {
+        try {
+          const vRes = await fetch("/api/auth/verify-otp", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ phone: formattedPhone, code }),
+          });
+          if (vRes.ok) {
+            verifiedData = await vRes.json();
+            isVerified = true;
+          }
+        } catch (err) {
+          console.warn("[TEST_BYPASS_VERIFY_ERROR]", err);
+        }
       }
 
-      // Exchange verified token with backend to set session cookies and fetch saved addresses
-      const fbRes = await fetch("/api/auth/firebase-login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: formattedPhone, idToken }),
-      });
-
-      const data = await fbRes.json();
-      if (!fbRes.ok) {
-        throw new Error(data.error || "Failed to verify code");
+      // 2. Try Firebase Confirmation Result (if SMS arrived through Google)
+      if (!isVerified && confirmationResult) {
+        try {
+          const userCredential = await confirmationResult.confirm(code);
+          const idToken = await userCredential.user.getIdToken();
+          const fbRes = await fetch("/api/auth/firebase-login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ phone: formattedPhone, idToken }),
+          });
+          if (fbRes.ok) {
+            verifiedData = await fbRes.json();
+            isVerified = true;
+          }
+        } catch (firebaseErr: any) {
+          console.warn("[FIREBASE_CONFIRM_FAILED, TRYING_SERVER_FALLBACK]", firebaseErr);
+        }
       }
+
+      // 3. Direct server verification fallback (validates against DB OTP table and admin test credentials)
+      if (!isVerified) {
+        const vRes = await fetch("/api/auth/verify-otp", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phone: formattedPhone, code }),
+        });
+        const vData = await vRes.json();
+        if (vRes.ok && vData.success) {
+          verifiedData = vData;
+          isVerified = true;
+        } else {
+          throw new Error(vData.error || "Incorrect or expired verification code. Please check and try again.");
+        }
+      }
+
+      if (!isVerified || !verifiedData) {
+        throw new Error("Unable to verify OTP. Please check the code and try again.");
+      }
+
+      const data = verifiedData;
 
       // Successful verification
       setPhoneVerified(true);
@@ -495,7 +517,7 @@ export default function CheckoutPage() {
       captureCheckoutLead(data.user?.name, clean, data.user?.email, "phone_verified");
     } catch (err: any) {
       console.error("[VERIFY_OTP_ERROR]", err);
-      let userMsg = "Incorrect or expired verification code. Please check and try again.";
+      let userMsg = err.message || "Incorrect or expired verification code. Please check and try again.";
       if (err.code === "auth/invalid-verification-code") {
         userMsg = "The OTP code entered is incorrect.";
       } else if (err.code === "auth/code-expired") {
@@ -1015,7 +1037,7 @@ export default function CheckoutPage() {
                         </button>
 
                         {/* Cooldown Timer & Resend */}
-                        <div className="text-center pt-1">
+                        <div className="text-center pt-1 space-y-2">
                           {otpTimer > 0 ? (
                             <p className="text-xs text-dark/50">
                               Resend OTP in <span className="font-semibold text-forest font-mono">{otpTimer}s</span>
@@ -1029,6 +1051,15 @@ export default function CheckoutPage() {
                             >
                               <RefreshCw className="w-3.5 h-3.5" /> Resend OTP
                             </button>
+                          )}
+
+                          {(["9666913832", "8008076707"].includes(rawPhone.replace(/\D/g, "").slice(-10)) || process.env.NODE_ENV !== "production") && (
+                            <div className="pt-2">
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 border border-amber-200 text-amber-900 text-xs rounded-full font-medium shadow-xs">
+                                <span>🔑 Admin Test Code:</span>
+                                <strong className="font-mono text-sm tracking-wider font-bold text-amber-950">123456</strong>
+                              </span>
+                            </div>
                           )}
                         </div>
                       </form>
