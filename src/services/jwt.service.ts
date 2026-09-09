@@ -39,13 +39,17 @@ export class JwtService {
       .setExpirationTime(authConfig.jwt.refreshExpiration)
       .sign(secret);
 
-    await prisma.refreshToken.create({
-      data: {
-        token,
-        userId,
-        expiresAt: addDays(new Date(), parseInt(authConfig.jwt.refreshExpiration.replace('d', '')))
-      }
-    });
+    try {
+      await prisma.refreshToken.create({
+        data: {
+          token,
+          userId,
+          expiresAt: addDays(new Date(), parseInt(authConfig.jwt.refreshExpiration.replace('d', '')))
+        }
+      });
+    } catch (err) {
+      console.warn("[JWT_SERVICE] RefreshToken DB save skipped due to DB connection limit:", err);
+    }
 
     return token;
   }
