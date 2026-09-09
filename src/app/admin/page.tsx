@@ -140,29 +140,106 @@ export default function AdminPage() {
     }
   }, [activeTab]);
 
-  // Business Expenses & Procurement Ledger State
-  const [businessExpenses, setBusinessExpenses] = useState<any[]>([
+  // Default Business Expenses & Procurement Ledger State (All 13 Admin Records Restored)
+  const INITIAL_BUSINESS_EXPENSES = [
+    {
+      id: "exp-custom-1",
+      date: "2026-07-07",
+      category: "Bottles",
+      item: "Glass Jars",
+      quantity: "50",
+      unitCost: 40,
+      shippingCost: 300,
+      amount: 2300,
+      notes: "",
+    },
+    {
+      id: "exp-custom-2",
+      date: "2026-08-25",
+      category: "Seeds",
+      item: "Oil Pressing",
+      quantity: "50kg",
+      unitCost: 125,
+      shippingCost: 0,
+      amount: 6250,
+      notes: "",
+    },
+    {
+      id: "exp-custom-3",
+      date: "2026-09-01",
+      category: "Marketing",
+      item: "Sai Suman",
+      quantity: "1",
+      unitCost: 10000,
+      shippingCost: 0,
+      amount: 10000,
+      notes: "",
+    },
+    {
+      id: "exp-custom-4",
+      date: "2026-08-31",
+      category: "Seeds",
+      item: "Rice",
+      quantity: "25",
+      unitCost: 70,
+      shippingCost: 0,
+      amount: 1750,
+      notes: "Anna Sent",
+    },
+    {
+      id: "exp-custom-5",
+      date: "2026-08-31",
+      category: "Seeds",
+      item: "Sesame seed",
+      quantity: "40",
+      unitCost: 130,
+      shippingCost: 100,
+      amount: 5300,
+      notes: "Anna Sent",
+    },
+    {
+      id: "exp-custom-6",
+      date: "2026-09-01",
+      category: "Bottles",
+      item: "5Liter tin",
+      quantity: "8",
+      unitCost: 80,
+      shippingCost: 500,
+      amount: 1140,
+      notes: "national",
+    },
+    {
+      id: "exp-custom-7",
+      date: "2026-09-01",
+      category: "Bottles",
+      item: "2Liter oilTin",
+      quantity: "100",
+      unitCost: 54,
+      shippingCost: 500,
+      amount: 5900,
+      notes: "International",
+    },
     {
       id: "exp-1",
       date: "2026-08-01",
       category: "Seeds",
-      item: "Organic Groundnut Seeds",
-      quantity: "500 kg",
-      unitCost: 125,
-      shippingCost: 3500,
-      amount: 66000,
-      notes: "Saurashtra Farm Direct Purchase",
+      item: "Organic Groundnut",
+      quantity: "50 kg",
+      unitCost: 140,
+      shippingCost: 500,
+      amount: 7500,
+      notes: "Surendhra",
     },
     {
       id: "exp-2",
-      date: "2026-08-05",
+      date: "2026-09-01",
       category: "Bottles",
       item: "1L Food Grade Oil Bottles",
-      quantity: "500 pcs",
-      unitCost: 35,
-      shippingCost: 1200,
-      amount: 18700,
-      notes: "PET Bottles Batch #1",
+      quantity: "100 pcs",
+      unitCost: 45,
+      shippingCost: 1000,
+      amount: 5500,
+      notes: "PET Bottles",
     },
     {
       id: "exp-3",
@@ -208,7 +285,9 @@ export default function AdminPage() {
       amount: 2400,
       notes: "Protective packaging for shipments",
     },
-  ]);
+  ];
+
+  const [businessExpenses, setBusinessExpenses] = useState<any[]>(INITIAL_BUSINESS_EXPENSES);
 
   // Form State for Adding New Business Expense
   const [newExpDate, setNewExpDate] = useState("");
@@ -254,16 +333,18 @@ export default function AdminPage() {
   // Expense Sorting & Direct In-Place Cell Update Handlers
   const [expenseSortOrder, setExpenseSortOrder] = useState<"desc" | "asc">("desc");
 
-  // Load persisted expenses from localStorage if available
+  // Load persisted expenses from localStorage if available, ensuring all 13 items are preserved
   useEffect(() => {
     try {
-      const saved = localStorage.getItem("rh_admin_expenses");
+      const saved = localStorage.getItem("rh_admin_expenses_v2");
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
+        if (Array.isArray(parsed) && parsed.length >= 13) {
           setBusinessExpenses(parsed);
+          return;
         }
       }
+      localStorage.setItem("rh_admin_expenses_v2", JSON.stringify(INITIAL_BUSINESS_EXPENSES));
     } catch (e) {
       console.error("Failed to load saved expenses from localStorage", e);
     }
@@ -273,7 +354,7 @@ export default function AdminPage() {
   useEffect(() => {
     try {
       if (businessExpenses && businessExpenses.length > 0) {
-        localStorage.setItem("rh_admin_expenses", JSON.stringify(businessExpenses));
+        localStorage.setItem("rh_admin_expenses_v2", JSON.stringify(businessExpenses));
       }
     } catch (e) {
       console.error("Failed to save expenses to localStorage", e);
@@ -2019,7 +2100,7 @@ export default function AdminPage() {
                             <tr key={exp.id} className="hover:bg-forest/5 transition-colors">
                               <td className="p-2">
                                 <input
-                                  type="date"
+                                  type="text"
                                   value={exp.date}
                                   onChange={(e) => updateExpense(exp.id, "date", e.target.value)}
                                   className="w-full p-1 border border-forest/10 bg-white text-[11px] font-mono outline-none"
