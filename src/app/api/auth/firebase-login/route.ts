@@ -67,9 +67,39 @@ export async function POST(req: Request) {
       path: "/",
     });
 
+    // Fetch saved addresses and determine customer status
+    const { prisma } = await import("@/lib/db");
+    const addresses = await prisma.address.findMany({
+      where: { userId: user.id },
+      orderBy: [
+        { isDefault: "desc" },
+        { createdAt: "desc" }
+      ],
+      select: {
+        id: true,
+        name: true,
+        phone: true,
+        addressLine1: true,
+        addressLine2: true,
+        city: true,
+        state: true,
+        pincode: true,
+        type: true,
+        isDefault: true,
+      }
+    });
+
+    const previousOrdersCount = await prisma.order.count({
+      where: { userId: user.id }
+    });
+
+    const isExistingCustomer = addresses.length > 0 || previousOrdersCount > 0;
+
     return NextResponse.json({
       success: true,
       user,
+      isExistingCustomer,
+      addresses,
     });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
