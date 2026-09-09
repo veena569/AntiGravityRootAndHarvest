@@ -21,15 +21,20 @@ import {
   Mail,
   RefreshCw,
   Trash2,
+  Star,
+  Globe,
+  Check,
+  ExternalLink,
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
+import { SEO_CONFIG } from "@/config/seo";
 
 export default function AdminPage() {
   const { products, orders: contextOrders } = useApp();
   const [activeTab, setActiveTab] = useState<
-    "orders" | "bills" | "inventory" | "expenses" | "analytics" | "coupons" | "content" | "leads"
+    "orders" | "bills" | "inventory" | "expenses" | "analytics" | "coupons" | "content" | "leads" | "reviews" | "seo"
   >("orders");
 
   // Checkout Leads State
@@ -55,6 +60,82 @@ export default function AdminPage() {
   useEffect(() => {
     fetchCheckoutLeads();
   }, []);
+
+  // Customer Reviews Moderation State
+  const [adminReviews, setAdminReviews] = useState<any[]>([]);
+  const [loadingAdminReviews, setLoadingAdminReviews] = useState(false);
+  const [reviewActionMsg, setReviewActionMsg] = useState("");
+
+  const fetchAdminReviews = async () => {
+    setLoadingAdminReviews(true);
+    try {
+      const res = await fetch("/api/admin/reviews");
+      if (res.ok) {
+        const data = await res.json();
+        setAdminReviews(data.reviews || []);
+      }
+    } catch (e) {
+      console.error("Failed to fetch admin reviews:", e);
+    } finally {
+      setLoadingAdminReviews(false);
+    }
+  };
+
+  const handleToggleVerifyReview = async (id: string, currentStatus: boolean) => {
+    try {
+      const res = await fetch("/api/admin/reviews", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, isVerified: !currentStatus }),
+      });
+      if (res.ok) {
+        setReviewActionMsg("Review status updated successfully!");
+        fetchAdminReviews();
+        setTimeout(() => setReviewActionMsg(""), 3000);
+      }
+    } catch (e) {
+      console.error("Failed to update review status:", e);
+    }
+  };
+
+  const handleDeleteReview = async (id: string) => {
+    if (!confirm("Are you sure you want to permanently delete this review?")) return;
+    try {
+      const res = await fetch(`/api/admin/reviews?id=${id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setReviewActionMsg("Review deleted successfully!");
+        fetchAdminReviews();
+        setTimeout(() => setReviewActionMsg(""), 3000);
+      }
+    } catch (e) {
+      console.error("Failed to delete review:", e);
+    }
+  };
+
+  // Google Places API test state
+  const [googleApiResult, setGoogleApiResult] = useState<any>(null);
+  const [testingGoogleApi, setTestingGoogleApi] = useState(false);
+
+  const handleTestGoogleApi = async () => {
+    setTestingGoogleApi(true);
+    try {
+      const res = await fetch("/api/reviews/google");
+      const data = await res.json();
+      setGoogleApiResult(data);
+    } catch (e: any) {
+      setGoogleApiResult({ error: e.message || "Failed to test API" });
+    } finally {
+      setTestingGoogleApi(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === "reviews") {
+      fetchAdminReviews();
+    }
+  }, [activeTab]);
 
   // Business Expenses & Procurement Ledger State
   const [businessExpenses, setBusinessExpenses] = useState<any[]>([
@@ -607,6 +688,8 @@ export default function AdminPage() {
                 { id: "analytics", label: "Complete Site Hits", icon: <Activity className="w-4 h-4" /> },
                 { id: "coupons", label: "Coupons Manager", icon: <Tag className="w-4 h-4" /> },
                 { id: "content", label: "Blogs & Recipes", icon: <Newspaper className="w-4 h-4" /> },
+                { id: "reviews", label: "Customer Reviews", icon: <Star className="w-4 h-4 text-amber-500" /> },
+                { id: "seo", label: "Google & SEO Settings", icon: <Globe className="w-4 h-4 text-blue-600" /> },
               ].map((tab) => {
                 const isActive = activeTab === tab.id;
                 return (
@@ -2272,6 +2355,249 @@ export default function AdminPage() {
                         </span>
                       </div>
                     ))}
+                  </div>
+                </div>
+              )}
+
+              {/* REVIEWS MODERATION TAB */}
+              {activeTab === "reviews" && (
+                <div className="space-y-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-forest/10 pb-4">
+                    <div>
+                      <h3 className="text-lg font-serif text-forest font-semibold">Customer Reviews &amp; Moderation</h3>
+                      <p className="text-xs text-dark/60 mt-0.5">
+                        Manage customer feedback, toggle Verified Buyer badges, and moderate comments.
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={fetchAdminReviews}
+                        disabled={loadingAdminReviews}
+                        className="px-4 py-2 border border-forest/20 text-forest text-xs font-semibold uppercase tracking-wider hover:bg-forest/5 flex items-center gap-2"
+                      >
+                        <RefreshCw className={`w-3.5 h-3.5 ${loadingAdminReviews ? "animate-spin" : ""}`} />
+                        Refresh
+                      </button>
+                      <Link
+                        href="/reviews"
+                        target="_blank"
+                        className="px-4 py-2 bg-forest text-white text-xs font-semibold uppercase tracking-wider hover:bg-forest-light flex items-center gap-2"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        View Public Reviews Hub
+                      </Link>
+                    </div>
+                  </div>
+
+                  {reviewActionMsg && (
+                    <div className="p-3 bg-green-50 border border-green-200 text-green-700 text-xs rounded">
+                      {reviewActionMsg}
+                    </div>
+                  )}
+
+                  {loadingAdminReviews ? (
+                    <div className="text-center py-12 text-xs text-dark/60">
+                      Loading customer reviews from database...
+                    </div>
+                  ) : adminReviews.length === 0 ? (
+                    <div className="text-center py-12 bg-white border border-forest/10 p-8 rounded space-y-2">
+                      <Star className="w-8 h-8 text-gold/40 mx-auto" />
+                      <p className="text-sm text-dark/70 font-semibold">No customer reviews in database yet.</p>
+                      <p className="text-xs text-dark/50">When customers review on product pages or /reviews, they will appear here.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {adminReviews.map((r: any) => (
+                        <div
+                          key={r.id}
+                          className="bg-white border border-forest/10 p-5 rounded space-y-3 shadow-xs"
+                        >
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-forest/5 pb-3">
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                <span className="font-semibold text-forest text-sm">{r.name || "Guest Customer"}</span>
+                                {r.email && <span className="text-xs text-dark/50">({r.email})</span>}
+                                {r.isVerified ? (
+                                  <span className="px-2 py-0.5 bg-green-100 text-green-800 text-[10px] font-bold rounded flex items-center gap-1">
+                                    <Check className="w-3 h-3" /> VERIFIED BUYER
+                                  </span>
+                                ) : (
+                                  <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-[10px] font-medium rounded">
+                                    UNVERIFIED
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-3 text-[10px] text-dark/40">
+                                <span>Product: <strong className="text-forest">{r.productId}</strong></span>
+                                <span>•</span>
+                                <span>{new Date(r.createdAt).toLocaleString()}</span>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-1 text-gold">
+                              {[...Array(5)].map((_, i) => (
+                                <Star
+                                  key={i}
+                                  className={`w-4 h-4 ${
+                                    i < r.rating ? "fill-gold text-gold" : "text-gold/20"
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                          </div>
+
+                          <p className="text-xs text-dark/80 leading-relaxed font-light whitespace-pre-line">
+                            "{r.comment}"
+                          </p>
+
+                          {r.mediaUrls && r.mediaUrls.length > 0 && (
+                            <div className="flex gap-2 pt-1">
+                              {r.mediaUrls.map((url: string, idx: number) => (
+                                <img
+                                  key={idx}
+                                  src={url}
+                                  alt="attachment"
+                                  className="w-16 h-16 object-cover rounded border border-forest/10"
+                                />
+                              ))}
+                            </div>
+                          )}
+
+                          <div className="flex items-center justify-between pt-2 border-t border-forest/5">
+                            <button
+                              onClick={() => handleToggleVerifyReview(r.id, r.isVerified)}
+                              className={`text-xs font-semibold px-3 py-1.5 rounded transition-colors ${
+                                r.isVerified
+                                  ? "bg-amber-50 text-amber-700 hover:bg-amber-100"
+                                  : "bg-green-50 text-green-700 hover:bg-green-100"
+                              }`}
+                            >
+                              {r.isVerified ? "Remove Verified Badge" : "Grant Verified Badge"}
+                            </button>
+
+                            <button
+                              onClick={() => handleDeleteReview(r.id)}
+                              className="text-xs text-red-600 hover:text-red-800 p-1.5 flex items-center gap-1 font-medium"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              Delete Review
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* SEO & GOOGLE BUSINESS SETTINGS TAB */}
+              {activeTab === "seo" && (
+                <div className="space-y-8">
+                  <div className="border-b border-forest/10 pb-4">
+                    <h3 className="text-lg font-serif text-forest font-semibold">Google Search &amp; Business Profile Settings</h3>
+                    <p className="text-xs text-dark/60 mt-0.5">
+                      Configure your official Google Business Profile, live review links, and Schema.org local entity data.
+                    </p>
+                  </div>
+
+                  {/* Config Status Summary */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-white border border-forest/10 p-5 rounded space-y-2">
+                      <span className="text-[10px] uppercase tracking-widest text-gold font-bold block">
+                        Canonical Brand URL
+                      </span>
+                      <p className="text-sm font-mono text-forest">{SEO_CONFIG.siteUrl}</p>
+                      <p className="text-[10px] text-dark/50">Used as base URL for sitemap, canonical tags, and OpenGraph tags.</p>
+                    </div>
+
+                    <div className="bg-white border border-forest/10 p-5 rounded space-y-2">
+                      <span className="text-[10px] uppercase tracking-widest text-gold font-bold block">
+                        Local Business Address
+                      </span>
+                      <p className="text-xs text-forest font-medium">
+                        {SEO_CONFIG.address.street}, {SEO_CONFIG.address.locality}, {SEO_CONFIG.address.region} {SEO_CONFIG.address.postalCode}
+                      </p>
+                      <p className="text-[10px] text-dark/50">Embedded in Organization &amp; LocalBusiness Schema.org graphs on all pages.</p>
+                    </div>
+
+                    <div className="bg-white border border-forest/10 p-5 rounded space-y-2">
+                      <span className="text-[10px] uppercase tracking-widest text-gold font-bold block">
+                        Google Review URL
+                      </span>
+                      <a
+                        href={SEO_CONFIG.googleReviewUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-forest hover:text-gold flex items-center gap-1 font-mono break-all underline"
+                      >
+                        {SEO_CONFIG.googleReviewUrl}
+                        <ExternalLink className="w-3 h-3 shrink-0" />
+                      </a>
+                      <p className="text-[10px] text-dark/50">Target URL for all "Review us on Google ❤️" buttons.</p>
+                    </div>
+
+                    <div className="bg-white border border-forest/10 p-5 rounded space-y-2">
+                      <span className="text-[10px] uppercase tracking-widest text-gold font-bold block">
+                        Google Maps Listing
+                      </span>
+                      <a
+                        href={SEO_CONFIG.googleBusinessUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-forest hover:text-gold flex items-center gap-1 font-mono break-all underline"
+                      >
+                        {SEO_CONFIG.googleBusinessUrl}
+                        <ExternalLink className="w-3 h-3 shrink-0" />
+                      </a>
+                      <p className="text-[10px] text-dark/50">Linked in footer, contact page, and schema sameAs links.</p>
+                    </div>
+                  </div>
+
+                  {/* Diagnostic Test Box */}
+                  <div className="bg-white border border-forest/10 p-6 rounded space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div>
+                        <h4 className="text-sm font-serif text-forest font-semibold">Google Places API Live Diagnostics</h4>
+                        <p className="text-xs text-dark/60">
+                          Verify server-side connectivity to Google Maps Places API for automated rating synchronization.
+                        </p>
+                      </div>
+                      <button
+                        onClick={handleTestGoogleApi}
+                        disabled={testingGoogleApi}
+                        className="px-4 py-2.5 bg-forest text-white text-xs uppercase tracking-widest font-semibold hover:bg-forest-light transition-colors"
+                      >
+                        {testingGoogleApi ? "Testing Connection..." : "Test Google API"}
+                      </button>
+                    </div>
+
+                    {googleApiResult && (
+                      <div className="p-4 bg-brand-bg/30 border border-forest/10 rounded text-xs space-y-2 font-mono">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-forest">Status:</span>
+                          <span className={googleApiResult.configured ? "text-green-700 font-bold" : "text-amber-700 font-bold"}>
+                            {googleApiResult.configured ? "API Keys Configured" : "Fallback Direct Mode (Keys Not Set)"}
+                          </span>
+                        </div>
+                        <pre className="text-[11px] overflow-x-auto text-dark/80 whitespace-pre-wrap">
+                          {JSON.stringify(googleApiResult, null, 2)}
+                        </pre>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Environment Configuration Guide */}
+                  <div className="bg-forest text-brand-bg p-6 rounded space-y-3">
+                    <h4 className="text-base font-serif font-semibold text-white">How to Configure Google Business Keys</h4>
+                    <p className="text-xs text-brand-bg/80 leading-relaxed font-light">
+                      To customize your Google review URL or enable automatic Places API ratings, set the following environment variables in your deployment settings (e.g., Vercel or your hosting environment):
+                    </p>
+                    <div className="bg-black/30 p-4 rounded text-xs font-mono space-y-1 text-gold">
+                      <p>NEXT_PUBLIC_GOOGLE_REVIEW_URL="https://g.page/r/YOUR_REVIEW_LINK/review"</p>
+                      <p>NEXT_PUBLIC_GOOGLE_BUSINESS_URL="https://maps.google.com/?cid=YOUR_CID"</p>
+                      <p>GOOGLE_PLACE_ID="ChIJ..."</p>
+                      <p>GOOGLE_MAPS_API_KEY="AIza..."</p>
+                    </div>
                   </div>
                 </div>
               )}

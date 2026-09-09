@@ -40,6 +40,7 @@ export const FOOTER_LINKS = {
   ],
   about: [
     { name: "Our Story", href: "/about" },
+    { name: "Customer Reviews", href: "/reviews" },
     { name: "Contact Us", href: "/contact" },
   ],
   help: [
@@ -54,6 +55,7 @@ export const FOOTER_LINKS = {
   ],
   social: [
     { name: "Instagram", href: "https://www.instagram.com/rootandharvest.in/" },
-    { name: "YouTube", href: "https://www.youtube me/" },
+    { name: "YouTube", href: "https://www.youtube.com/@rootandharvest" },
+    { name: "WhatsApp", href: "https://wa.me/919121603832" },
   ],
 };

@@ -5,6 +5,8 @@ import Link from "next/link";
 import { Mail, ArrowUp, Camera, ArrowRight } from "lucide-react";
 import { FOOTER_LINKS } from "@/constants";
 import { BRAND } from "@/config/brand";
+import { GoogleReviewButton } from "@/components/ui/GoogleReviewButton";
+import { SEO_CONFIG } from "@/config/seo";
 
 export const Footer: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -50,6 +52,23 @@ export const Footer: React.FC = () => {
                 <ArrowRight className="w-5 h-5" />
               </button>
             </form>
+
+            <div className="pt-4 space-y-3">
+              <span className="text-[10px] uppercase tracking-[0.2em] text-gold font-bold block">Rate Our Experience</span>
+              <GoogleReviewButton size="sm" variant="gold" text="Review us on Google ❤️" />
+              <div className="pt-2 text-[11px] text-brand-bg/60 space-y-1">
+                <p>📍 Central Park Phase -1, Serilingampally, Hyderabad 500019</p>
+                <p>📞 +91 9121603832 | ✉️ hello@rootandharvest.in</p>
+                <a
+                  href={SEO_CONFIG.googleBusinessUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gold hover:underline inline-block pt-1"
+                >
+                  View on Google Maps →
+                </a>
+              </div>
+            </div>
           </div>
         </div>
 

@@ -2,10 +2,11 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import { Mail, MapPin, Phone, Send, Check } from "lucide-react";
+import { Mail, MapPin, Phone, Send, Check, Star } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { motion, AnimatePresence } from "framer-motion";
+import { GoogleReviewButton } from "@/components/ui/GoogleReviewButton";
 
 export default function ContactPage() {
   const [name, setName] = useState("");
@@ -154,11 +155,26 @@ export default function ContactPage() {
                     </div>
                     <div className="space-y-1">
                       <span className="text-forest/60 font-semibold uppercase tracking-wider block">Business Address</span>
-                      <p className="text-sm font-semibold text-forest">Root & Harvest.in</p>
-                      <p className="text-xs text-dark/70">Central Park Phase -1, Serilingmapally, Hyderabad, Telangana 500019</p>
+                      <p className="text-sm font-semibold text-forest">Root & Harvest</p>
+                      <p className="text-xs text-dark/70">Central Park Phase -1, Serilingampally, Hyderabad, Telangana 500019</p>
                     </div>
                   </div>
 
+                </div>
+              </div>
+
+              {/* Google Business & Review Card */}
+              <div className="bg-forest text-brand-bg p-8 space-y-4 shadow-sm rounded-sm">
+                <div className="flex items-center gap-2">
+                  <Star className="w-4 h-4 text-gold fill-gold" />
+                  <span className="text-[10px] uppercase tracking-widest text-gold font-semibold">Google Business Profile</span>
+                </div>
+                <h3 className="text-xl font-serif text-white font-semibold">Review Us on Google</h3>
+                <p className="text-xs text-brand-bg/80 leading-relaxed font-light">
+                  Have you experienced our traditional wood-pressed oils? Your genuine review on Google Maps helps more families find authentic, chemical-free food.
+                </p>
+                <div className="pt-2">
+                  <GoogleReviewButton variant="gold" className="w-full justify-center" />
                 </div>
               </div>
 

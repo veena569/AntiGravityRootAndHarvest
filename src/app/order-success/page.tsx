@@ -8,6 +8,7 @@ import { useApp } from "@/context/AppContext";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { motion, AnimatePresence } from "framer-motion";
+import { GoogleReviewButton } from "@/components/ui/GoogleReviewButton";
 
 function OrderSuccessContent() {
   const searchParams = useSearchParams();
@@ -150,6 +151,28 @@ function OrderSuccessContent() {
           <ShoppingBag className="w-4 h-4" />
           Continue Shopping
         </Link>
+      </div>
+
+      {/* Google & Customer Review Invitation */}
+      <div className="bg-white border border-forest/10 p-8 rounded-2xl text-center space-y-4 shadow-xs max-w-xl mx-auto">
+        <span className="text-[10px] uppercase tracking-[0.3em] text-gold font-bold block">
+          YOUR EXPERIENCE MATTERS
+        </span>
+        <h3 className="text-xl sm:text-2xl font-serif text-forest font-semibold">
+          Review Root & Harvest on Google ❤️
+        </h3>
+        <p className="text-xs text-dark/70 leading-relaxed font-light">
+          As a homegrown family brand, honest word-of-mouth helps us thrive. Would you take 30 seconds to share your experience with other families on Google Maps?
+        </p>
+        <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <GoogleReviewButton variant="gold" />
+          <Link
+            href="/reviews"
+            className="text-xs text-forest hover:text-gold uppercase tracking-wider font-semibold transition-colors"
+          >
+            Or Write a Website Review →
+          </Link>
+        </div>
       </div>
 
       <div className="flex justify-center pb-20">

@@ -19,10 +19,31 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "ROOT & HARVEST | Premium Wood Pressed Oils & Farm Fresh Foods",
-  description: "From trusted farms to your family. ROOT & HARVEST brings 100% pure, traditional wood-pressed oils and authentic farm-fresh foods to every Indian kitchen.",
-  keywords: ["Root & Harvest", "Sunflower Oil", "Wood Pressed Oil", "Cold Pressed Oil", "Premium Indian Food", "Healthy Oils", "D2C food brand India"],
-  authors: [{ name: "Root & Harvest Co-Founders" }],
+  metadataBase: new URL("https://www.rootandharvest.in"),
+  title: {
+    default: "ROOT & HARVEST | Pure Wood Pressed Oils & Farm-Fresh Foods",
+    template: "%s | ROOT & HARVEST",
+  },
+  description:
+    "100% natural wood-pressed groundnut oil, sesame oil, and authentic unpolished heritage grains. Cold-extracted below 14 RPM from trusted Indian farms directly to your kitchen.",
+  keywords: [
+    "Root and Harvest",
+    "Root & Harvest",
+    "Root and Harvest products",
+    "Wood Pressed Groundnut Oil",
+    "Wood Pressed Sesame Oil",
+    "Cold Pressed Oil Hyderabad",
+    "Lakdi Ghani Oil India",
+    "Unpolished Rice",
+    "Organic Groundnuts",
+    "Traditional Indian Food",
+  ],
+  authors: [{ name: "Root & Harvest", url: "https://www.rootandharvest.in" }],
+  creator: "Root & Harvest",
+  publisher: "Root & Harvest",
+  alternates: {
+    canonical: "/",
+  },
   icons: {
     icon: [
       { url: "/favicon.ico" },
@@ -32,10 +53,39 @@ export const metadata: Metadata = {
     apple: "/logo.jpg",
   },
   openGraph: {
-    title: "ROOT & HARVEST | Honest Food, Naturally Crafted",
-    description: "Generations of agricultural values combined with modern engineering precision.",
+    title: "ROOT & HARVEST | Pure Wood Pressed Oils & Farm-Fresh Foods",
+    description:
+      "From trusted farms to your family. 100% pure, unrefined wood-pressed oils and natural grains, made in small batches.",
+    url: "https://www.rootandharvest.in",
+    siteName: "Root & Harvest",
+    images: [
+      {
+        url: "https://www.rootandharvest.in/images/groundnut-oil-farm.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Root & Harvest Wood Pressed Oils and Farm Purity",
+      },
+    ],
     type: "website",
     locale: "en_IN",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "ROOT & HARVEST | Pure Wood Pressed Oils",
+    description:
+      "Pure, unrefined wood-pressed oils and traditional grains sourced with care from trusted Indian farms.",
+    images: ["https://www.rootandharvest.in/images/groundnut-oil-farm.jpg"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
 };
 
@@ -48,54 +98,73 @@ export default function RootLayout({
     "@context": "https://schema.org",
     "@graph": [
       {
-        "@type": "Organization",
+        "@type": ["Organization", "Store", "LocalBusiness"],
         "@id": "https://www.rootandharvest.in/#organization",
         "name": "Root & Harvest",
+        "legalName": "Root & Harvest",
         "url": "https://www.rootandharvest.in",
         "logo": {
           "@type": "ImageObject",
           "url": "https://www.rootandharvest.in/logo.jpg",
-          "caption": "Root & Harvest Logo"
+          "caption": "Root & Harvest Brand Logo",
         },
-        "image": "https://www.rootandharvest.in/logo.jpg",
+        "image": "https://www.rootandharvest.in/images/groundnut-oil-farm.jpg",
+        "description":
+          "Root & Harvest brings 100% pure, traditional wood-pressed oils and authentic farm-fresh heritage grains directly from trusted Indian farms to family kitchens.",
+        "telephone": "+91-9121603832",
+        "email": "hello@rootandharvest.in",
+        "priceRange": "₹₹",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "Central Park Phase -1",
+          "addressLocality": "Serilingampally, Hyderabad",
+          "addressRegion": "Telangana",
+          "postalCode": "500019",
+          "addressCountry": "IN",
+        },
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": "17.4834",
+          "longitude": "78.3158",
+        },
+        "openingHoursSpecification": [
+          {
+            "@type": "OpeningHoursSpecification",
+            "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+            "opens": "10:00",
+            "closes": "18:00",
+          },
+        ],
+        "contactPoint": [
+          {
+            "@type": "ContactPoint",
+            "telephone": "+91-9121603832",
+            "contactType": "customer service",
+            "areaServed": "IN",
+            "availableLanguage": ["English", "Telugu", "Hindi"],
+          },
+        ],
         "sameAs": [
-          "https://www.instagram.com/rootandharvest.in",
-          "https://www.youtube.com/@rootandharvest"
-        ]
+          "https://www.instagram.com/rootandharvest.in/",
+          "https://www.youtube.com/@rootandharvest",
+        ],
       },
       {
         "@type": "WebSite",
         "@id": "https://www.rootandharvest.in/#website",
         "url": "https://www.rootandharvest.in",
-        "name": "ROOT & HARVEST",
-        "description": "From Trusted Farms to Your Family. Premium Wood Pressed Oils.",
+        "name": "Root & Harvest",
+        "description": "Pure Wood Pressed Oils & Farm Fresh Traditional Foods",
         "publisher": {
-          "@id": "https://www.rootandharvest.in/#organization"
+          "@id": "https://www.rootandharvest.in/#organization",
         },
-        "hasPart": [
-          {
-            "@type": "WebPage",
-            "name": "Our Products",
-            "url": "https://www.rootandharvest.in/products"
-          },
-          {
-            "@type": "WebPage",
-            "name": "About Us",
-            "url": "https://www.rootandharvest.in/about"
-          },
-          {
-            "@type": "WebPage",
-            "name": "Contact Us",
-            "url": "https://www.rootandharvest.in/contact"
-          },
-          {
-            "@type": "WebPage",
-            "name": "FAQ",
-            "url": "https://www.rootandharvest.in/faq"
-          }
-        ]
-      }
-    ]
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": "https://www.rootandharvest.in/products?search={search_term_string}",
+          "query-input": "required name=search_term_string",
+        },
+      },
+    ],
   };
 
   return (
