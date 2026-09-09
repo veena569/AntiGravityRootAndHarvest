@@ -318,6 +318,9 @@ export default function AdminPage() {
       seedCostPerKg: 125,
       seedRatioPerLiter: 2.5,
       pressingCostPerKg: 30,
+      plasticPackCost: 45,
+      glassPackCost: 65,
+      metalPackCost: 85,
       variants: [
         { id: "gn-500ml-plastic", name: "500ML Plastic", volume: 0.5, packaging: "Plastic", packagingCost: 25, salePrice: 245 },
         { id: "gn-500ml-glass", name: "500ML Glass", volume: 0.5, packaging: "Glass", packagingCost: 45, salePrice: 295 },
@@ -334,6 +337,9 @@ export default function AdminPage() {
       seedCostPerKg: 125,
       seedRatioPerLiter: 2.5,
       pressingCostPerKg: 30,
+      plasticPackCost: 45,
+      glassPackCost: 65,
+      metalPackCost: 85,
       variants: [
         { id: "ses-500ml-plastic", name: "500ML Plastic", volume: 0.5, packaging: "Plastic", packagingCost: 25, salePrice: 299 },
         { id: "ses-500ml-glass", name: "500ML Glass", volume: 0.5, packaging: "Glass", packagingCost: 45, salePrice: 349 },
@@ -1023,10 +1029,10 @@ export default function AdminPage() {
                                 </span>
                               </div>
 
-                              {/* Editable Base Cost Inputs */}
-                              <div className="flex flex-wrap items-center gap-3 text-xs bg-brand-bg/40 p-2.5 border border-forest/10">
+                              {/* Editable Base Raw Material & Packaging Cost Inputs */}
+                              <div className="flex flex-wrap items-center gap-3 text-xs bg-brand-bg/40 p-3 border border-forest/10 rounded-xs">
                                 <div className="flex items-center gap-1.5">
-                                  <label className="text-[9px] uppercase font-bold text-dark/60">Seed Rate (₹/kg):</label>
+                                  <label className="text-[9px] uppercase font-bold text-dark/70">Seed Rate (₹/kg):</label>
                                   <input
                                     type="number"
                                     value={oil.seedCostPerKg}
@@ -1040,7 +1046,7 @@ export default function AdminPage() {
                                 </div>
 
                                 <div className="flex items-center gap-1.5">
-                                  <label className="text-[9px] uppercase font-bold text-dark/60">Pressing (₹/kg):</label>
+                                  <label className="text-[9px] uppercase font-bold text-dark/70">Pressing (₹/kg):</label>
                                   <input
                                     type="number"
                                     value={oil.pressingCostPerKg}
@@ -1054,7 +1060,7 @@ export default function AdminPage() {
                                 </div>
 
                                 <div className="flex items-center gap-1.5">
-                                  <label className="text-[9px] uppercase font-bold text-dark/60">Seeds/L (kg):</label>
+                                  <label className="text-[9px] uppercase font-bold text-dark/70">Seeds/L (kg):</label>
                                   <input
                                     type="number"
                                     step="0.1"
@@ -1065,6 +1071,63 @@ export default function AdminPage() {
                                       setOilRates(updated);
                                     }}
                                     className="w-14 p-1 border border-forest/20 font-mono font-bold text-forest text-xs outline-none bg-white"
+                                  />
+                                </div>
+
+                                <div className="h-4 border-r border-forest/20 mx-1 hidden sm:block"></div>
+
+                                {/* Packaging Material Base Inputs */}
+                                <div className="flex items-center gap-1.5">
+                                  <label className="text-[9px] uppercase font-bold text-amber-900">Plastic Pack (₹/L):</label>
+                                  <input
+                                    type="number"
+                                    value={oil.plasticPackCost ?? 45}
+                                    onChange={(e) => {
+                                      const val = Number(e.target.value);
+                                      const updated = [...oilRates];
+                                      updated[pIdx].plasticPackCost = val;
+                                      updated[pIdx].variants = updated[pIdx].variants.map((v: any) =>
+                                        v.packaging === "Plastic" ? { ...v, packagingCost: Math.round(val * v.volume) } : v
+                                      );
+                                      setOilRates(updated);
+                                    }}
+                                    className="w-16 p-1 border border-amber-300 font-mono font-bold text-amber-900 text-xs outline-none bg-amber-50"
+                                  />
+                                </div>
+
+                                <div className="flex items-center gap-1.5">
+                                  <label className="text-[9px] uppercase font-bold text-amber-900">Glass Pack (₹/L):</label>
+                                  <input
+                                    type="number"
+                                    value={oil.glassPackCost ?? 65}
+                                    onChange={(e) => {
+                                      const val = Number(e.target.value);
+                                      const updated = [...oilRates];
+                                      updated[pIdx].glassPackCost = val;
+                                      updated[pIdx].variants = updated[pIdx].variants.map((v: any) =>
+                                        v.packaging === "Glass" ? { ...v, packagingCost: Math.round(val * v.volume) } : v
+                                      );
+                                      setOilRates(updated);
+                                    }}
+                                    className="w-16 p-1 border border-amber-300 font-mono font-bold text-amber-900 text-xs outline-none bg-amber-50"
+                                  />
+                                </div>
+
+                                <div className="flex items-center gap-1.5">
+                                  <label className="text-[9px] uppercase font-bold text-amber-900">Tin Metal Pack (₹/L):</label>
+                                  <input
+                                    type="number"
+                                    value={oil.metalPackCost ?? 85}
+                                    onChange={(e) => {
+                                      const val = Number(e.target.value);
+                                      const updated = [...oilRates];
+                                      updated[pIdx].metalPackCost = val;
+                                      updated[pIdx].variants = updated[pIdx].variants.map((v: any) =>
+                                        v.packaging === "Tin Metal" ? { ...v, packagingCost: Math.round(val * v.volume) } : v
+                                      );
+                                      setOilRates(updated);
+                                    }}
+                                    className="w-16 p-1 border border-amber-300 font-mono font-bold text-amber-900 text-xs outline-none bg-amber-50"
                                   />
                                 </div>
                               </div>
