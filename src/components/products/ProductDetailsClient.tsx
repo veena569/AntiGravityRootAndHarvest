@@ -92,6 +92,7 @@ export function ProductDetailsClient({ productId }: { productId: string }) {
   const router = useRouter();
   const [selectedImage, setSelectedImage] = useState(product.image);
   const [quantity, setQuantity] = useState(1);
+  const [isAdded, setIsAdded] = useState(false);
 
   // Accordion open/close states
   const [openAccordion, setOpenAccordion] = useState<string | null>("why-better");
@@ -455,7 +456,8 @@ export function ProductDetailsClient({ productId }: { productId: string }) {
   const handleAddToCart = () => {
     if (product.isComingSoon) return;
     addToCart(product, selectedVariant.size, quantity, selectedVariant.bottleType, selectedVariant.salePrice);
-    router.push("/checkout");
+    setIsAdded(true);
+    setTimeout(() => setIsAdded(false), 3500);
   };
 
   const handleBuyNow = () => {
@@ -653,20 +655,46 @@ export function ProductDetailsClient({ productId }: { productId: string }) {
             </div>
 
             {/* CTAs */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4">
-              <Button
-                onClick={handleAddToCart}
-                className="w-full py-3.5 text-xs uppercase tracking-widest font-semibold"
-              >
-                Add to Cart & Checkout
-              </Button>
-              <Button
-                variant="outline"
-                onClick={handleBuyNow}
-                className="w-full py-3.5 text-xs uppercase tracking-widest font-semibold border-forest text-forest hover:bg-forest hover:text-white"
-              >
-                Instant Buy
-              </Button>
+            <div className="space-y-3 pt-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Button
+                  onClick={handleAddToCart}
+                  className={`w-full py-3.5 text-xs uppercase tracking-widest font-semibold flex items-center justify-center gap-2 transition-all ${
+                    isAdded ? "bg-emerald-700 hover:bg-emerald-800 text-white" : ""
+                  }`}
+                >
+                  {isAdded ? (
+                    <>
+                      <Check className="w-4 h-4" /> Added to Cart ✓
+                    </>
+                  ) : (
+                    "Add to Cart"
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleBuyNow}
+                  className="w-full py-3.5 text-xs uppercase tracking-widest font-semibold border-forest text-forest hover:bg-forest hover:text-white"
+                >
+                  Buy Now
+                </Button>
+              </div>
+
+              {/* Added confirmation feedback with View Cart & Continue Shopping */}
+              {isAdded && (
+                <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between animate-fadeIn">
+                  <div className="flex items-center gap-2 text-emerald-800 text-xs font-medium">
+                    <Check className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                    <span>Added <strong>{quantity} × {product.name} ({selectedVariant.label})</strong> to your cart.</span>
+                  </div>
+                  <Link
+                    href="/cart"
+                    className="text-xs font-bold text-forest underline hover:text-forest-light ml-3 whitespace-nowrap"
+                  >
+                    View Cart →
+                  </Link>
+                </div>
+              )}
             </div>
 
             {/* Trust Badges */}
