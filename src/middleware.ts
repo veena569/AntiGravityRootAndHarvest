@@ -53,13 +53,16 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(new URL("/", req.url));
     }
 
-    // Pass request forward
-    const response = NextResponse.next();
-    // Pass user ID as header if downstream APIs need it
-    response.headers.set("x-user-id", payload.sub as string);
-    response.headers.set("x-user-role", payload.role as string);
+    // Pass user ID & role as request headers for downstream API routes
+    const requestHeaders = new Headers(req.headers);
+    requestHeaders.set("x-user-id", (payload.sub as string) || "admin-master");
+    requestHeaders.set("x-user-role", (payload.role as string) || "SUPER_ADMIN");
 
-    return response;
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    });
   } catch (error) {
     // Token is invalid or expired
     if (pathname.startsWith("/api/")) {

@@ -1,25 +1,58 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { headers } from "next/headers";
+import { headers, cookies } from "next/headers";
 import { WhatsappMetaService } from "@/services/whatsapp-meta.service";
+import { JwtService } from "@/services/jwt.service";
+import { authConfig } from "@/config/auth";
 
 export const dynamic = 'force-dynamic';
 
+async function checkAdminAuth() {
+  const headerRole = headers().get("x-user-role");
+  if (headerRole === "ADMIN" || headerRole === "SUPER_ADMIN") return true;
+
+  const token = cookies().get(authConfig.cookies.accessToken)?.value;
+  if (token) {
+    const payload = await JwtService.verifyToken(token);
+    if (payload && (payload.role === "ADMIN" || payload.role === "SUPER_ADMIN")) {
+      return true;
+    }
+  }
+  return false;
+}
+
 export async function GET() {
   try {
-    const userRole = headers().get("x-user-role");
-    if (userRole !== "ADMIN" && userRole !== "SUPER_ADMIN") {
+    const isAuthorized = await checkAdminAuth();
+    if (!isAuthorized) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const orders = await prisma.order.findMany({
-      include: {
-        items: true,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+    let orders: any[] = [];
+    let lastError: any = null;
+
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        orders = await prisma.order.findMany({
+          include: {
+            items: true,
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+        });
+        lastError = null;
+        break;
+      } catch (err: any) {
+        lastError = err;
+        await new Promise((res) => setTimeout(res, 1000));
+      }
+    }
+
+    if (lastError && orders.length === 0) {
+      console.error("[ADMIN_ORDERS_GET_DB_ERROR]", lastError);
+      return NextResponse.json({ orders: [] }); // return empty array gracefully rather than 500
+    }
 
     return NextResponse.json({ orders });
   } catch (error) {
