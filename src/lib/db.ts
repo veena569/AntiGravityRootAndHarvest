@@ -7,7 +7,7 @@ function getFormattedDbUrl() {
   let url = process.env.DATABASE_URL || defaultDbUrl;
   if (!url.includes("connection_limit=")) {
     const sep = url.includes("?") ? "&" : "?";
-    url = `${url}${sep}connection_limit=3&pool_timeout=20`;
+    url = `${url}${sep}connection_limit=1&pool_timeout=15`;
   }
   return url;
 }
