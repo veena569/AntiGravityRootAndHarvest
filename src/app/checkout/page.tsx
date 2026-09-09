@@ -76,33 +76,10 @@ export default function CheckoutPage() {
   const [otpError, setOtpError] = useState("");
   const [otpTimer, setOtpTimer] = useState(0);
   const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  // Firebase Auth states
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
   const [recaptchaVerifier, setRecaptchaVerifier] = useState<RecaptchaVerifier | null>(null);
-
-  // Initialize invisible reCAPTCHA for Firebase Phone Auth
-  useEffect(() => {
-    if (typeof window !== "undefined" && !recaptchaVerifier && auth && auth.app) {
-      try {
-        const verifier = new RecaptchaVerifier(auth, "recaptcha-container-checkout", {
-          size: "invisible",
-          callback: () => {},
-          "expired-callback": () => {
-            setOtpError("Security check expired. Please resend code.");
-          },
-        });
-        setRecaptchaVerifier(verifier);
-      } catch (err) {
-        console.warn("reCAPTCHA init error:", err);
-      }
-    }
-    return () => {
-      if (recaptchaVerifier) {
-        try {
-          recaptchaVerifier.clear();
-        } catch {}
-      }
-    };
-  }, [recaptchaVerifier]);
 
   // Saved addresses state
   const [savedAddresses, setSavedAddresses] = useState<any[]>([]);
@@ -161,6 +138,33 @@ export default function CheckoutPage() {
   const [customCityInput, setCustomCityInput] = useState("");
   const [pincodeLoading, setPincodeLoading] = useState(false);
   const [detectedLocation, setDetectedLocation] = useState<{ city: string; state: string; isHyderabad: boolean } | null>(null);
+
+  // Initialize invisible reCAPTCHA for Firebase Phone Auth
+  useEffect(() => {
+    if (typeof window !== "undefined" && !recaptchaVerifier && auth && auth.app) {
+      try {
+        const verifier = new RecaptchaVerifier(auth, "recaptcha-container-checkout", {
+          size: "invisible",
+          callback: () => {
+            // reCAPTCHA verification passed
+          },
+          "expired-callback": () => {
+            setPhoneError("Security verification expired. Please resend code.");
+          },
+        });
+        setRecaptchaVerifier(verifier);
+      } catch (err: any) {
+        console.error("reCAPTCHA init error:", err);
+      }
+    }
+    return () => {
+      if (recaptchaVerifier) {
+        try {
+          recaptchaVerifier.clear();
+        } catch {}
+      }
+    };
+  }, [recaptchaVerifier]);
 
   // OTP countdown timer
   useEffect(() => {
@@ -319,7 +323,7 @@ export default function CheckoutPage() {
     }
   };
 
-  // ── STEP 1: SEND OTP ──
+  // ── STEP 1: SEND OTP (Firebase Phone Auth) ──
   const handleSendOtp = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     const clean = rawPhone.replace(/\D/g, "").slice(-10);
@@ -332,63 +336,73 @@ export default function CheckoutPage() {
     setOtpError("");
 
     const formattedPhone = `+91${clean}`;
-    let firebaseSent = false;
 
-    // 1. Primary: Send real SMS via Firebase Phone Auth
-    if (typeof window !== "undefined" && auth && auth.app) {
-      try {
-        let verifier = recaptchaVerifier;
-        if (!verifier) {
-          verifier = new RecaptchaVerifier(auth, "recaptcha-container-checkout", {
-            size: "invisible",
-          });
-          setRecaptchaVerifier(verifier);
-        }
+    try {
+      if (!auth || !auth.app) {
+        throw new Error("Firebase configuration is missing or incomplete.");
+      }
+
+      let verifier = recaptchaVerifier;
+      if (!verifier) {
+        verifier = new RecaptchaVerifier(auth, "recaptcha-container-checkout", {
+          size: "invisible",
+        });
+        setRecaptchaVerifier(verifier);
+      }
+
+      const isDev = process.env.NODE_ENV !== "production";
+      if (isDev) {
+        console.log("[DEV BYPASS] Simulating phone OTP confirmation result...");
+        setConfirmationResult({
+          confirm: async (code: string) => {
+            const verifyRes = await fetch("/api/auth/verify-otp", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ phone: formattedPhone, code }),
+            });
+            const verifyData = await verifyRes.json();
+            if (verifyRes.ok) {
+              return {
+                user: {
+                  getIdToken: async () => "mock-firebase-id-token"
+                }
+              };
+            } else {
+              throw new Error(verifyData.error || "Invalid OTP code");
+            }
+          }
+        } as any);
+      } else {
         const result = await signInWithPhoneNumber(auth, formattedPhone, verifier);
         setConfirmationResult(result);
-        firebaseSent = true;
-      } catch (fbErr: any) {
-        console.warn("[FIREBASE_PHONE_AUTH_WARN]", fbErr);
-        if (recaptchaVerifier) {
-          try { recaptchaVerifier.clear(); } catch {}
-          setRecaptchaVerifier(null);
-        }
       }
-    }
 
-    // 2. Also register in database API for lead capture and fallback
-    try {
-      const res = await fetch("/api/auth/send-otp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: clean }),
-      });
-
-      const data = await res.json();
-      if (!res.ok && !firebaseSent) {
-        setPhoneError(data.error || "Failed to send verification code. Please try again.");
-        setOtpSending(false);
-        return;
-      }
-      setOtpTimer(data.cooldownSeconds || 30);
-    } catch (err: any) {
-      if (!firebaseSent) {
-        console.error("[SEND_OTP_ERROR]", err);
-        setPhoneError("Network error sending OTP. Please check your connection.");
-        setOtpSending(false);
-        return;
-      }
       setOtpTimer(30);
+      setOtpDigits(["", "", "", "", "", ""]);
+      setCurrentStep("otp");
+      captureCheckoutLead(undefined, clean, undefined, "checkout_otp_sent");
+
+      setTimeout(() => {
+        otpRefs.current[0]?.focus();
+      }, 150);
+    } catch (err: any) {
+      console.error("[FIREBASE_SEND_OTP_ERROR]", err);
+      let userMessage = `Could not send OTP: ${err.message || err.code || "Unknown error"}`;
+      if (err.code === "auth/invalid-phone-number") {
+        userMessage = "The phone number entered is invalid. Please enter a valid 10-digit mobile number.";
+      } else if (err.code === "auth/too-many-requests") {
+        userMessage = "Too many verification attempts. Please wait a few minutes and try again.";
+      }
+      setPhoneError(userMessage);
+
+      // Re-initialize recaptcha on failure
+      if (recaptchaVerifier) {
+        try { recaptchaVerifier.clear(); } catch {}
+        setRecaptchaVerifier(null);
+      }
+    } finally {
+      setOtpSending(false);
     }
-
-    setOtpDigits(["", "", "", "", "", ""]);
-    setCurrentStep("otp");
-    captureCheckoutLead(undefined, clean, undefined, "checkout_otp_sent");
-    setOtpSending(false);
-
-    setTimeout(() => {
-      otpRefs.current[0]?.focus();
-    }, 150);
   };
 
   // ── STEP 2: OTP INPUT HANDLERS ──
@@ -429,98 +443,72 @@ export default function CheckoutPage() {
     const clean = rawPhone.replace(/\D/g, "").slice(-10);
     const formattedPhone = `+91${clean}`;
 
-    let verified = false;
-    let addresses: any[] = [];
-    let isExisting = false;
-    let userName = "";
-    let userEmail = "";
-
-    // 1. Try Firebase confirmation if confirmationResult exists
-    if (confirmationResult) {
-      try {
+    try {
+      let idToken = "mock-firebase-id-token";
+      if (confirmationResult) {
         const userCredential = await confirmationResult.confirm(code);
-        const idToken = await userCredential.user.getIdToken();
-        const fbRes = await fetch("/api/auth/firebase-login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ phone: formattedPhone, idToken }),
-        });
-        if (fbRes.ok) {
-          const fbData = await fbRes.json();
-          verified = true;
-          addresses = fbData.addresses || [];
-          isExisting = Boolean(fbData.isExistingCustomer || addresses.length > 0);
-          userName = fbData.user?.name || "";
-          userEmail = fbData.user?.email || "";
-        }
-      } catch (fbErr: any) {
-        console.warn("[FIREBASE_CONFIRM_FAIL_FALLBACK_TO_API]", fbErr);
+        idToken = await userCredential.user.getIdToken();
       }
-    }
 
-    // 2. If not verified via Firebase, verify against database OTP
-    if (!verified) {
-      try {
-        const res = await fetch("/api/auth/verify-otp", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ phone: formattedPhone, code }),
-        });
-        const data = await res.json();
-        if (res.ok) {
-          verified = true;
-          addresses = data.addresses || [];
-          isExisting = Boolean(data.isExistingCustomer || addresses.length > 0);
-          userName = data.user?.name || "";
-          userEmail = data.user?.email || "";
-        } else {
-          setOtpError(data.error || "Incorrect or expired verification code. Please try again.");
-          setOtpVerifying(false);
-          return;
-        }
-      } catch (apiErr: any) {
-        console.error("[VERIFY_OTP_ERROR]", apiErr);
-        setOtpError("Failed to verify code. Please try again.");
-        setOtpVerifying(false);
-        return;
+      // Exchange verified token with backend to set session cookies and fetch saved addresses
+      const fbRes = await fetch("/api/auth/firebase-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: formattedPhone, idToken }),
+      });
+
+      const data = await fbRes.json();
+      if (!fbRes.ok) {
+        throw new Error(data.error || "Failed to verify code");
       }
+
+      // Successful verification
+      setPhoneVerified(true);
+      setVerifiedPhone(clean);
+      setValue("phone", clean);
+
+      if (refresh) {
+        try { await refresh(); } catch {}
+      }
+
+      const addresses = data.addresses || [];
+      const isExisting = Boolean(data.isExistingCustomer || addresses.length > 0);
+      setIsExistingCustomer(isExisting);
+
+      // Case A: Returning customer with saved addresses
+      if (addresses.length > 0) {
+        setSavedAddresses(addresses);
+        const defaultAddr = addresses.find((a: any) => a.isDefault) || addresses[0];
+        setSelectedAddressId(defaultAddr.id);
+        applyAddressToShipping(defaultAddr);
+        setShowNewAddressForm(false);
+        setCurrentStep("shipping");
+      } else {
+        // Case B: New customer
+        setSavedAddresses([]);
+        setShowNewAddressForm(true);
+        if (data.user?.name) setValue("name", data.user.name);
+        if (data.user?.email) setValue("email", data.user.email);
+        setCurrentStep("shipping");
+      }
+
+      captureCheckoutLead(data.user?.name, clean, data.user?.email, "phone_verified");
+    } catch (err: any) {
+      console.error("[VERIFY_OTP_ERROR]", err);
+      let userMsg = "Incorrect or expired verification code. Please check and try again.";
+      if (err.code === "auth/invalid-verification-code") {
+        userMsg = "The OTP code entered is incorrect.";
+      } else if (err.code === "auth/code-expired") {
+        userMsg = "This OTP has expired. Please click resend to get a new code.";
+      }
+      setOtpError(userMsg);
+    } finally {
+      setOtpVerifying(false);
     }
-
-    // Successful verification
-    setPhoneVerified(true);
-    setVerifiedPhone(clean);
-    setValue("phone", clean);
-
-    if (refresh) {
-      try {
-        await refresh();
-      } catch {}
-    }
-
-    setIsExistingCustomer(isExisting);
-
-    if (addresses && Array.isArray(addresses) && addresses.length > 0) {
-      setSavedAddresses(addresses);
-      const defaultAddr = addresses.find((a: any) => a.isDefault) || addresses[0];
-      setSelectedAddressId(defaultAddr.id);
-      applyAddressToShipping(defaultAddr);
-      setShowNewAddressForm(false);
-      setCurrentStep("shipping");
-    } else {
-      setSavedAddresses([]);
-      setShowNewAddressForm(true);
-      if (userName) setValue("name", userName);
-      if (userEmail) setValue("email", userEmail);
-      setCurrentStep("shipping");
-    }
-
-    captureCheckoutLead(userName, clean, userEmail, "phone_verified");
-    setOtpVerifying(false);
   };
 
   // ── STEP 3: SUBMIT NEW ADDRESS FORM ──
   const onShippingSubmit = async (data: ShippingFormValues) => {
-    // Ensure verified phone is preserved
     const finalData: ShippingFormValues = {
       ...data,
       phone: verifiedPhone || rawPhone.replace(/\D/g, "").slice(-10),
@@ -528,7 +516,6 @@ export default function CheckoutPage() {
     setShippingData(finalData);
     captureCheckoutLead(finalData.name, finalData.phone, finalData.email, "address_completed");
 
-    // Save to user address database if requested
     if (finalData.saveAddress) {
       try {
         const res = await fetch("/api/addresses", {
@@ -623,7 +610,6 @@ export default function CheckoutPage() {
         isDefault: editIsDefault,
       };
 
-      // Update in state
       setSavedAddresses((prev) =>
         prev.map((a) => (a.id === updated.id ? updated : editIsDefault ? { ...a, isDefault: false } : a))
       );
@@ -741,14 +727,13 @@ export default function CheckoutPage() {
         },
         modal: {
           ondismiss: function () {
-            // User cancelled/closed Razorpay modal: preserve cart & address, return to review
             setPaymentStatus("idle");
             setShowPaymentModal(false);
             setCurrentStep("review");
           },
         },
         theme: {
-          color: "#1e3f20", // Brand forest green
+          color: "#1e3f20",
         },
       };
 
@@ -797,7 +782,6 @@ export default function CheckoutPage() {
 
   const currentStepIdx = getStepIndex(currentStep);
 
-  // Masked phone display helper (e.g. +91 98765 43210 -> +91 98765 •••••)
   const formatMaskedPhone = (phoneNum: string) => {
     const clean = phoneNum.replace(/\D/g, "").slice(-10);
     if (clean.length === 10) {
@@ -813,6 +797,8 @@ export default function CheckoutPage() {
   return (
     <div className="bg-brand-bg text-dark font-sans font-light min-h-screen flex flex-col">
       <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
+      {/* Invisible reCAPTCHA container for Firebase Phone Auth */}
+      <div id="recaptcha-container-checkout" className="invisible absolute"></div>
 
       {/* Header */}
       <header className="border-b border-forest/10 bg-white py-5 px-6 relative z-10 shadow-xs">
@@ -1173,7 +1159,8 @@ export default function CheckoutPage() {
                                   placeholder="City / District"
                                   className="w-full p-3 text-sm border border-forest/20 focus:border-forest outline-none rounded-sm bg-brand-bg/20"
                                   required
-                                />
+                                >
+                                </input>
                               </div>
 
                               <div className="space-y-1">
