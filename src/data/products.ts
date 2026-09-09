@@ -54,16 +54,16 @@ export const INITIAL_PRODUCTS: Product[] = [
     ],
     sizes: ["500 ml", "1 L", "2 L", "5 L"],
     sizePrices: {
-      "500 ml": 225,
-      "1 L": 449,
-      "2 L": 900,
-      "5 L": 2200
+      "500 ml": 245,
+      "1 L": 469,
+      "2 L": 920,
+      "5 L": 2220
     },
     originalSizePrices: {
-      "500 ml": 250,
-      "1 L": 529,
-      "2 L": 1050,
-      "5 L": 2499
+      "500 ml": 270,
+      "1 L": 549,
+      "2 L": 1070,
+      "5 L": 2519
     },
     benefits: [
       "Rich in Monounsaturated Fatty Acids (MUFA) which support healthy lipid levels.",

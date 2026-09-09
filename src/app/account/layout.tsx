@@ -79,23 +79,31 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
             </nav>
 
             {/* Mobile Navigation (Horizontal Scroll) */}
-            <nav className="md:hidden flex overflow-x-auto space-x-6 pb-2 border-b border-forest/10 scrollbar-hide">
-              {TABS.map((tab) => {
-                const isActive = pathname === tab.path;
-                return (
-                  <Link
-                    key={tab.path}
-                    href={tab.path}
-                    className={`whitespace-nowrap text-xs uppercase tracking-widest font-semibold transition-all pb-2 border-b-2 ${
-                      isActive 
-                        ? "border-forest text-forest" 
-                        : "border-transparent text-dark/40"
-                    }`}
-                  >
-                    {tab.name}
-                  </Link>
-                );
-              })}
+            <nav className="md:hidden flex overflow-x-auto items-center justify-between space-x-6 pb-2 border-b border-forest/10 scrollbar-hide">
+              <div className="flex space-x-6">
+                {TABS.map((tab) => {
+                  const isActive = pathname === tab.path;
+                  return (
+                    <Link
+                      key={tab.path}
+                      href={tab.path}
+                      className={`whitespace-nowrap text-xs uppercase tracking-widest font-semibold transition-all pb-2 border-b-2 ${
+                        isActive 
+                          ? "border-forest text-forest" 
+                          : "border-transparent text-dark/40"
+                      }`}
+                    >
+                      {tab.name}
+                    </Link>
+                  );
+                })}
+              </div>
+              <button
+                onClick={logout}
+                className="whitespace-nowrap text-xs uppercase tracking-widest font-semibold text-red-800/80 hover:text-red-950 transition-colors pb-2 border-b-2 border-transparent"
+              >
+                Logout
+              </button>
             </nav>
 
             {/* Content Area */}

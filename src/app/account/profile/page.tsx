@@ -4,7 +4,7 @@ import { useAuth } from "@/components/layout/AuthProvider";
 import { motion } from "framer-motion";
 
 export default function ProfilePage() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
 
   if (!user) return null;
 
@@ -34,6 +34,15 @@ export default function ProfilePage() {
               <label className="text-[10px] uppercase tracking-widest text-dark/50 font-semibold">Account Type</label>
               <p className="text-sm font-medium">{user.role}</p>
             </div>
+          </div>
+
+          <div className="pt-6 border-t border-forest/10 flex justify-end">
+            <button
+              onClick={logout}
+              className="px-6 py-2.5 bg-red-950/5 hover:bg-red-900 text-red-900 hover:text-white transition-all text-xs font-semibold uppercase tracking-widest rounded border border-red-900/20"
+            >
+              Logout Account
+            </button>
           </div>
         </div>
       </div>

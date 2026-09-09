@@ -4,8 +4,9 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ShoppingBag, Heart, Menu, X, User, ArrowRight, Search } from "lucide-react";
+import { ShoppingBag, Heart, Menu, X, User, ArrowRight, Search, LogOut } from "lucide-react";
 import { useApp } from "@/context/AppContext";
+import { useAuth } from "@/components/layout/AuthProvider";
 import { NAVIGATION_LINKS } from "@/constants";
 import { BRAND } from "@/config/brand";
 import { SHIPPING_CONFIG } from "@/config/shipping";
@@ -14,6 +15,7 @@ import { BrandLogo } from "@/components/ui/BrandLogo";
 
 export const Navbar: React.FC = () => {
   const { cart, wishlist } = useApp();
+  const { user, logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const pathname = usePathname();
@@ -77,7 +79,7 @@ export const Navbar: React.FC = () => {
           </nav>
 
           {/* Right: Icons Bar */}
-          <div className="flex items-center space-x-1 md:space-x-4">
+          <div className="flex items-center space-x-1 md:space-x-3">
             {/* Search Icon */}
             <Link
               href="/products"
@@ -89,11 +91,21 @@ export const Navbar: React.FC = () => {
 
             <Link
               href="/account"
-              className="p-1.5 md:p-2 text-forest hover:text-gold transition-colors"
-              title="My Account"
+              className="p-1.5 md:p-2 text-forest hover:text-gold transition-colors flex items-center gap-1"
+              title={user ? `Account (${user.name || 'User'})` : "My Account"}
             >
               <User className="w-5 h-5" />
             </Link>
+
+            {user && (
+              <button
+                onClick={() => logout()}
+                className="p-1.5 md:p-2 text-forest/70 hover:text-red-700 transition-colors"
+                title="Logout"
+              >
+                <LogOut className="w-5 h-5" />
+              </button>
+            )}
 
             <Link
               href="/products?filter=wishlist"
@@ -176,6 +188,18 @@ export const Navbar: React.FC = () => {
                     My Account
                     <User className="w-4 h-4 opacity-50" />
                   </Link>
+                  {user && (
+                    <button
+                      onClick={() => {
+                        setIsOpen(false);
+                        logout();
+                      }}
+                      className="text-lg tracking-widest uppercase font-medium text-red-800 hover:text-red-600 transition-colors flex items-center justify-between text-left w-full"
+                    >
+                      Logout
+                      <LogOut className="w-4 h-4 opacity-70" />
+                    </button>
+                  )}
                 </nav>
               </div>
 
