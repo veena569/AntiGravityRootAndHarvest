@@ -1099,8 +1099,9 @@ export default function AdminPage() {
                               <table className="w-full text-xs divide-y divide-forest/10">
                                 <thead className="bg-brand-bg/60 text-forest text-[9px] uppercase font-bold text-left">
                                   <tr>
-                                    <th className="p-3 w-40">Variant / Label</th>
-                                    <th className="p-3 w-28">Packaging</th>
+                                    <th className="p-3 w-36">Variant / Label</th>
+                                    <th className="p-3 w-24">Packaging</th>
+                                    <th className="p-3 w-28 text-right">Pack Cost (₹)</th>
                                     <th className="p-3 w-28 text-right">Sale Price (₹)</th>
                                     <th className="p-3 w-24 text-right">MRP (₹)</th>
                                     <th className="p-3 w-20 text-center">Discount</th>
@@ -1124,6 +1125,18 @@ export default function AdminPage() {
                                         </div>
                                       </td>
                                       <td className="p-3 font-sans text-dark/70 text-[11px] whitespace-nowrap">{v.packaging}</td>
+                                      <td className="p-2 text-right whitespace-nowrap">
+                                        <input
+                                          type="number"
+                                          value={v.packagingCost}
+                                          onChange={(e) => {
+                                            const updated = [...oilRates];
+                                            updated[pIdx].variants[vIdx].packagingCost = Number(e.target.value);
+                                            setOilRates(updated);
+                                          }}
+                                          className="w-20 p-1 border border-forest/20 text-right font-mono font-bold text-amber-900 text-xs outline-none bg-amber-50 focus:bg-white"
+                                        />
+                                      </td>
                                       <td className="p-2 text-right whitespace-nowrap">
                                         <input
                                           type="number"
