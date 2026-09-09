@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import {
   Settings,
@@ -25,6 +25,9 @@ import {
   Globe,
   Check,
   ExternalLink,
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { Navbar } from "@/components/layout/Navbar";
@@ -239,7 +242,7 @@ export default function AdminPage() {
       amount: computedAmount,
       notes: newExpNotes.trim(),
     };
-    setBusinessExpenses([newEntry, ...businessExpenses]);
+    setBusinessExpenses((prev) => [newEntry, ...prev]);
     setNewExpItem("");
     setNewExpQty("");
     setNewExpUnitCost("");
@@ -247,6 +250,64 @@ export default function AdminPage() {
     setNewExpAmount("");
     setNewExpNotes("");
   };
+
+  // Expense Sorting & Direct In-Place Cell Update Handlers
+  const [expenseSortOrder, setExpenseSortOrder] = useState<"desc" | "asc">("desc");
+
+  // Load persisted expenses from localStorage if available
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("rh_admin_expenses");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setBusinessExpenses(parsed);
+        }
+      }
+    } catch (e) {
+      console.error("Failed to load saved expenses from localStorage", e);
+    }
+  }, []);
+
+  // Persist expenses to localStorage whenever updated
+  useEffect(() => {
+    try {
+      if (businessExpenses && businessExpenses.length > 0) {
+        localStorage.setItem("rh_admin_expenses", JSON.stringify(businessExpenses));
+      }
+    } catch (e) {
+      console.error("Failed to save expenses to localStorage", e);
+    }
+  }, [businessExpenses]);
+
+  // Safely update expense field by ID
+  const updateExpense = (id: string, field: string, value: any) => {
+    setBusinessExpenses((prev) =>
+      prev.map((item) => {
+        if (item.id !== id) return item;
+        const updated = { ...item, [field]: value };
+        if (field === "unitCost" || field === "quantity" || field === "shippingCost") {
+          const q = parseFloat(field === "quantity" ? value : updated.quantity) || 1;
+          const u = Number(field === "unitCost" ? value : updated.unitCost) || 0;
+          const s = Number(field === "shippingCost" ? value : updated.shippingCost) || 0;
+          updated.amount = Math.round(u * q + s);
+        }
+        return updated;
+      })
+    );
+  };
+
+  // Automatically sorted expenses based on date
+  const sortedExpenses = useMemo(() => {
+    return [...businessExpenses].sort((a, b) => {
+      const timeA = new Date(a.date).getTime() || 0;
+      const timeB = new Date(b.date).getTime() || 0;
+      if (timeA === timeB) {
+        return String(b.id || "").localeCompare(String(a.id || ""));
+      }
+      return expenseSortOrder === "desc" ? timeB - timeA : timeA - timeB;
+    });
+  }, [businessExpenses, expenseSortOrder]);
 
   // Orders State
   const [dbOrders, setDbOrders] = useState<any[]>([]);
@@ -333,18 +394,35 @@ export default function AdminPage() {
     fetchAnalytics();
   }, []);
 
-  // Filtered Orders
-  const filteredOrders = dbOrders.filter((ord) => {
-    if (!orderSearchQuery.trim()) return true;
-    const q = orderSearchQuery.toLowerCase();
-    const matchOrderNo = ord.orderNumber?.toLowerCase().includes(q);
-    const matchName = ord.shippingName?.toLowerCase().includes(q);
-    const matchPhone = ord.shippingPhone?.toLowerCase().includes(q);
-    const matchCity = ord.shippingCity?.toLowerCase().includes(q);
-    const matchState = ord.shippingState?.toLowerCase().includes(q);
-    const matchPincode = ord.shippingPincode?.toLowerCase().includes(q);
-    return matchOrderNo || matchName || matchPhone || matchCity || matchState || matchPincode;
-  });
+  // Filtered Orders automatically sorted by date (newest first)
+  const filteredOrders = useMemo(() => {
+    return dbOrders
+      .filter((ord) => {
+        if (!orderSearchQuery.trim()) return true;
+        const q = orderSearchQuery.toLowerCase();
+        const matchOrderNo = ord.orderNumber?.toLowerCase().includes(q);
+        const matchName = ord.shippingName?.toLowerCase().includes(q);
+        const matchPhone = ord.shippingPhone?.toLowerCase().includes(q);
+        const matchCity = ord.shippingCity?.toLowerCase().includes(q);
+        const matchState = ord.shippingState?.toLowerCase().includes(q);
+        const matchPincode = ord.shippingPincode?.toLowerCase().includes(q);
+        return matchOrderNo || matchName || matchPhone || matchCity || matchState || matchPincode;
+      })
+      .sort((a, b) => {
+        const timeA = new Date(a.createdAt).getTime() || 0;
+        const timeB = new Date(b.createdAt).getTime() || 0;
+        return timeB - timeA;
+      });
+  }, [dbOrders, orderSearchQuery]);
+
+  // Abandoned Carts / Leads automatically sorted by date (newest first)
+  const sortedLeads = useMemo(() => {
+    return [...checkoutLeads].sort((a, b) => {
+      const timeA = new Date(a.updatedAt || a.createdAt).getTime() || 0;
+      const timeB = new Date(b.updatedAt || b.createdAt).getTime() || 0;
+      return timeB - timeA;
+    });
+  }, [checkoutLeads]);
 
   // Mock inventories
   const [inventoryList, setInventoryList] = useState([
@@ -1870,19 +1948,62 @@ export default function AdminPage() {
 
                   {/* Expenses Ledger Table */}
                   <div className="space-y-3">
-                    <div className="flex justify-between items-center border-b border-forest/10 pb-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-forest/10 pb-2">
                       <div>
                         <h4 className="text-sm font-serif font-bold text-forest uppercase tracking-wider">Day 1 Expense &amp; Procurement Log</h4>
-                        <span className="text-[10px] text-dark/50">Edit any past record, date, quantity, rate or shipping cost directly in the table below</span>
+                        <span className="text-[10px] text-dark/50">Edit any past record, date, quantity, rate or shipping cost directly below (sorted automatically by date)</span>
                       </div>
-                      <span className="text-[10px] text-gold font-semibold uppercase">{businessExpenses.length} Expense Records</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-dark/60 font-sans">Sort by Date:</span>
+                        <button
+                          type="button"
+                          onClick={() => setExpenseSortOrder("desc")}
+                          className={`px-2.5 py-1 text-[10px] font-bold uppercase rounded flex items-center gap-1 transition-colors ${
+                            expenseSortOrder === "desc"
+                              ? "bg-forest text-brand-bg shadow-xs"
+                              : "bg-forest/10 text-forest hover:bg-forest/20"
+                          }`}
+                        >
+                          <ArrowDown className="w-3 h-3" /> Newest First
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setExpenseSortOrder("asc")}
+                          className={`px-2.5 py-1 text-[10px] font-bold uppercase rounded flex items-center gap-1 transition-colors ${
+                            expenseSortOrder === "asc"
+                              ? "bg-forest text-brand-bg shadow-xs"
+                              : "bg-forest/10 text-forest hover:bg-forest/20"
+                          }`}
+                        >
+                          <ArrowUp className="w-3 h-3" /> Oldest First
+                        </button>
+                        <span className="text-[10px] text-gold font-semibold uppercase ml-2">
+                          {businessExpenses.length} Expense Records
+                        </span>
+                      </div>
                     </div>
 
                     <div className="overflow-x-auto border border-forest/10 bg-white">
                       <table className="w-full text-xs font-light text-dark divide-y divide-forest/10">
                         <thead className="bg-brand-bg/50 text-[9px] uppercase font-bold text-forest sticky top-0">
                           <tr>
-                            <th className="p-3 text-left w-28">Date</th>
+                            <th
+                              onClick={() => setExpenseSortOrder((prev) => (prev === "desc" ? "asc" : "desc"))}
+                              className="p-3 text-left w-36 cursor-pointer hover:bg-forest/10 select-none transition-colors group"
+                              title="Click to toggle sorting between newest and oldest"
+                            >
+                              <div className="flex items-center gap-1.5">
+                                <span>Date</span>
+                                {expenseSortOrder === "desc" ? (
+                                  <ArrowDown className="w-3.5 h-3.5 text-forest" />
+                                ) : (
+                                  <ArrowUp className="w-3.5 h-3.5 text-forest" />
+                                )}
+                                <span className="text-[8px] font-normal lowercase text-forest/60">
+                                  ({expenseSortOrder === "desc" ? "newest" : "oldest"})
+                                </span>
+                              </div>
+                            </th>
                             <th className="p-3 text-left w-36">Category</th>
                             <th className="p-3 text-left">Item Description</th>
                             <th className="p-3 text-left w-24">Quantity</th>
@@ -1894,28 +2015,20 @@ export default function AdminPage() {
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-forest/5 font-mono">
-                          {businessExpenses.map((exp, idx) => (
+                          {sortedExpenses.map((exp) => (
                             <tr key={exp.id} className="hover:bg-forest/5 transition-colors">
                               <td className="p-2">
                                 <input
-                                  type="text"
+                                  type="date"
                                   value={exp.date}
-                                  onChange={(e) => {
-                                    const updated = [...businessExpenses];
-                                    updated[idx].date = e.target.value;
-                                    setBusinessExpenses(updated);
-                                  }}
+                                  onChange={(e) => updateExpense(exp.id, "date", e.target.value)}
                                   className="w-full p-1 border border-forest/10 bg-white text-[11px] font-mono outline-none"
                                 />
                               </td>
                               <td className="p-2">
                                 <select
                                   value={exp.category}
-                                  onChange={(e) => {
-                                    const updated = [...businessExpenses];
-                                    updated[idx].category = e.target.value;
-                                    setBusinessExpenses(updated);
-                                  }}
+                                  onChange={(e) => updateExpense(exp.id, "category", e.target.value)}
                                   className="w-full p-1 border border-forest/10 bg-white text-[10px] font-bold font-sans uppercase text-forest outline-none"
                                 >
                                   <option value="Seeds">Seeds &amp; Raw Grain</option>
@@ -1934,11 +2047,7 @@ export default function AdminPage() {
                                 <input
                                   type="text"
                                   value={exp.item}
-                                  onChange={(e) => {
-                                    const updated = [...businessExpenses];
-                                    updated[idx].item = e.target.value;
-                                    setBusinessExpenses(updated);
-                                  }}
+                                  onChange={(e) => updateExpense(exp.id, "item", e.target.value)}
                                   className="w-full p-1 border border-forest/10 bg-white font-sans font-semibold text-forest text-xs outline-none"
                                 />
                               </td>
@@ -1946,16 +2055,7 @@ export default function AdminPage() {
                                 <input
                                   type="text"
                                   value={exp.quantity}
-                                  onChange={(e) => {
-                                    const updated = [...businessExpenses];
-                                    const val = e.target.value;
-                                    updated[idx].quantity = val;
-                                    const q = parseFloat(val) || 1;
-                                    const uCost = Number(updated[idx].unitCost || 0);
-                                    const sCost = Number(updated[idx].shippingCost || 0);
-                                    updated[idx].amount = Math.round(uCost * q + sCost);
-                                    setBusinessExpenses(updated);
-                                  }}
+                                  onChange={(e) => updateExpense(exp.id, "quantity", e.target.value)}
                                   className="w-full p-1 border border-forest/10 bg-white text-xs outline-none"
                                 />
                               </td>
@@ -1963,15 +2063,7 @@ export default function AdminPage() {
                                 <input
                                   type="number"
                                   value={exp.unitCost || 0}
-                                  onChange={(e) => {
-                                    const updated = [...businessExpenses];
-                                    const uCost = Number(e.target.value);
-                                    updated[idx].unitCost = uCost;
-                                    const q = parseFloat(updated[idx].quantity) || 1;
-                                    const s = Number(updated[idx].shippingCost || 0);
-                                    updated[idx].amount = Math.round(uCost * q + s);
-                                    setBusinessExpenses(updated);
-                                  }}
+                                  onChange={(e) => updateExpense(exp.id, "unitCost", Number(e.target.value))}
                                   className="w-full p-1 border border-forest/10 bg-white text-xs font-mono font-bold text-dark outline-none"
                                 />
                               </td>
@@ -1979,15 +2071,7 @@ export default function AdminPage() {
                                 <input
                                   type="number"
                                   value={exp.shippingCost || 0}
-                                  onChange={(e) => {
-                                    const updated = [...businessExpenses];
-                                    const sCost = Number(e.target.value);
-                                    updated[idx].shippingCost = sCost;
-                                    const uCost = Number(updated[idx].unitCost || 0);
-                                    const q = parseFloat(updated[idx].quantity) || 1;
-                                    updated[idx].amount = Math.round(uCost * q + sCost);
-                                    setBusinessExpenses(updated);
-                                  }}
+                                  onChange={(e) => updateExpense(exp.id, "shippingCost", Number(e.target.value))}
                                   className="w-full p-1 border border-forest/10 bg-white text-xs font-mono font-bold text-amber-800 outline-none"
                                 />
                               </td>
@@ -2003,11 +2087,7 @@ export default function AdminPage() {
                                     <input
                                       type="number"
                                       value={displayAmount}
-                                      onChange={(e) => {
-                                        const updated = [...businessExpenses];
-                                        updated[idx].amount = Number(e.target.value);
-                                        setBusinessExpenses(updated);
-                                      }}
+                                      onChange={(e) => updateExpense(exp.id, "amount", Number(e.target.value))}
                                       className="w-full p-1 border border-forest/10 bg-amber-50 text-xs font-mono font-bold text-red-700 outline-none"
                                     />
                                   );
@@ -2017,11 +2097,7 @@ export default function AdminPage() {
                                 <input
                                   type="text"
                                   value={exp.notes || ""}
-                                  onChange={(e) => {
-                                    const updated = [...businessExpenses];
-                                    updated[idx].notes = e.target.value;
-                                    setBusinessExpenses(updated);
-                                  }}
+                                  onChange={(e) => updateExpense(exp.id, "notes", e.target.value)}
                                   className="w-full p-1 border border-forest/10 bg-white text-[11px] font-sans text-dark/70 outline-none"
                                 />
                               </td>
@@ -2145,7 +2221,7 @@ export default function AdminPage() {
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-forest/5">
-                            {checkoutLeads.map((lead) => {
+                            {sortedLeads.map((lead) => {
                               const items = Array.isArray(lead.cartItems) ? lead.cartItems : [];
                               const itemsText = items.map((i: any) => `${i.name || "Item"} (${i.size || "1L"}) x${i.quantity || 1}`).join(", ") || "—";
                               const timeStr = new Date(lead.updatedAt).toLocaleString("en-IN", {
