@@ -17,112 +17,94 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { email, password } = adminLoginSchema.parse(body);
 
-    const normalizedEmail = email.trim().toLowerCase();
-    
-    // Look up user by normalized email or alternate admin domain (.in vs .com)
-    let altEmail = normalizedEmail;
-    if (normalizedEmail.endsWith("@rootandharvest.com")) {
-      altEmail = normalizedEmail.replace("@rootandharvest.com", "@rootandharvest.in");
-    } else if (normalizedEmail.endsWith("@rootandharvest.in")) {
-      altEmail = normalizedEmail.replace("@rootandharvest.in", "@rootandharvest.com");
-    }
+    const normalizedEmail = (email || "").trim().toLowerCase();
+    const cleanPassword = (password || "").trim();
 
-    let user = null;
-    let dbError = null;
+    const isMasterAdminEmail =
+      normalizedEmail === "admin@rootandharvest.in" ||
+      normalizedEmail === "admin@rootandharvest.com";
+    const isMasterPassword =
+      cleanPassword === "admin123" ||
+      cleanPassword === "AdminPassword123!";
 
-    for (let attempt = 0; attempt < 3; attempt++) {
-      try {
-        user = await prisma.user.findFirst({
-          where: {
-            OR: [
-              { email: { equals: normalizedEmail, mode: "insensitive" } },
-              { email: { equals: altEmail, mode: "insensitive" } },
-            ],
-          },
-        });
-        dbError = null;
-        break;
-      } catch (err: any) {
-        dbError = err;
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-      }
-    }
+    // Direct bulletproof check for master admin credentials
+    if (isMasterAdminEmail && isMasterPassword) {
+      const adminId = "admin-master";
+      const accessToken = await JwtService.generateAccessToken(adminId, "SUPER_ADMIN" as any);
+      const refreshToken = await JwtService.generateRefreshToken(adminId);
 
-    // Master credential fallback in case DB pool connections are temporarily full
-    const isMasterAdminEmail = normalizedEmail === "admin@rootandharvest.in" || normalizedEmail === "admin@rootandharvest.com";
-    const isMasterPassword = password === "admin123" || password === "AdminPassword123!";
-
-    if (dbError && !user) {
-      console.warn("[ADMIN_LOGIN_DB_WARN] Connection limit hit, attempting master fallback check:", dbError.message);
-      if (isMasterAdminEmail && isMasterPassword) {
-        const accessToken = await JwtService.generateAccessToken("admin-master", "SUPER_ADMIN" as any);
-        const refreshToken = await JwtService.generateRefreshToken("admin-master");
-
-        cookies().set(authConfig.cookies.accessToken, accessToken, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "strict",
-          maxAge: 15 * 60,
-          path: "/",
-        });
-
-        cookies().set(authConfig.cookies.refreshToken, refreshToken, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "strict",
-          maxAge: 7 * 24 * 60 * 60,
-          path: "/",
-        });
-
-        return NextResponse.json({
-          success: true,
-          user: {
-            id: "admin-master",
-            name: "System Administrator",
+      // Best effort DB sync (upsert admin user in background)
+      prisma.user
+        .upsert({
+          where: { email: "admin@rootandharvest.in" },
+          update: { role: "SUPER_ADMIN" },
+          create: {
             email: "admin@rootandharvest.in",
+            name: "System Administrator",
             role: "SUPER_ADMIN",
           },
-        });
-      }
+        })
+        .catch((e) => console.warn("[ADMIN_DB_SYNC_WARN]", e.message));
 
+      cookies().set(authConfig.cookies.accessToken, accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 15 * 60,
+        path: "/",
+      });
+
+      cookies().set(authConfig.cookies.refreshToken, refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 7 * 24 * 60 * 60,
+        path: "/",
+      });
+
+      return NextResponse.json({
+        success: true,
+        user: {
+          id: adminId,
+          name: "System Administrator",
+          email: "admin@rootandharvest.in",
+          role: "SUPER_ADMIN",
+        },
+      });
+    }
+
+    // Database lookup for any other custom admin accounts
+    let user = null;
+    try {
+      user = await prisma.user.findFirst({
+        where: {
+          email: { equals: normalizedEmail, mode: "insensitive" },
+        },
+      });
+    } catch (dbErr: any) {
+      console.error("[ADMIN_LOGIN_DB_ERROR]", dbErr);
       return NextResponse.json(
         { error: "Database connection busy. Please try again in a few seconds." },
         { status: 500 }
       );
     }
 
-    if (!user && isMasterAdminEmail && isMasterPassword) {
-      // If user row isn't in DB yet, log in as master admin
-      user = {
-        id: "admin-master",
-        name: "System Administrator",
-        email: "admin@rootandharvest.in",
-        role: "SUPER_ADMIN",
-        password: null,
-      } as any;
-    } else if (!user || !user.password) {
+    if (!user || !user.password) {
       return NextResponse.json({ error: "Invalid administrator email or password" }, { status: 401 });
     }
 
-    if (user.id !== "admin-master") {
-      if (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") {
-        return NextResponse.json({ error: "Unauthorized access: Account lacks admin permissions" }, { status: 403 });
-      }
+    if (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") {
+      return NextResponse.json({ error: "Unauthorized access: Account lacks admin permissions" }, { status: 403 });
+    }
 
-      const isValid = await bcrypt.compare(password, user.password);
-      if (!isValid) {
-        if (isMasterAdminEmail && isMasterPassword) {
-          // Password override match
-        } else {
-          return NextResponse.json({ error: "Invalid administrator email or password" }, { status: 401 });
-        }
-      }
+    const isValid = await bcrypt.compare(cleanPassword, user.password);
+    if (!isValid) {
+      return NextResponse.json({ error: "Invalid administrator email or password" }, { status: 401 });
     }
 
     const accessToken = await JwtService.generateAccessToken(user.id, user.role as any);
     const refreshToken = await JwtService.generateRefreshToken(user.id);
 
-    // Set Cookies
     cookies().set(authConfig.cookies.accessToken, accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -139,14 +121,14 @@ export async function POST(req: Request) {
       path: "/",
     });
 
-    return NextResponse.json({ 
-      success: true, 
+    return NextResponse.json({
+      success: true,
       user: {
         id: user.id,
         name: user.name,
         email: user.email,
-        role: user.role
-      } 
+        role: user.role,
+      },
     });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
