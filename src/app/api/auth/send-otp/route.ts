@@ -18,6 +18,26 @@ export async function POST(req: Request) {
     }
     const formattedPhone = `+91${raw}`;
 
+    // Rate-limiting: prevent requesting OTP more than once every 30 seconds
+    const { prisma } = await import("@/lib/db");
+    const recentOtp = await prisma.otp.findFirst({
+      where: {
+        phone: formattedPhone,
+        createdAt: {
+          gte: new Date(Date.now() - 30 * 1000)
+        }
+      },
+      orderBy: { createdAt: "desc" }
+    });
+
+    if (recentOtp) {
+      const waitSeconds = Math.max(1, Math.ceil((30 * 1000 - (Date.now() - new Date(recentOtp.createdAt).getTime())) / 1000));
+      return NextResponse.json({ 
+        error: `Please wait ${waitSeconds}s before requesting a new OTP`,
+        cooldownSeconds: waitSeconds
+      }, { status: 429 });
+    }
+
     const { referenceId, code } = await AuthService.requestOtp(formattedPhone);
 
     const isDev = process.env.NODE_ENV !== "production";
