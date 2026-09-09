@@ -56,13 +56,13 @@ export const INITIAL_PRODUCTS: Product[] = [
     sizePrices: {
       "500 ml": 245,
       "1 L": 469,
-      "2 L": 899,
+      "2 L": 999,
       "5 L": 2299
     },
     originalSizePrices: {
       "500 ml": 272.22,
       "1 L": 521.11,
-      "2 L": 998.89,
+      "2 L": 1110.00,
       "5 L": 2554.44
     },
     benefits: [
@@ -145,16 +145,16 @@ export const INITIAL_PRODUCTS: Product[] = [
     ],
     sizes: ["500 ml", "1 L", "2 L", "5 L"],
     sizePrices: {
-      "500 ml": 319,
-      "1 L": 599,
-      "2 L": 1149,
-      "5 L": 2799
+      "500 ml": 299,
+      "1 L": 549,
+      "2 L": 1199,
+      "5 L": 2699
     },
     originalSizePrices: {
-      "500 ml": 355,
-      "1 L": 665,
-      "2 L": 1275,
-      "5 L": 3100
+      "500 ml": 332.22,
+      "1 L": 610.00,
+      "2 L": 1332.22,
+      "5 L": 2998.89
     },
     benefits: [
       "Rich in natural sesame antioxidants (sesamol and sesamolin).",

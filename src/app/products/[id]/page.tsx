@@ -112,11 +112,20 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
       makeOilVariant({ id: "500ml-plastic", size: "500 ml", bottleType: "Plastic Bottle", label: "500mL Plastic", salePrice: 245.00, litres: 0.5 }),
       makeOilVariant({ id: "500ml-glass", size: "500 ml", bottleType: "Glass Bottle", label: "500mL Glass", salePrice: 295.00, litres: 0.5 }),
       makeOilVariant({ id: "1l-plastic", size: "1 L", bottleType: "Plastic Bottle", label: "1L Plastic", salePrice: 469.00, litres: 1.0, tag: "BESTSELLER" }),
-      makeOilVariant({ id: "1l-glass", size: "1 L", bottleType: "Glass Bottle", label: "1L Glass", salePrice: 519.00, litres: 1.0 }),
+      makeOilVariant({ id: "1l-glass", size: "1 L", bottleType: "Glass Bottle", label: "1L Glass", salePrice: 549.00, litres: 1.0 }),
       makeOilVariant({ id: "1l-tin", size: "1 L", bottleType: "Tin Metal", label: "1L Tin Metal", salePrice: 569.00, litres: 1.0 }),
-      makeOilVariant({ id: "2l-plastic", size: "2 L", bottleType: "Plastic Can", label: "2L Plastic Can", salePrice: 899.00, litres: 2.0 }),
       makeOilVariant({ id: "2l-tin", size: "2 L", bottleType: "Tin Metal", label: "2L Tin Metal", salePrice: 999.00, litres: 2.0 }),
       makeOilVariant({ id: "5l-tin", size: "5 L", bottleType: "Tin Metal", label: "5L Tin Metal", salePrice: 2299.00, litres: 5.0, tag: "BEST VALUE" }),
+    ];
+  } else if (product.id === "sesame-oil") {
+    variants = [
+      makeOilVariant({ id: "500ml-plastic", size: "500 ml", bottleType: "Plastic Bottle", label: "500mL Plastic", salePrice: 299.00, litres: 0.5 }),
+      makeOilVariant({ id: "500ml-glass", size: "500 ml", bottleType: "Glass Bottle", label: "500mL Glass", salePrice: 349.00, litres: 0.5 }),
+      makeOilVariant({ id: "1l-plastic", size: "1 L", bottleType: "Plastic Bottle", label: "1L Plastic", salePrice: 549.00, litres: 1.0, tag: "BESTSELLER" }),
+      makeOilVariant({ id: "1l-glass", size: "1 L", bottleType: "Glass Bottle", label: "1L Glass", salePrice: 569.00, litres: 1.0 }),
+      makeOilVariant({ id: "1l-tin", size: "1 L", bottleType: "Tin Metal", label: "1L Tin Metal", salePrice: 589.00, litres: 1.0 }),
+      makeOilVariant({ id: "2l-tin", size: "2 L", bottleType: "Tin Metal", label: "2L Tin Metal", salePrice: 1199.00, litres: 2.0 }),
+      makeOilVariant({ id: "5l-tin", size: "5 L", bottleType: "Tin Metal", label: "5L Tin Metal", salePrice: 2699.00, litres: 5.0, tag: "BEST VALUE" }),
     ];
   } else if (isOil) {
     variants = [
@@ -125,7 +134,6 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
       makeOilVariant({ id: "1l-plastic", size: "1 L", bottleType: "Plastic Bottle", label: "1L Plastic", salePrice: p1L, litres: 1.0, tag: "BESTSELLER" }),
       makeOilVariant({ id: "1l-glass", size: "1 L", bottleType: "Glass Bottle", label: "1L Glass", salePrice: p1L + glassDiff, litres: 1.0 }),
       makeOilVariant({ id: "1l-tin", size: "1 L", bottleType: "Tin Metal", label: "1L Tin Metal", salePrice: p1L + tinDiff, litres: 1.0 }),
-      makeOilVariant({ id: "2l-plastic", size: "2 L", bottleType: "Plastic Can", label: "2L Plastic Can", salePrice: p2L, litres: 2.0 }),
       makeOilVariant({ id: "2l-tin", size: "2 L", bottleType: "Tin Metal", label: "2L Tin Metal", salePrice: p2L + tinDiff, litres: 2.0 }),
       makeOilVariant({ id: "5l-tin", size: "5 L", bottleType: "Tin Metal", label: "5L Tin Metal", salePrice: p5L + tinDiff, litres: 5.0, tag: "BEST VALUE" }),
     ];
