@@ -25,6 +25,7 @@ import {
   Globe,
   Check,
   ExternalLink,
+  Save,
   ArrowDown,
   ArrowUp,
   ArrowUpDown,
@@ -137,6 +138,8 @@ export default function AdminPage() {
   useEffect(() => {
     if (activeTab === "reviews") {
       fetchAdminReviews();
+    } else if (activeTab === "expenses") {
+      fetchExpensesFromDb();
     }
   }, [activeTab]);
 
@@ -299,6 +302,113 @@ export default function AdminPage() {
   const [newExpAmount, setNewExpAmount] = useState("");
   const [newExpNotes, setNewExpNotes] = useState("");
 
+  // Database Persistence & Auto-Sync State for Business Expenses
+  const [expenseSyncStatus, setExpenseSyncStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [expenseSyncMsg, setExpenseSyncMsg] = useState<string>("");
+  const [isExpenseDirty, setIsExpenseDirty] = useState<boolean>(false);
+  const [isDbLoaded, setIsDbLoaded] = useState<boolean>(false);
+
+  // Expense Sorting & Direct In-Place Cell Update Handlers
+  const [expenseSortOrder, setExpenseSortOrder] = useState<"desc" | "asc">("desc");
+
+  // Fetch expenses from PostgreSQL Database on mount
+  const fetchExpensesFromDb = async () => {
+    try {
+      setExpenseSyncStatus("saving");
+      setExpenseSyncMsg("Connecting to Database...");
+      const res = await fetch("/api/admin/expenses");
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.expenses) && data.expenses.length > 0) {
+          setBusinessExpenses(data.expenses);
+          try {
+            localStorage.setItem("rh_admin_expenses_v2", JSON.stringify(data.expenses));
+          } catch (_) {}
+          setExpenseSyncStatus("saved");
+          setExpenseSyncMsg("Database: In Sync ✓");
+          setIsExpenseDirty(false);
+          setIsDbLoaded(true);
+          return;
+        }
+      }
+      // If DB empty, fallback to local storage or initial expenses and seed to DB
+      let initialToUse = INITIAL_BUSINESS_EXPENSES;
+      try {
+        const local = localStorage.getItem("rh_admin_expenses_v2");
+        if (local) {
+          const parsed = JSON.parse(local);
+          if (Array.isArray(parsed) && parsed.length >= 13) {
+            initialToUse = parsed;
+          }
+        }
+      } catch (_) {}
+      setBusinessExpenses(initialToUse);
+      setIsDbLoaded(true);
+      await saveExpensesToDb(initialToUse);
+    } catch (e: any) {
+      console.error("Failed to load expenses from DB", e);
+      setExpenseSyncStatus("error");
+      setExpenseSyncMsg("DB Offline (Local backup active)");
+      setIsDbLoaded(true);
+    }
+  };
+
+  // Save expenses array to PostgreSQL Database
+  const saveExpensesToDb = async (expensesToSave = businessExpenses) => {
+    try {
+      setExpenseSyncStatus("saving");
+      setExpenseSyncMsg("Saving to Database...");
+      const res = await fetch("/api/admin/expenses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ expenses: expensesToSave }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.expenses)) {
+          setBusinessExpenses(data.expenses);
+          try {
+            localStorage.setItem("rh_admin_expenses_v2", JSON.stringify(data.expenses));
+          } catch (_) {}
+        }
+        setExpenseSyncStatus("saved");
+        setExpenseSyncMsg("Database: Saved ✓");
+        setIsExpenseDirty(false);
+      } else {
+        throw new Error("Failed to save");
+      }
+    } catch (e: any) {
+      console.error("Failed to save expenses to DB:", e);
+      setExpenseSyncStatus("error");
+      setExpenseSyncMsg("Save Failed (Stored locally)");
+    }
+  };
+
+  // Load from DB on mount or when switching to expenses tab
+  useEffect(() => {
+    fetchExpensesFromDb();
+  }, []);
+
+  // Debounced Auto-Sync to Database when edited
+  useEffect(() => {
+    if (!isDbLoaded || !isExpenseDirty) return;
+    const timer = setTimeout(() => {
+      saveExpensesToDb(businessExpenses);
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, [businessExpenses, isExpenseDirty, isDbLoaded]);
+
+  // Persist expenses to localStorage whenever updated
+  useEffect(() => {
+    try {
+      if (businessExpenses && businessExpenses.length > 0) {
+        localStorage.setItem("rh_admin_expenses_v2", JSON.stringify(businessExpenses));
+      }
+    } catch (e) {
+      console.error("Failed to save expenses to localStorage", e);
+    }
+  }, [businessExpenses]);
+
   const handleAddExpense = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newExpItem) return;
@@ -321,7 +431,11 @@ export default function AdminPage() {
       amount: computedAmount,
       notes: newExpNotes.trim(),
     };
-    setBusinessExpenses((prev) => [newEntry, ...prev]);
+    const updatedExpenses = [newEntry, ...businessExpenses];
+    setBusinessExpenses(updatedExpenses);
+    setIsExpenseDirty(true);
+    saveExpensesToDb(updatedExpenses);
+
     setNewExpItem("");
     setNewExpQty("");
     setNewExpUnitCost("");
@@ -330,39 +444,9 @@ export default function AdminPage() {
     setNewExpNotes("");
   };
 
-  // Expense Sorting & Direct In-Place Cell Update Handlers
-  const [expenseSortOrder, setExpenseSortOrder] = useState<"desc" | "asc">("desc");
-
-  // Load persisted expenses from localStorage if available, ensuring all 13 items are preserved
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem("rh_admin_expenses_v2");
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length >= 13) {
-          setBusinessExpenses(parsed);
-          return;
-        }
-      }
-      localStorage.setItem("rh_admin_expenses_v2", JSON.stringify(INITIAL_BUSINESS_EXPENSES));
-    } catch (e) {
-      console.error("Failed to load saved expenses from localStorage", e);
-    }
-  }, []);
-
-  // Persist expenses to localStorage whenever updated
-  useEffect(() => {
-    try {
-      if (businessExpenses && businessExpenses.length > 0) {
-        localStorage.setItem("rh_admin_expenses_v2", JSON.stringify(businessExpenses));
-      }
-    } catch (e) {
-      console.error("Failed to save expenses to localStorage", e);
-    }
-  }, [businessExpenses]);
-
   // Safely update expense field by ID
   const updateExpense = (id: string, field: string, value: any) => {
+    setIsExpenseDirty(true);
     setBusinessExpenses((prev) =>
       prev.map((item) => {
         if (item.id !== id) return item;
@@ -376,6 +460,13 @@ export default function AdminPage() {
         return updated;
       })
     );
+  };
+
+  const handleRemoveExpense = (id: string) => {
+    const remaining = businessExpenses.filter((e) => e.id !== id);
+    setBusinessExpenses(remaining);
+    setIsExpenseDirty(true);
+    saveExpensesToDb(remaining);
   };
 
   // Automatically sorted expenses based on date
@@ -2029,17 +2120,74 @@ export default function AdminPage() {
 
                   {/* Expenses Ledger Table */}
                   <div className="space-y-3">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-forest/10 pb-2">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-forest/10 pb-3">
                       <div>
-                        <h4 className="text-sm font-serif font-bold text-forest uppercase tracking-wider">Day 1 Expense &amp; Procurement Log</h4>
-                        <span className="text-[10px] text-dark/50">Edit any past record, date, quantity, rate or shipping cost directly below (sorted automatically by date)</span>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-sm font-serif font-bold text-forest uppercase tracking-wider">Day 1 Expense &amp; Procurement Log</h4>
+                          {/* Live DB Sync Status Badge */}
+                          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono border">
+                            {expenseSyncStatus === "saving" && (
+                              <span className="flex items-center gap-1 text-amber-700 bg-amber-50">
+                                <RefreshCw className="w-3 h-3 animate-spin text-amber-600" />
+                                Saving to DB...
+                              </span>
+                            )}
+                            {expenseSyncStatus === "saved" && !isExpenseDirty && (
+                              <span className="flex items-center gap-1 text-emerald-700 bg-emerald-50 font-semibold">
+                                <Check className="w-3 h-3 text-emerald-600" />
+                                Database: In Sync ✓
+                              </span>
+                            )}
+                            {isExpenseDirty && (
+                              <span className="flex items-center gap-1 text-amber-800 bg-amber-50 font-semibold">
+                                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                                Unsaved Changes
+                              </span>
+                            )}
+                            {expenseSyncStatus === "error" && (
+                              <span className="flex items-center gap-1 text-red-700 bg-red-50">
+                                ● Sync Error (Local)
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <span className="text-[10px] text-dark/50 block mt-0.5">
+                          Edit any record, date, quantity, rate, or shipping cost directly below (synced automatically &amp; permanently to PostgreSQL)
+                        </span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] text-dark/60 font-sans">Sort by Date:</span>
+
+                      <div className="flex flex-wrap items-center gap-2">
+                        {/* Save to Database Button */}
+                        <button
+                          type="button"
+                          onClick={() => saveExpensesToDb()}
+                          disabled={expenseSyncStatus === "saving"}
+                          className="px-3 py-1.5 bg-forest hover:bg-forest-light active:scale-95 text-white text-[10px] font-bold uppercase rounded flex items-center gap-1.5 shadow-sm transition-all"
+                          title="Save all changes directly to PostgreSQL cloud database"
+                        >
+                          <Save className="w-3.5 h-3.5" />
+                          Save to DB
+                        </button>
+
+                        {/* Reload from DB Button */}
+                        <button
+                          type="button"
+                          onClick={fetchExpensesFromDb}
+                          disabled={expenseSyncStatus === "saving"}
+                          className="px-2.5 py-1.5 bg-forest/10 hover:bg-forest/20 text-forest text-[10px] font-bold uppercase rounded flex items-center gap-1 transition-colors"
+                          title="Reload latest records from PostgreSQL database"
+                        >
+                          <RefreshCw className={`w-3 h-3 ${expenseSyncStatus === "saving" ? "animate-spin" : ""}`} />
+                          Reload
+                        </button>
+
+                        <div className="h-4 w-px bg-forest/20 mx-1 hidden sm:block" />
+
+                        <span className="text-[10px] text-dark/60 font-sans">Sort:</span>
                         <button
                           type="button"
                           onClick={() => setExpenseSortOrder("desc")}
-                          className={`px-2.5 py-1 text-[10px] font-bold uppercase rounded flex items-center gap-1 transition-colors ${
+                          className={`px-2 py-1 text-[10px] font-bold uppercase rounded flex items-center gap-1 transition-colors ${
                             expenseSortOrder === "desc"
                               ? "bg-forest text-brand-bg shadow-xs"
                               : "bg-forest/10 text-forest hover:bg-forest/20"
@@ -2050,7 +2198,7 @@ export default function AdminPage() {
                         <button
                           type="button"
                           onClick={() => setExpenseSortOrder("asc")}
-                          className={`px-2.5 py-1 text-[10px] font-bold uppercase rounded flex items-center gap-1 transition-colors ${
+                          className={`px-2 py-1 text-[10px] font-bold uppercase rounded flex items-center gap-1 transition-colors ${
                             expenseSortOrder === "asc"
                               ? "bg-forest text-brand-bg shadow-xs"
                               : "bg-forest/10 text-forest hover:bg-forest/20"
@@ -2058,8 +2206,8 @@ export default function AdminPage() {
                         >
                           <ArrowUp className="w-3 h-3" /> Oldest First
                         </button>
-                        <span className="text-[10px] text-gold font-semibold uppercase ml-2">
-                          {businessExpenses.length} Expense Records
+                        <span className="text-[10px] text-gold font-semibold uppercase ml-1">
+                          {businessExpenses.length} Records
                         </span>
                       </div>
                     </div>
@@ -2184,7 +2332,8 @@ export default function AdminPage() {
                               </td>
                               <td className="p-2 text-center">
                                 <button
-                                  onClick={() => setBusinessExpenses(businessExpenses.filter((e) => e.id !== exp.id))}
+                                  type="button"
+                                  onClick={() => handleRemoveExpense(exp.id)}
                                   className="text-red-600 hover:text-red-800 text-[10px] uppercase font-bold font-sans"
                                 >
                                   Remove

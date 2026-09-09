@@ -178,5 +178,18 @@ model CheckoutLead {
   @@index([email])
 }
 
+model BusinessExpense {
+  id           String   @id @default(cuid())
+  date         String
+  category     String
+  item         String
+  quantity     String
+  unitCost     Float    @default(0)
+  shippingCost Float    @default(0)
+  amount       Float    @default(0)
+  notes        String?  @default("")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-
+  @@index([date])
+}
