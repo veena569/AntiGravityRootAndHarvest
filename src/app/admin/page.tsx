@@ -310,7 +310,7 @@ export default function AdminPage() {
       prev.map((item) => (item.sku === sku ? { ...item, stock: Math.max(0, item.stock - 5) } : item))
     );
   };
-  // Dynamic Oil & Grain Master Rate Registers
+  // Dynamic Oil & Grain Master Rate Registers with 7-Variant Support
   const [oilRates, setOilRates] = useState<any[]>([
     {
       id: "groundnut-oil",
@@ -318,8 +318,15 @@ export default function AdminPage() {
       seedCostPerKg: 125,
       seedRatioPerLiter: 2.5,
       pressingCostPerKg: 30,
-      packagingCostPerLiter: 45, // ₹35 bottle + ₹10 cap & label
-      sellingPricePerLiter: 449,
+      variants: [
+        { id: "gn-500ml-plastic", name: "500ML Plastic", volume: 0.5, packaging: "Plastic", packagingCost: 25, salePrice: 245 },
+        { id: "gn-500ml-glass", name: "500ML Glass", volume: 0.5, packaging: "Glass", packagingCost: 45, salePrice: 295 },
+        { id: "gn-1l-plastic", name: "1L Plastic", volume: 1.0, packaging: "Plastic", packagingCost: 45, salePrice: 469, badge: "BESTSELLER" },
+        { id: "gn-1l-glass", name: "1L Glass", volume: 1.0, packaging: "Glass", packagingCost: 65, salePrice: 549 },
+        { id: "gn-1l-tin", name: "1L Tin Metal", volume: 1.0, packaging: "Tin Metal", packagingCost: 85, salePrice: 569 },
+        { id: "gn-2l-tin", name: "2L Tin Metal", volume: 2.0, packaging: "Tin Metal", packagingCost: 140, salePrice: 999 },
+        { id: "gn-5l-tin", name: "5L Tin Metal", volume: 5.0, packaging: "Tin Metal", packagingCost: 280, salePrice: 2299, badge: "BEST VALUE" },
+      ],
     },
     {
       id: "sesame-oil",
@@ -327,44 +334,71 @@ export default function AdminPage() {
       seedCostPerKg: 125,
       seedRatioPerLiter: 2.5,
       pressingCostPerKg: 30,
-      packagingCostPerLiter: 45,
-      sellingPricePerLiter: 599,
-    },
-    {
-      id: "sunflower-oil",
-      name: "Wood Pressed Sunflower Oil",
-      seedCostPerKg: 110,
-      seedRatioPerLiter: 2.5,
-      pressingCostPerKg: 30,
-      packagingCostPerLiter: 45,
-      sellingPricePerLiter: 465,
+      variants: [
+        { id: "ses-500ml-plastic", name: "500ML Plastic", volume: 0.5, packaging: "Plastic", packagingCost: 25, salePrice: 299 },
+        { id: "ses-500ml-glass", name: "500ML Glass", volume: 0.5, packaging: "Glass", packagingCost: 45, salePrice: 349 },
+        { id: "ses-1l-plastic", name: "1L Plastic", volume: 1.0, packaging: "Plastic", packagingCost: 45, salePrice: 549, badge: "BESTSELLER" },
+        { id: "ses-1l-glass", name: "1L Glass", volume: 1.0, packaging: "Glass", packagingCost: 65, salePrice: 569 },
+        { id: "ses-1l-tin", name: "1L Tin Metal", volume: 1.0, packaging: "Tin Metal", packagingCost: 85, salePrice: 589 },
+        { id: "ses-2l-tin", name: "2L Tin Metal", volume: 2.0, packaging: "Tin Metal", packagingCost: 140, salePrice: 1199 },
+        { id: "ses-5l-tin", name: "5L Tin Metal", volume: 5.0, packaging: "Tin Metal", packagingCost: 280, salePrice: 2699, badge: "BEST VALUE" },
+      ],
     },
   ]);
 
   // Form State for Adding New Custom Oils
   const [newOilName, setNewOilName] = useState("");
-  const [newOilSeedCost, setNewOilSeedCost] = useState("");
+  const [newOilSeedCost, setNewOilSeedCost] = useState("125");
   const [newOilSeedRatio, setNewOilSeedRatio] = useState("2.5");
   const [newOilPressingCost, setNewOilPressingCost] = useState("30");
-  const [newOilPackagingCost, setNewOilPackagingCost] = useState("45");
   const [newOilSellingPrice, setNewOilSellingPrice] = useState("");
+  const [newOilMrp, setNewOilMrp] = useState("");
+
+  const handleSalePriceChange = (val: string) => {
+    setNewOilSellingPrice(val);
+    const num = parseFloat(val);
+    if (!isNaN(num) && num > 0) {
+      setNewOilMrp((num / 0.90).toFixed(2));
+    } else {
+      setNewOilMrp("");
+    }
+  };
+
+  const handleMrpChange = (val: string) => {
+    setNewOilMrp(val);
+    const num = parseFloat(val);
+    if (!isNaN(num) && num > 0) {
+      setNewOilSellingPrice(String(Math.round(num * 0.90)));
+    } else {
+      setNewOilSellingPrice("");
+    }
+  };
 
   const handleAddOil = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newOilName || !newOilSeedCost || !newOilSellingPrice) return;
+    if (!newOilName || !newOilSellingPrice) return;
+    const base1LSellPrice = Number(newOilSellingPrice);
+    const oilId = newOilName.toLowerCase().replace(/[^a-z0-9]/g, "-");
     const newOil = {
-      id: newOilName.toLowerCase().replace(/[^a-z0-9]/g, "-"),
+      id: oilId,
       name: newOilName.trim(),
-      seedCostPerKg: Number(newOilSeedCost),
+      seedCostPerKg: Number(newOilSeedCost || 125),
       seedRatioPerLiter: Number(newOilSeedRatio || 2.5),
       pressingCostPerKg: Number(newOilPressingCost || 30),
-      packagingCostPerLiter: Number(newOilPackagingCost || 45),
-      sellingPricePerLiter: Number(newOilSellingPrice),
+      variants: [
+        { id: `${oilId}-500ml-plastic`, name: "500ML Plastic", volume: 0.5, packaging: "Plastic", packagingCost: 25, salePrice: Math.round(base1LSellPrice * 0.53) },
+        { id: `${oilId}-500ml-glass`, name: "500ML Glass", volume: 0.5, packaging: "Glass", packagingCost: 45, salePrice: Math.round(base1LSellPrice * 0.53 + 50) },
+        { id: `${oilId}-1l-plastic`, name: "1L Plastic", volume: 1.0, packaging: "Plastic", packagingCost: 45, salePrice: base1LSellPrice, badge: "BESTSELLER" },
+        { id: `${oilId}-1l-glass`, name: "1L Glass", volume: 1.0, packaging: "Glass", packagingCost: 65, salePrice: Math.round(base1LSellPrice + 50) },
+        { id: `${oilId}-1l-tin`, name: "1L Tin Metal", volume: 1.0, packaging: "Tin Metal", packagingCost: 85, salePrice: Math.round(base1LSellPrice + 70) },
+        { id: `${oilId}-2l-tin`, name: "2L Tin Metal", volume: 2.0, packaging: "Tin Metal", packagingCost: 140, salePrice: Math.round(base1LSellPrice * 2 - 30) },
+        { id: `${oilId}-5l-tin`, name: "5L Tin Metal", volume: 5.0, packaging: "Tin Metal", packagingCost: 280, salePrice: Math.round(base1LSellPrice * 5 - 150), badge: "BEST VALUE" },
+      ],
     };
     setOilRates([...oilRates, newOil]);
     setNewOilName("");
-    setNewOilSeedCost("");
     setNewOilSellingPrice("");
+    setNewOilMrp("");
   };
 
   const [grainRates, setGrainRates] = useState<any[]>([
@@ -421,6 +455,18 @@ export default function AdminPage() {
       const oilNameLower = String(oil.name || "").toLowerCase();
       const oilIdLower = String(oil.id || "").toLowerCase();
       if (nameLower.includes(oilNameLower) || nameLower.includes(oilIdLower.replace(/-/g, " "))) {
+        if (oil.variants && Array.isArray(oil.variants)) {
+          const matchedVariant = oil.variants.find((v: any) =>
+            sizeLower.includes(v.name.toLowerCase()) || sizeLower.includes(v.id.toLowerCase())
+          );
+          if (matchedVariant) {
+            const seedsCost = matchedVariant.volume * (oil.seedRatioPerLiter || 2.5) * (oil.seedCostPerKg || 0);
+            const pressingCost = matchedVariant.volume * (oil.seedRatioPerLiter || 2.5) * (oil.pressingCostPerKg || 30);
+            const packCost = matchedVariant.packagingCost || 45;
+            return Math.round((seedsCost + pressingCost + packCost) * qty);
+          }
+        }
+
         let literMultiplier = 1.0;
         if (sizeLower.includes("500") || sizeLower.includes("0.5")) literMultiplier = 0.5;
         else if (sizeLower.includes("2 l")) literMultiplier = 2.0;
@@ -429,7 +475,7 @@ export default function AdminPage() {
         const seedsNeededKg = (oil.seedRatioPerLiter || 2.5) * literMultiplier;
         const seedCost = seedsNeededKg * (oil.seedCostPerKg || 0);
         const pressingCost = seedsNeededKg * (oil.pressingCostPerKg || 30);
-        const packCost = (oil.packagingCostPerLiter || 45) * literMultiplier;
+        const packCost = 45 * literMultiplier;
 
         return Math.round((seedCost + pressingCost + packCost) * qty);
       }
@@ -886,108 +932,261 @@ export default function AdminPage() {
 
               {/* INVENTORY LOGS & PROFIT CALCULATOR TAB */}
               {activeTab === "inventory" && (
-                <div className="space-y-8 text-left">
+                <div className="max-w-6xl mx-auto space-y-8 text-left">
                   
-                  {/* Title */}
-                  <div className="border-b border-forest/10 pb-4 flex justify-between items-center">
+                  {/* Title & Description */}
+                  <div className="border-b border-forest/10 pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                     <div>
                       <h3 className="text-xl font-serif text-forest font-semibold">Inventory Rates &amp; Profit Calculator</h3>
-                      <p className="text-xs text-dark/60">Configure raw seed, pressing, bottle, and grain costs to automatically calculate profit margins across all orders</p>
+                      <p className="text-xs text-dark/60">
+                        Configure raw seed rates, pressing charges, packaging costs, and variant sale prices to track profit margins across all 7 variants.
+                      </p>
                     </div>
+                    <span className="text-[10px] bg-forest/10 text-forest font-semibold uppercase px-3 py-1 border border-forest/20">
+                      Variant-Level Tracking Active
+                    </span>
                   </div>
 
-                  {/* 1. DYNAMIC OILS COST REGISTER */}
-                  <div className="space-y-4 bg-brand-bg/30 border border-forest/10 p-6 rounded-sm">
+                  {/* 1. WOOD PRESSED OILS MASTER COST REGISTER */}
+                  <div className="space-y-6 bg-brand-bg/30 border border-forest/10 p-6 rounded-sm">
                     <div className="flex justify-between items-center border-b border-forest/10 pb-3">
-                      <h4 className="text-sm font-serif font-bold text-forest uppercase tracking-wider">1. Wood Pressed Oils Master Cost Register</h4>
-                      <span className="text-[10px] text-gold font-semibold uppercase">Seeds + Pressing + Packaging COGS</span>
+                      <h4 className="text-sm font-serif font-bold text-forest uppercase tracking-wider">
+                        1. Wood Pressed Oils Master Cost &amp; Variant Profit Register
+                      </h4>
+                      <span className="text-[10px] text-gold font-semibold uppercase tracking-wider">
+                        Seed + Pressing + Packaging COGS
+                      </span>
                     </div>
 
-                    {/* Oils List */}
-                    <div className="space-y-3">
-                      {oilRates.map((o, idx) => {
-                        const seedCostFor1L = o.seedRatioPerLiter * o.seedCostPerKg;
-                        const pressingCostFor1L = o.seedRatioPerLiter * o.pressingCostPerKg;
-                        const totalCogsFor1L = seedCostFor1L + pressingCostFor1L + o.packagingCostPerLiter;
-                        const profitFor1L = o.sellingPricePerLiter - totalCogsFor1L;
-                        const marginPct = Math.round((profitFor1L / o.sellingPricePerLiter) * 100);
+                    {/* Render Products */}
+                    <div className="space-y-8">
+                      {oilRates.map((oil, pIdx) => {
+                        const variants = oil.variants || [];
+                        const variantCount = variants.length;
+
+                        // Calculate product metrics across all variants
+                        const prices = variants.map((v: any) => v.salePrice);
+                        const minPrice = prices.length ? Math.min(...prices) : 0;
+                        const maxPrice = prices.length ? Math.max(...prices) : 0;
+
+                        let totalUnitPricePerL = 0;
+                        let totalProfit = 0;
+                        let totalMarginPct = 0;
+
+                        const variantCalculations = variants.map((v: any) => {
+                          const mrp = Math.round((v.salePrice / 0.90) * 100) / 100;
+                          const discountPercent = 10;
+                          const unitPrice = Math.round((v.salePrice / v.volume) * 100) / 100;
+
+                          const seedsNeededKg = v.volume * oil.seedRatioPerLiter;
+                          const seedCost = seedsNeededKg * oil.seedCostPerKg;
+                          const pressingCost = seedsNeededKg * oil.pressingCostPerKg;
+                          const packCost = v.packagingCost;
+                          const totalCogs = Math.round(seedCost + pressingCost + packCost);
+                          const profit = Math.round(v.salePrice - totalCogs);
+                          const margin = v.salePrice > 0 ? Math.round((profit / v.salePrice) * 100) : 0;
+
+                          totalUnitPricePerL += unitPrice;
+                          totalProfit += profit;
+                          totalMarginPct += margin;
+
+                          return {
+                            ...v,
+                            mrp,
+                            discountPercent,
+                            unitPrice,
+                            seedCost,
+                            pressingCost,
+                            totalCogs,
+                            profit,
+                            margin,
+                          };
+                        });
+
+                        const avgUnitPricePerL = variantCount ? (totalUnitPricePerL / variantCount).toFixed(2) : "0.00";
+                        const avgProfitPerUnit = variantCount ? Math.round(totalProfit / variantCount) : 0;
+                        const avgMarginPct = variantCount ? Math.round(totalMarginPct / variantCount) : 0;
 
                         return (
-                          <div key={o.id} className="grid grid-cols-1 sm:grid-cols-7 gap-3 items-center p-3.5 border border-forest/10 bg-white text-xs rounded-xs">
-                            <div className="sm:col-span-2 space-y-0.5">
-                              <span className="font-bold text-forest text-sm block">{o.name}</span>
-                              <span className="text-[10px] text-dark/50 font-mono">ID: {o.id} | {o.seedRatioPerLiter}kg seeds/L</span>
+                          <div key={oil.id} className="bg-white border border-forest/10 shadow-xs space-y-4 p-5 rounded-xs">
+                            {/* Product Card Header */}
+                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-forest/10 pb-4">
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <h5 className="font-serif font-bold text-forest text-base">{oil.name}</h5>
+                                  <span className="bg-forest text-gold text-[9px] font-bold px-2 py-0.5 uppercase tracking-wider">
+                                    {variantCount} Active Variants
+                                  </span>
+                                </div>
+                                <span className="text-[10px] text-dark/50 font-mono">
+                                  ID: {oil.id} | Base Yield: {oil.seedRatioPerLiter} kg seeds / L
+                                </span>
+                              </div>
+
+                              {/* Editable Base Cost Inputs */}
+                              <div className="flex flex-wrap items-center gap-3 text-xs bg-brand-bg/40 p-2.5 border border-forest/10">
+                                <div className="flex items-center gap-1.5">
+                                  <label className="text-[9px] uppercase font-bold text-dark/60">Seed Rate (₹/kg):</label>
+                                  <input
+                                    type="number"
+                                    value={oil.seedCostPerKg}
+                                    onChange={(e) => {
+                                      const updated = [...oilRates];
+                                      updated[pIdx].seedCostPerKg = Number(e.target.value);
+                                      setOilRates(updated);
+                                    }}
+                                    className="w-16 p-1 border border-forest/20 font-mono font-bold text-forest text-xs outline-none bg-white"
+                                  />
+                                </div>
+
+                                <div className="flex items-center gap-1.5">
+                                  <label className="text-[9px] uppercase font-bold text-dark/60">Pressing (₹/kg):</label>
+                                  <input
+                                    type="number"
+                                    value={oil.pressingCostPerKg}
+                                    onChange={(e) => {
+                                      const updated = [...oilRates];
+                                      updated[pIdx].pressingCostPerKg = Number(e.target.value);
+                                      setOilRates(updated);
+                                    }}
+                                    className="w-16 p-1 border border-forest/20 font-mono font-bold text-forest text-xs outline-none bg-white"
+                                  />
+                                </div>
+
+                                <div className="flex items-center gap-1.5">
+                                  <label className="text-[9px] uppercase font-bold text-dark/60">Seeds/L (kg):</label>
+                                  <input
+                                    type="number"
+                                    step="0.1"
+                                    value={oil.seedRatioPerLiter}
+                                    onChange={(e) => {
+                                      const updated = [...oilRates];
+                                      updated[pIdx].seedRatioPerLiter = Number(e.target.value);
+                                      setOilRates(updated);
+                                    }}
+                                    className="w-14 p-1 border border-forest/20 font-mono font-bold text-forest text-xs outline-none bg-white"
+                                  />
+                                </div>
+                              </div>
                             </div>
 
-                            <div>
-                              <label className="text-[9px] text-dark/50 uppercase block font-semibold">Seed Rate (₹/kg)</label>
-                              <input
-                                type="number"
-                                value={o.seedCostPerKg}
-                                onChange={(e) => {
-                                  const updated = [...oilRates];
-                                  updated[idx].seedCostPerKg = Number(e.target.value);
-                                  setOilRates(updated);
-                                }}
-                                className="w-20 p-1 border border-forest/20 font-mono font-bold text-dark outline-none text-xs"
-                              />
+                            {/* Summary Metrics Row */}
+                            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs bg-brand-bg/20 p-3 border border-forest/5">
+                              <div>
+                                <span className="text-[9px] uppercase text-dark/50 font-semibold block">Active Variants</span>
+                                <span className="font-mono font-bold text-forest text-sm block">{variantCount} Variants</span>
+                              </div>
+                              <div>
+                                <span className="text-[9px] uppercase text-dark/50 font-semibold block">Sale Price Range</span>
+                                <span className="font-mono font-bold text-forest text-sm block">₹{minPrice} — ₹{maxPrice}</span>
+                              </div>
+                              <div>
+                                <span className="text-[9px] uppercase text-dark/50 font-semibold block">Avg Sale Price / L</span>
+                                <span className="font-mono font-bold text-forest text-sm block">₹{avgUnitPricePerL}/L</span>
+                              </div>
+                              <div>
+                                <span className="text-[9px] uppercase text-dark/50 font-semibold block">Avg Profit / Unit</span>
+                                <span className="font-mono font-bold text-green-700 text-sm block">₹{avgProfitPerUnit}</span>
+                              </div>
+                              <div>
+                                <span className="text-[9px] uppercase text-dark/50 font-semibold block">Avg Margin %</span>
+                                <span className="font-mono font-bold text-gold text-sm block">{avgMarginPct}%</span>
+                              </div>
                             </div>
 
-                            <div>
-                              <label className="text-[9px] text-dark/50 uppercase block font-semibold">Pressing (₹/kg)</label>
-                              <input
-                                type="number"
-                                value={o.pressingCostPerKg}
-                                onChange={(e) => {
-                                  const updated = [...oilRates];
-                                  updated[idx].pressingCostPerKg = Number(e.target.value);
-                                  setOilRates(updated);
-                                }}
-                                className="w-20 p-1 border border-forest/20 font-mono font-bold text-dark outline-none text-xs"
-                              />
-                            </div>
-
-                            <div>
-                              <label className="text-[9px] text-dark/50 uppercase block font-semibold">Bottle &amp; Pack (₹/L)</label>
-                              <input
-                                type="number"
-                                value={o.packagingCostPerLiter}
-                                onChange={(e) => {
-                                  const updated = [...oilRates];
-                                  updated[idx].packagingCostPerLiter = Number(e.target.value);
-                                  setOilRates(updated);
-                                }}
-                                className="w-20 p-1 border border-forest/20 font-mono font-bold text-dark outline-none text-xs"
-                              />
-                            </div>
-
-                            <div>
-                              <span className="text-[9px] text-dark/50 uppercase block font-semibold">Total 1L COGS</span>
-                              <span className="font-mono font-bold text-forest text-sm">₹{Math.round(totalCogsFor1L)}</span>
-                            </div>
-
-                            <div className="text-right sm:text-left">
-                              <span className="text-[9px] text-dark/50 uppercase block font-semibold">1L Margin</span>
-                              <span className="font-mono font-bold text-green-700 text-sm">₹{Math.round(profitFor1L)} ({marginPct}%)</span>
+                            {/* Variant Level Table */}
+                            <div className="overflow-x-auto border border-forest/10">
+                              <table className="w-full text-xs divide-y divide-forest/10">
+                                <thead className="bg-brand-bg/60 text-forest text-[9px] uppercase font-bold text-left">
+                                  <tr>
+                                    <th className="p-3 w-40">Variant / Label</th>
+                                    <th className="p-3 w-28">Packaging</th>
+                                    <th className="p-3 w-28 text-right">Sale Price (₹)</th>
+                                    <th className="p-3 w-24 text-right">MRP (₹)</th>
+                                    <th className="p-3 w-20 text-center">Discount</th>
+                                    <th className="p-3 w-28 text-right">Sale Price / L</th>
+                                    <th className="p-3 w-28 text-right">Total COGS (₹)</th>
+                                    <th className="p-3 w-28 text-right">Profit / Unit</th>
+                                    <th className="p-3 w-24 text-right">Margin %</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-forest/5 font-mono">
+                                  {variantCalculations.map((v: any, vIdx: number) => (
+                                    <tr key={v.id} className="hover:bg-brand-bg/30 transition-colors">
+                                      <td className="p-3 font-sans font-semibold text-forest whitespace-nowrap">
+                                        <div className="flex items-center gap-1.5">
+                                          <span>{v.name}</span>
+                                          {v.badge && (
+                                            <span className="text-[8px] bg-gold/15 text-gold border border-gold/30 px-1 py-0.5 uppercase font-bold rounded-xs">
+                                              {v.badge}
+                                            </span>
+                                          )}
+                                        </div>
+                                      </td>
+                                      <td className="p-3 font-sans text-dark/70 text-[11px] whitespace-nowrap">{v.packaging}</td>
+                                      <td className="p-2 text-right whitespace-nowrap">
+                                        <input
+                                          type="number"
+                                          value={v.salePrice}
+                                          onChange={(e) => {
+                                            const updated = [...oilRates];
+                                            updated[pIdx].variants[vIdx].salePrice = Number(e.target.value);
+                                            setOilRates(updated);
+                                          }}
+                                          className="w-20 p-1 border border-forest/20 text-right font-mono font-bold text-forest text-xs outline-none bg-brand-bg/10 focus:bg-white"
+                                        />
+                                      </td>
+                                      <td className="p-3 text-right text-dark/40 line-through text-[11px] whitespace-nowrap">
+                                        ₹{v.mrp.toFixed(2)}
+                                      </td>
+                                      <td className="p-3 text-center whitespace-nowrap">
+                                        <span className="bg-green-50 text-green-700 text-[9px] font-bold px-1.5 py-0.5 border border-green-200">
+                                          10% OFF
+                                        </span>
+                                      </td>
+                                      <td className="p-3 text-right font-bold text-dark/80 text-[11px] whitespace-nowrap">
+                                        ₹{v.unitPrice.toFixed(2)}/L
+                                      </td>
+                                      <td className="p-3 text-right font-bold text-amber-800 text-[11px] whitespace-nowrap">
+                                        ₹{v.totalCogs}
+                                      </td>
+                                      <td className="p-3 text-right font-bold text-green-700 text-[11px] whitespace-nowrap">
+                                        ₹{v.profit}
+                                      </td>
+                                      <td className="p-3 text-right font-bold text-gold text-[11px] whitespace-nowrap">
+                                        {v.margin}%
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
                             </div>
                           </div>
                         );
                       })}
                     </div>
 
-                    {/* Form to Add New Oil */}
-                    <form onSubmit={handleAddOil} className="border-t border-forest/10 pt-4 space-y-3">
-                      <span className="text-xs font-serif font-bold text-forest uppercase tracking-wider block">+ Add New Wood Pressed Oil</span>
-                      
+                    {/* Form to Add New Custom Wood Pressed Oil */}
+                    <form onSubmit={handleAddOil} className="border-t border-forest/10 pt-5 space-y-4 bg-white p-5 border border-forest/10">
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs font-serif font-bold text-forest uppercase tracking-wider block">
+                          + Add New Custom Wood Pressed Oil Product
+                        </span>
+                        <span className="text-[10px] bg-gold/15 text-gold font-bold px-2 py-0.5 border border-gold/30">
+                          Auto MRP = Sale Price ÷ 0.90 (10% Discount)
+                        </span>
+                      </div>
+
                       <div className="grid grid-cols-1 sm:grid-cols-6 gap-3 items-end text-xs">
                         <div className="space-y-1 sm:col-span-2">
-                          <label className="text-[10px] text-forest/70 uppercase font-semibold block">Oil Name</label>
+                          <label className="text-[10px] text-forest/70 uppercase font-semibold block">Oil Product Name</label>
                           <input
                             type="text"
-                            placeholder="e.g. Wood Pressed Coconut Oil"
+                            required
+                            placeholder="e.g. Wood Pressed Mustard Oil"
                             value={newOilName}
                             onChange={(e) => setNewOilName(e.target.value)}
-                            className="w-full p-2 border border-forest/20 bg-white outline-none"
+                            className="w-full p-2 border border-forest/20 bg-brand-bg/10 outline-none text-xs"
                           />
                         </div>
 
@@ -995,10 +1194,10 @@ export default function AdminPage() {
                           <label className="text-[10px] text-forest/70 uppercase font-semibold block">Seed Cost (₹/kg)</label>
                           <input
                             type="number"
-                            placeholder="160"
+                            placeholder="125"
                             value={newOilSeedCost}
                             onChange={(e) => setNewOilSeedCost(e.target.value)}
-                            className="w-full p-2 border border-forest/20 bg-white outline-none"
+                            className="w-full p-2 border border-forest/20 bg-brand-bg/10 outline-none font-mono text-xs"
                           />
                         </div>
 
@@ -1010,7 +1209,7 @@ export default function AdminPage() {
                             placeholder="2.5"
                             value={newOilSeedRatio}
                             onChange={(e) => setNewOilSeedRatio(e.target.value)}
-                            className="w-full p-2 border border-forest/20 bg-white outline-none"
+                            className="w-full p-2 border border-forest/20 bg-brand-bg/10 outline-none font-mono text-xs"
                           />
                         </div>
 
@@ -1021,28 +1220,44 @@ export default function AdminPage() {
                             placeholder="30"
                             value={newOilPressingCost}
                             onChange={(e) => setNewOilPressingCost(e.target.value)}
-                            className="w-full p-2 border border-forest/20 bg-white outline-none"
+                            className="w-full p-2 border border-forest/20 bg-brand-bg/10 outline-none font-mono text-xs"
                           />
                         </div>
 
                         <div className="space-y-1">
-                          <label className="text-[10px] text-forest/70 uppercase font-semibold block">1L Sell Price (₹)</label>
+                          <label className="text-[10px] text-forest/70 uppercase font-semibold block">1L Sale Price (₹)</label>
                           <input
                             type="number"
-                            placeholder="599"
+                            required
+                            placeholder="469"
                             value={newOilSellingPrice}
-                            onChange={(e) => setNewOilSellingPrice(e.target.value)}
-                            className="w-full p-2 border border-forest/20 bg-white outline-none"
+                            onChange={(e) => handleSalePriceChange(e.target.value)}
+                            className="w-full p-2 border border-forest/20 bg-white font-bold font-mono outline-none text-xs text-forest"
                           />
                         </div>
                       </div>
 
-                      <button
-                        type="submit"
-                        className="bg-forest hover:bg-forest-light text-white text-xs font-bold uppercase tracking-wider px-5 py-2 transition-colors"
-                      >
-                        Add Oil Item
-                      </button>
+                      <div className="grid grid-cols-1 sm:grid-cols-6 gap-3 items-end text-xs">
+                        <div className="space-y-1 sm:col-span-2">
+                          <label className="text-[10px] text-forest/70 uppercase font-semibold block">Auto Computed MRP (₹)</label>
+                          <input
+                            type="number"
+                            placeholder="521.11"
+                            value={newOilMrp}
+                            onChange={(e) => handleMrpChange(e.target.value)}
+                            className="w-full p-2 border border-forest/20 bg-white font-mono text-dark/60 outline-none text-xs"
+                          />
+                        </div>
+
+                        <div className="sm:col-span-4 flex items-center justify-end">
+                          <button
+                            type="submit"
+                            className="bg-forest hover:bg-forest-light text-white text-xs font-bold uppercase tracking-wider px-6 py-2.5 transition-colors shadow-xs"
+                          >
+                            + Add Oil Product (7 Variants)
+                          </button>
+                        </div>
+                      </div>
                     </form>
                   </div>
 
@@ -1053,74 +1268,80 @@ export default function AdminPage() {
                       <span className="text-[10px] text-gold font-semibold uppercase">Purchase + Packing COGS</span>
                     </div>
 
-                    {/* Grain List */}
-                    <div className="space-y-3">
-                      {grainRates.map((g, idx) => {
-                        const totalCogsPerKg = g.purchaseCostPerKg + g.packingCostPerKg;
-                        const profitPerKg = g.sellingPricePerKg - totalCogsPerKg;
-                        const marginPct = g.sellingPricePerKg > 0 ? Math.round((profitPerKg / g.sellingPricePerKg) * 100) : 0;
+                    {/* Grain List Table */}
+                    <div className="overflow-x-auto border border-forest/10 bg-white">
+                      <table className="w-full text-xs divide-y divide-forest/10">
+                        <thead className="bg-brand-bg/60 text-forest text-[9px] uppercase font-bold text-left">
+                          <tr>
+                            <th className="p-3 w-56">Grain / Produce Name</th>
+                            <th className="p-3 w-32 text-right">Raw Cost (₹/kg)</th>
+                            <th className="p-3 w-32 text-right">Packing (₹/kg)</th>
+                            <th className="p-3 w-36 text-right">Selling Price (₹/kg)</th>
+                            <th className="p-3 w-32 text-right">Total COGS / kg</th>
+                            <th className="p-3 w-32 text-right">Margin / kg</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-forest/5 font-mono">
+                          {grainRates.map((g, idx) => {
+                            const totalCogsPerKg = g.purchaseCostPerKg + g.packingCostPerKg;
+                            const profitPerKg = g.sellingPricePerKg - totalCogsPerKg;
+                            const marginPct = g.sellingPricePerKg > 0 ? Math.round((profitPerKg / g.sellingPricePerKg) * 100) : 0;
 
-                        return (
-                          <div key={g.id} className="grid grid-cols-1 sm:grid-cols-7 gap-3 items-center p-3.5 border border-forest/10 bg-white text-xs rounded-xs">
-                            <div className="sm:col-span-2 space-y-0.5">
-                              <span className="font-bold text-forest text-sm block">{g.name}</span>
-                              <span className="text-[10px] text-dark/50 font-mono">ID: {g.id}</span>
-                            </div>
-
-                            <div>
-                              <label className="text-[9px] text-dark/50 uppercase block font-semibold">Raw Cost (₹/kg)</label>
-                              <input
-                                type="number"
-                                value={g.purchaseCostPerKg}
-                                onChange={(e) => {
-                                  const updated = [...grainRates];
-                                  updated[idx].purchaseCostPerKg = Number(e.target.value);
-                                  setGrainRates(updated);
-                                }}
-                                className="w-20 p-1 border border-forest/20 font-mono font-bold text-dark outline-none text-xs"
-                              />
-                            </div>
-
-                            <div>
-                              <label className="text-[9px] text-dark/50 uppercase block font-semibold">Packing (₹/kg)</label>
-                              <input
-                                type="number"
-                                value={g.packingCostPerKg}
-                                onChange={(e) => {
-                                  const updated = [...grainRates];
-                                  updated[idx].packingCostPerKg = Number(e.target.value);
-                                  setGrainRates(updated);
-                                }}
-                                className="w-20 p-1 border border-forest/20 font-mono font-bold text-dark outline-none text-xs"
-                              />
-                            </div>
-
-                            <div>
-                              <label className="text-[9px] text-dark/50 uppercase block font-semibold">Sell Price (₹/kg)</label>
-                              <input
-                                type="number"
-                                value={g.sellingPricePerKg}
-                                onChange={(e) => {
-                                  const updated = [...grainRates];
-                                  updated[idx].sellingPricePerKg = Number(e.target.value);
-                                  setGrainRates(updated);
-                                }}
-                                className="w-20 p-1 border border-forest/20 font-mono font-bold text-dark outline-none text-xs"
-                              />
-                            </div>
-
-                            <div>
-                              <span className="text-[9px] text-dark/50 uppercase block font-semibold">Total COGS / kg</span>
-                              <span className="font-mono font-bold text-forest text-sm">₹{totalCogsPerKg}</span>
-                            </div>
-
-                            <div className="text-right sm:text-left">
-                              <span className="text-[9px] text-dark/50 uppercase block font-semibold">Margin / kg</span>
-                              <span className="font-mono font-bold text-green-700 text-sm">₹{profitPerKg} ({marginPct}%)</span>
-                            </div>
-                          </div>
-                        );
-                      })}
+                            return (
+                              <tr key={g.id} className="hover:bg-brand-bg/30 transition-colors">
+                                <td className="p-3 font-sans font-semibold text-forest whitespace-nowrap">
+                                  <div>
+                                    <span className="block">{g.name}</span>
+                                    <span className="text-[9px] text-dark/50 font-mono">ID: {g.id}</span>
+                                  </div>
+                                </td>
+                                <td className="p-2 text-right whitespace-nowrap">
+                                  <input
+                                    type="number"
+                                    value={g.purchaseCostPerKg}
+                                    onChange={(e) => {
+                                      const updated = [...grainRates];
+                                      updated[idx].purchaseCostPerKg = Number(e.target.value);
+                                      setGrainRates(updated);
+                                    }}
+                                    className="w-20 p-1 border border-forest/20 text-right font-mono font-bold text-dark outline-none text-xs bg-brand-bg/10 focus:bg-white"
+                                  />
+                                </td>
+                                <td className="p-2 text-right whitespace-nowrap">
+                                  <input
+                                    type="number"
+                                    value={g.packingCostPerKg}
+                                    onChange={(e) => {
+                                      const updated = [...grainRates];
+                                      updated[idx].packingCostPerKg = Number(e.target.value);
+                                      setGrainRates(updated);
+                                    }}
+                                    className="w-20 p-1 border border-forest/20 text-right font-mono font-bold text-dark outline-none text-xs bg-brand-bg/10 focus:bg-white"
+                                  />
+                                </td>
+                                <td className="p-2 text-right whitespace-nowrap">
+                                  <input
+                                    type="number"
+                                    value={g.sellingPricePerKg}
+                                    onChange={(e) => {
+                                      const updated = [...grainRates];
+                                      updated[idx].sellingPricePerKg = Number(e.target.value);
+                                      setGrainRates(updated);
+                                    }}
+                                    className="w-20 p-1 border border-forest/20 text-right font-mono font-bold text-forest outline-none text-xs bg-brand-bg/10 focus:bg-white"
+                                  />
+                                </td>
+                                <td className="p-3 text-right font-bold text-amber-800 text-[11px] whitespace-nowrap">
+                                  ₹{totalCogsPerKg}
+                                </td>
+                                <td className="p-3 text-right font-bold text-green-700 text-[11px] whitespace-nowrap">
+                                  ₹{profitPerKg} ({marginPct}%)
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
                     </div>
 
                     {/* Form to Add New Grain */}
@@ -1135,7 +1356,7 @@ export default function AdminPage() {
                             placeholder="e.g. Foxtail Millet"
                             value={newGrainName}
                             onChange={(e) => setNewGrainName(e.target.value)}
-                            className="w-full p-2.5 border border-forest/20 bg-white outline-none"
+                            className="w-full p-2 border border-forest/20 bg-white outline-none"
                           />
                         </div>
 
@@ -1146,7 +1367,7 @@ export default function AdminPage() {
                             placeholder="140"
                             value={newGrainPurchaseCost}
                             onChange={(e) => setNewGrainPurchaseCost(e.target.value)}
-                            className="w-full p-2.5 border border-forest/20 bg-white outline-none"
+                            className="w-full p-2 border border-forest/20 bg-white outline-none"
                           />
                         </div>
 
@@ -1157,7 +1378,7 @@ export default function AdminPage() {
                             placeholder="20"
                             value={newGrainPackingCost}
                             onChange={(e) => setNewGrainPackingCost(e.target.value)}
-                            className="w-full p-2.5 border border-forest/20 bg-white outline-none"
+                            className="w-full p-2 border border-forest/20 bg-white outline-none"
                           />
                         </div>
 
@@ -1168,7 +1389,7 @@ export default function AdminPage() {
                             placeholder="199"
                             value={newGrainSellingPrice}
                             onChange={(e) => setNewGrainSellingPrice(e.target.value)}
-                            className="w-full p-2.5 border border-forest/20 bg-white outline-none"
+                            className="w-full p-2 border border-forest/20 bg-white outline-none"
                           />
                         </div>
                       </div>
