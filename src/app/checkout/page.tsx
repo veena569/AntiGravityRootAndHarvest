@@ -79,9 +79,41 @@ export default function CheckoutPage() {
 
   // Firebase Auth states
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
-  const [recaptchaVerifier, setRecaptchaVerifier] = useState<RecaptchaVerifier | null>(null);
+  const recaptchaVerifierRef = useRef<RecaptchaVerifier | null>(null);
 
-  // Saved addresses state
+  const getOrCreateRecaptchaVerifier = () => {
+    if (typeof window === "undefined" || !auth || !auth.app) return null;
+    if (recaptchaVerifierRef.current) return recaptchaVerifierRef.current;
+
+    try {
+      const verifier = new RecaptchaVerifier(auth, "recaptcha-container-checkout", {
+        size: "invisible",
+        callback: () => {
+          // reCAPTCHA verification passed
+        },
+        "expired-callback": () => {
+          setPhoneError("Security verification expired. Please click Send OTP again.");
+        },
+      });
+      recaptchaVerifierRef.current = verifier;
+      return verifier;
+    } catch (err: any) {
+      console.error("[reCAPTCHA init error]:", err);
+      return null;
+    }
+  };
+
+  // Cleanup reCAPTCHA only on unmount
+  useEffect(() => {
+    return () => {
+      if (recaptchaVerifierRef.current) {
+        try {
+          recaptchaVerifierRef.current.clear();
+        } catch {}
+        recaptchaVerifierRef.current = null;
+      }
+    };
+  }, []);
   const [savedAddresses, setSavedAddresses] = useState<any[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [showNewAddressForm, setShowNewAddressForm] = useState(false);
@@ -138,33 +170,6 @@ export default function CheckoutPage() {
   const [customCityInput, setCustomCityInput] = useState("");
   const [pincodeLoading, setPincodeLoading] = useState(false);
   const [detectedLocation, setDetectedLocation] = useState<{ city: string; state: string; isHyderabad: boolean } | null>(null);
-
-  // Initialize invisible reCAPTCHA for Firebase Phone Auth
-  useEffect(() => {
-    if (typeof window !== "undefined" && !recaptchaVerifier && auth && auth.app) {
-      try {
-        const verifier = new RecaptchaVerifier(auth, "recaptcha-container-checkout", {
-          size: "invisible",
-          callback: () => {
-            // reCAPTCHA verification passed
-          },
-          "expired-callback": () => {
-            setPhoneError("Security verification expired. Please resend code.");
-          },
-        });
-        setRecaptchaVerifier(verifier);
-      } catch (err: any) {
-        console.error("reCAPTCHA init error:", err);
-      }
-    }
-    return () => {
-      if (recaptchaVerifier) {
-        try {
-          recaptchaVerifier.clear();
-        } catch {}
-      }
-    };
-  }, [recaptchaVerifier]);
 
   // OTP countdown timer
   useEffect(() => {
@@ -349,25 +354,17 @@ export default function CheckoutPage() {
     // 2. Attempt Firebase Phone Auth for real carrier SMS delivery
     try {
       if (auth && auth.app) {
-        let verifier = recaptchaVerifier;
-        if (!verifier) {
-          verifier = new RecaptchaVerifier(auth, "recaptcha-container-checkout", {
-            size: "invisible",
-          });
-          setRecaptchaVerifier(verifier);
-        }
-
-        const isDev = process.env.NODE_ENV !== "production";
-        if (!isDev && verifier) {
+        const verifier = getOrCreateRecaptchaVerifier();
+        if (verifier) {
           const result = await signInWithPhoneNumber(auth, formattedPhone, verifier);
           setConfirmationResult(result);
         }
       }
     } catch (err: any) {
       console.warn("[FIREBASE_SEND_OTP_WARNING]", err);
-      if (recaptchaVerifier) {
-        try { recaptchaVerifier.clear(); } catch {}
-        setRecaptchaVerifier(null);
+      if (recaptchaVerifierRef.current) {
+        try { recaptchaVerifierRef.current.clear(); } catch {}
+        recaptchaVerifierRef.current = null;
       }
     } finally {
       setOtpSending(false);
@@ -820,7 +817,7 @@ export default function CheckoutPage() {
     <div className="bg-brand-bg text-dark font-sans font-light min-h-screen flex flex-col">
       <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
       {/* Invisible reCAPTCHA container for Firebase Phone Auth */}
-      <div id="recaptcha-container-checkout" className="invisible absolute"></div>
+      <div id="recaptcha-container-checkout"></div>
 
       {/* Header */}
       <header className="border-b border-forest/10 bg-white py-5 px-6 relative z-10 shadow-xs">
@@ -935,7 +932,8 @@ export default function CheckoutPage() {
                         <button
                           type="submit"
                           disabled={otpSending || rawPhone.length !== 10}
-                          className="w-full px-8 py-4 bg-forest text-white text-xs uppercase tracking-widest font-semibold hover:bg-forest-light transition-all flex items-center justify-center gap-2 rounded-sm shadow-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                          className="w-full py-4 px-8 bg-forest hover:bg-forest-light text-white text-sm sm:text-base font-semibold tracking-wider uppercase transition-all flex items-center justify-center gap-2.5 rounded-lg shadow-md hover:shadow-lg active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                          style={{ minHeight: "52px" }}
                         >
                           {otpSending ? (
                             <>
@@ -1023,7 +1021,8 @@ export default function CheckoutPage() {
                         <button
                           type="submit"
                           disabled={otpVerifying || otpDigits.join("").length < 6}
-                          className="w-full px-8 py-4.5 bg-forest text-white text-xs uppercase tracking-widest font-semibold hover:bg-forest-light transition-all flex items-center justify-center gap-2 rounded-sm shadow-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                          className="w-full py-4 px-8 bg-forest hover:bg-forest-light text-white text-sm sm:text-base font-semibold tracking-wider uppercase transition-all flex items-center justify-center gap-2.5 rounded-lg shadow-md hover:shadow-lg active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                          style={{ minHeight: "52px" }}
                         >
                           {otpVerifying ? (
                             <>
@@ -1375,7 +1374,7 @@ export default function CheckoutPage() {
                           </div>
 
                           {/* Primary CTA for returning customer */}
-                          <div className="pt-3">
+                          <div className="pt-4">
                             <button
                               type="button"
                               onClick={() => {
@@ -1385,7 +1384,8 @@ export default function CheckoutPage() {
                                   setCurrentStep("review");
                                 }
                               }}
-                              className="w-full px-8 py-4 bg-forest text-white text-xs uppercase tracking-widest font-semibold hover:bg-forest-light transition-all flex items-center justify-center gap-2 rounded-sm shadow-sm cursor-pointer"
+                              className="w-full py-4 px-8 bg-forest hover:bg-forest-light text-white text-sm sm:text-base font-semibold tracking-wider uppercase transition-all flex items-center justify-center gap-2.5 rounded-lg shadow-md hover:shadow-lg active:scale-[0.99] cursor-pointer"
+                              style={{ minHeight: "52px" }}
                             >
                               Use this address &amp; Continue <ChevronRight className="w-4 h-4" />
                             </button>
@@ -1722,7 +1722,8 @@ export default function CheckoutPage() {
                             <div className="pt-4">
                               <button
                                 type="submit"
-                                className="w-full px-8 py-4.5 bg-forest text-white text-xs uppercase tracking-widest font-semibold hover:bg-forest-light transition-all flex items-center justify-center gap-2 rounded-sm shadow-sm cursor-pointer"
+                                className="w-full py-4 px-8 bg-forest hover:bg-forest-light text-white text-sm sm:text-base font-semibold tracking-wider uppercase transition-all flex items-center justify-center gap-2.5 rounded-lg shadow-md hover:shadow-lg active:scale-[0.99] cursor-pointer"
+                                style={{ minHeight: "52px" }}
                               >
                                 Continue to Review <ChevronRight className="w-4 h-4" />
                               </button>
@@ -1736,15 +1737,24 @@ export default function CheckoutPage() {
                   {/* ──────────────────────────────────────────────────────────── */}
                   {/* STEP 4: REVIEW & PAYMENT                                    */}
                   {/* ──────────────────────────────────────────────────────────── */}
-                  {currentStep === "review" && (
-                    <motion.div
-                      key="step-review"
-                      initial={{ opacity: 0, y: 12 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -12 }}
-                      transition={{ duration: 0.25 }}
-                      className="space-y-6"
-                    >
+                  {currentStep === "review" && (() => {
+                    const shippingInfo = calculateShippingFee(
+                      shippingData?.pincode || watch("pincode"),
+                      isCustomCity ? customCityInput : shippingData?.city || watch("city"),
+                      subtotal,
+                      shippingData?.state || watch("state")
+                    );
+                    const totalToPay = subtotal + shippingInfo.shippingCharge;
+
+                    return (
+                      <motion.div
+                        key="step-review"
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -12 }}
+                        transition={{ duration: 0.25 }}
+                        className="space-y-6"
+                      >
                       <div className="flex items-center justify-between pb-3 border-b border-forest/10">
                         <div>
                           <h2 className="text-2xl font-serif text-forest">Review Order</h2>
@@ -1812,36 +1822,24 @@ export default function CheckoutPage() {
                       </div>
 
                       {/* Price Breakdown */}
-                      {(() => {
-                        const shippingInfo = calculateShippingFee(
-                          shippingData?.pincode || watch("pincode"),
-                          isCustomCity ? customCityInput : shippingData?.city || watch("city"),
-                          subtotal,
-                          shippingData?.state || watch("state")
-                        );
-                        const totalToPay = subtotal + shippingInfo.shippingCharge;
-
-                        return (
-                          <div className="space-y-2.5 pt-2 text-sm font-light">
-                            <div className="flex justify-between text-dark/80">
-                              <span>Subtotal</span>
-                              <span className="font-semibold text-dark">₹{subtotal}</span>
-                            </div>
-                            <div className="flex justify-between text-dark/80 items-center">
-                              <span>Shipping ({shippingInfo.description})</span>
-                              <span className="text-emerald-800 font-semibold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 text-xs">
-                                {shippingInfo.shippingLabel}
-                              </span>
-                            </div>
-                            <div className="flex justify-between items-end border-t border-forest/15 pt-3">
-                              <span className="text-xs uppercase tracking-widest text-dark/60 font-bold">Total Payable</span>
-                              <span className="text-2xl sm:text-3xl font-serif text-forest font-bold tracking-tight">
-                                ₹{totalToPay}
-                              </span>
-                            </div>
-                          </div>
-                        );
-                      })()}
+                      <div className="space-y-2.5 pt-2 text-sm font-light">
+                        <div className="flex justify-between text-dark/80">
+                          <span>Subtotal</span>
+                          <span className="font-semibold text-dark">₹{subtotal}</span>
+                        </div>
+                        <div className="flex justify-between text-dark/80 items-center">
+                          <span>Shipping ({shippingInfo.description})</span>
+                          <span className="text-emerald-800 font-semibold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 text-xs">
+                            {shippingInfo.shippingLabel}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-end border-t border-forest/15 pt-3">
+                          <span className="text-xs uppercase tracking-widest text-dark/60 font-bold">Total Payable</span>
+                          <span className="text-2xl sm:text-3xl font-serif text-forest font-bold tracking-tight">
+                            ₹{totalToPay}
+                          </span>
+                        </div>
+                      </div>
 
                       {/* Payment Method Selector */}
                       {process.env.NODE_ENV !== "production" && (
@@ -1877,25 +1875,42 @@ export default function CheckoutPage() {
                       )}
 
                       {/* Primary CTA: Proceed to Payment */}
-                      <div className="pt-4">
+                      <div className="pt-6">
                         <button
                           type="button"
                           onClick={handleProceedToPayment}
-                          className="w-full px-8 py-4.5 bg-forest text-white text-xs uppercase tracking-widest font-semibold hover:bg-forest-light transition-all flex items-center justify-center gap-2 rounded-sm shadow-sm cursor-pointer"
+                          className="w-full py-4.5 sm:py-5 px-6 sm:px-8 bg-forest hover:bg-forest-light active:scale-[0.99] text-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-200 flex items-center justify-between group cursor-pointer border border-forest-light/40"
+                          style={{ minHeight: "62px" }}
                         >
-                          {process.env.NODE_ENV !== "production" && paymentMethod === "COD" ? (
-                            <>
-                              Place COD Order <Lock className="w-3.5 h-3.5" />
-                            </>
-                          ) : (
-                            <>
-                              Proceed to Payment <Lock className="w-3.5 h-3.5" />
-                            </>
-                          )}
+                          <div className="flex items-center gap-3.5">
+                            <span className="w-10 h-10 rounded-full bg-white/15 flex items-center justify-center text-white group-hover:bg-white/25 transition-colors shrink-0">
+                              <Lock className="w-4 h-4 text-emerald-300" />
+                            </span>
+                            <div className="text-left">
+                              <span className="text-base sm:text-lg font-bold tracking-wide uppercase block font-serif">
+                                {process.env.NODE_ENV !== "production" && paymentMethod === "COD"
+                                  ? "Place COD Order"
+                                  : "Proceed to Payment"}
+                              </span>
+                              <span className="text-[11px] text-emerald-200/90 font-light normal-case tracking-normal block">
+                                🔒 100% Encrypted &amp; Secure via Razorpay
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3 pl-3">
+                            <div className="text-right">
+                              <span className="text-[10px] uppercase tracking-wider text-white/70 block">Total Payable</span>
+                              <span className="text-xl sm:text-2xl font-serif font-bold text-amber-300 tracking-tight">
+                                ₹{totalToPay}
+                              </span>
+                            </div>
+                            <ChevronRight className="w-5 h-5 text-white/80 group-hover:translate-x-1 transition-transform shrink-0" />
+                          </div>
                         </button>
                       </div>
                     </motion.div>
-                  )}
+                  );
+                })()}
 
                 </AnimatePresence>
               </div>

@@ -47,9 +47,18 @@ export class OtpService {
     // If Fast2SMS API key is set in environment, send real SMS via 'q' (Quick SMS) route in the background
     if (process.env.FAST2SMS_API_KEY && phone) {
       const rawPhone = phone.replace(/\D/g, "").slice(-10); // get last 10 digits for Indian numbers
-      const smsMessage = encodeURIComponent(`Your Root & Harvest verification code is: ${code}`);
-      const fast2smsUrl = `https://www.fast2sms.com/dev/bulkV2?authorization=${process.env.FAST2SMS_API_KEY}&route=q&message=${smsMessage}&numbers=${rawPhone}`;
-      fetch(fast2smsUrl, { method: "GET" })
+      fetch("https://www.fast2sms.com/dev/bulkV2", {
+        method: "POST",
+        headers: {
+          "Authorization": process.env.FAST2SMS_API_KEY,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          route: "q",
+          message: `Your Root & Harvest verification code is: ${code}. Valid for 10 minutes.`,
+          numbers: rawPhone,
+        }),
+      })
         .then(res => res.json())
         .then(resJson => {
           console.log(`[Fast2SMS SMS Sent] Phone: ${rawPhone}, Status:`, resJson);
