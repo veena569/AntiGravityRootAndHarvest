@@ -20,6 +20,7 @@ import {
   Award,
   Sparkles,
   MessageSquare,
+  ShoppingBag,
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/components/layout/AuthProvider";
@@ -79,7 +80,7 @@ function makeOilVariant(opts: {
 }
 
 export function ProductDetailsClient({ productId }: { productId: string }) {
-  const { products, addToCart, wishlist, toggleWishlist } = useApp();
+  const { products, cart, addToCart, wishlist, toggleWishlist } = useApp();
   const product =
     products.find((p) => p.id === productId) ||
     INITIAL_PRODUCTS.find((p) => p.id === productId);
@@ -346,6 +347,15 @@ export function ProductDetailsClient({ productId }: { productId: string }) {
     oilVariants.find((v) => v.id.includes("1l-plastic")) ||
     oilVariants[0];
 
+  const isItemInCart = useMemo(() => {
+    return cart.some(
+      (item) =>
+        item.product.id === product.id &&
+        item.size === selectedVariant.size &&
+        (item.bottleType ?? "") === (selectedVariant.bottleType ?? "")
+    );
+  }, [cart, product.id, selectedVariant.size, selectedVariant.bottleType]);
+
   useEffect(() => {
     async function fetchReviews() {
       try {
@@ -455,9 +465,12 @@ export function ProductDetailsClient({ productId }: { productId: string }) {
 
   const handleAddToCart = () => {
     if (product.isComingSoon) return;
+    if (isItemInCart) {
+      router.push("/cart");
+      return;
+    }
     addToCart(product, selectedVariant.size, quantity, selectedVariant.bottleType, selectedVariant.salePrice);
     setIsAdded(true);
-    setTimeout(() => setIsAdded(false), 3500);
   };
 
   const handleBuyNow = () => {
@@ -659,13 +672,15 @@ export function ProductDetailsClient({ productId }: { productId: string }) {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Button
                   onClick={handleAddToCart}
-                  className={`w-full py-3.5 text-xs uppercase tracking-widest font-semibold flex items-center justify-center gap-2 transition-all ${
-                    isAdded ? "bg-emerald-700 hover:bg-emerald-800 text-white" : ""
+                  className={`w-full py-3.5 text-xs uppercase tracking-widest font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                    isItemInCart
+                      ? "bg-emerald-700 hover:bg-emerald-800 text-white shadow-sm"
+                      : "bg-forest hover:bg-forest-light text-white"
                   }`}
                 >
-                  {isAdded ? (
+                  {isItemInCart ? (
                     <>
-                      <Check className="w-4 h-4" /> Added to Cart ✓
+                      <ShoppingBag className="w-4 h-4" /> Go To Cart
                     </>
                   ) : (
                     "Add to Cart"
@@ -674,18 +689,18 @@ export function ProductDetailsClient({ productId }: { productId: string }) {
                 <Button
                   variant="outline"
                   onClick={handleBuyNow}
-                  className="w-full py-3.5 text-xs uppercase tracking-widest font-semibold border-forest text-forest hover:bg-forest hover:text-white"
+                  className="w-full py-3.5 text-xs uppercase tracking-widest font-semibold border-forest text-forest hover:bg-forest hover:text-white cursor-pointer"
                 >
                   Buy Now
                 </Button>
               </div>
 
               {/* Added confirmation feedback with View Cart & Continue Shopping */}
-              {isAdded && (
+              {(isAdded || isItemInCart) && (
                 <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between animate-fadeIn">
                   <div className="flex items-center gap-2 text-emerald-800 text-xs font-medium">
                     <Check className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                    <span>Added <strong>{quantity} × {product.name} ({selectedVariant.label})</strong> to your cart.</span>
+                    <span>In your cart: <strong>{product.name} ({selectedVariant.label})</strong></span>
                   </div>
                   <Link
                     href="/cart"

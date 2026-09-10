@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import {
   ArrowRight,
   Leaf,
@@ -51,10 +52,10 @@ function RevealSection({
 }
 
 export function HomeView() {
-  const { addToCart } = useApp();
+  const { addToCart, cart } = useApp();
+  const router = useRouter();
   const [reviews, setReviews] = useState<any[]>([]);
   const [loadingReviews, setLoadingReviews] = useState(true);
-  const [addedProduct, setAddedProduct] = useState<string | null>(null);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   useEffect(() => {
@@ -75,10 +76,13 @@ export function HomeView() {
   }, []);
 
   const handleAddToCart = (product: any) => {
+    const inCart = cart.some((item) => item.product.id === product.id);
+    if (inCart) {
+      router.push("/cart");
+      return;
+    }
     const defaultSize = product.sizes[0];
     addToCart(product, defaultSize, 1);
-    setAddedProduct(`${product.id}-${defaultSize}`);
-    setTimeout(() => setAddedProduct(null), 2000);
   };
 
   const bestsellerIds = [
@@ -227,7 +231,7 @@ export function HomeView() {
             {bestsellers.map((product) => {
               const defaultSize = product.sizes[0];
               const price = product.sizePrices[defaultSize] || 0;
-              const isAdded = addedProduct === `${product.id}-${defaultSize}`;
+              const inCart = cart.some((item) => item.product.id === product.id);
 
               return (
                 <div
@@ -264,9 +268,13 @@ export function HomeView() {
                     </div>
                     <button
                       onClick={() => handleAddToCart(product)}
-                      className="px-4 py-2 bg-forest hover:bg-forest-light text-white text-[10px] uppercase tracking-widest font-semibold transition-colors"
+                      className={`px-4 py-2 text-[10px] uppercase tracking-widest font-semibold transition-colors cursor-pointer ${
+                        inCart
+                          ? "bg-emerald-700 hover:bg-emerald-800 text-white"
+                          : "bg-forest hover:bg-forest-light text-white"
+                      }`}
                     >
-                      {isAdded ? "Added ✓" : "Add to Cart"}
+                      {inCart ? "Go To Cart" : "Add to Cart"}
                     </button>
                   </div>
                 </div>
