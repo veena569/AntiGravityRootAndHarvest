@@ -422,26 +422,8 @@ export default function CheckoutPage() {
       let verifiedData: any = null;
       let isVerified = false;
 
-      // 1. Check if user is testing with admin code or admin number
-      const isAdminPhone = clean === "9666913832" || clean === "8008076707";
-      if (isAdminPhone && code === "123456") {
-        try {
-          const vRes = await fetch("/api/auth/verify-otp", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ phone: formattedPhone, code }),
-          });
-          if (vRes.ok) {
-            verifiedData = await vRes.json();
-            isVerified = true;
-          }
-        } catch (err) {
-          console.warn("[TEST_BYPASS_VERIFY_ERROR]", err);
-        }
-      }
-
-      // 2. Try Firebase Confirmation Result (if SMS arrived through Google)
-      if (!isVerified && confirmationResult) {
+      // 1. Try Firebase Confirmation Result (if SMS arrived through Firebase)
+      if (confirmationResult) {
         try {
           const userCredential = await confirmationResult.confirm(code);
           const idToken = await userCredential.user.getIdToken();
@@ -1036,7 +1018,7 @@ export default function CheckoutPage() {
                         </button>
 
                         {/* Cooldown Timer & Resend */}
-                        <div className="text-center pt-1 space-y-2">
+                        <div className="text-center pt-1">
                           {otpTimer > 0 ? (
                             <p className="text-xs text-dark/50">
                               Resend OTP in <span className="font-semibold text-forest font-mono">{otpTimer}s</span>
@@ -1050,15 +1032,6 @@ export default function CheckoutPage() {
                             >
                               <RefreshCw className="w-3.5 h-3.5" /> Resend OTP
                             </button>
-                          )}
-
-                          {(["9666913832", "8008076707"].includes(rawPhone.replace(/\D/g, "").slice(-10)) || process.env.NODE_ENV !== "production") && (
-                            <div className="pt-2">
-                              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 border border-amber-200 text-amber-900 text-xs rounded-full font-medium shadow-xs">
-                                <span>🔑 Admin Test Code:</span>
-                                <strong className="font-mono text-sm tracking-wider font-bold text-amber-950">123456</strong>
-                              </span>
-                            </div>
                           )}
                         </div>
                       </form>

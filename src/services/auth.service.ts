@@ -16,9 +16,7 @@ export class AuthService {
    */
   static async verifyAndLogin(phone: string, code: string): Promise<Session | null> {
     const isDev = process.env.NODE_ENV !== "production";
-    const rawDigits = phone.replace(/\D/g, "").slice(-10);
-    const isAdminTestPhone = rawDigits === "9666913832" || rawDigits === "8008076707";
-    const isValid = (isDev && code === "123456") || (isAdminTestPhone && code === "123456") || await OtpService.verifyOtp(code, { phone });
+    const isValid = (isDev && code === "123456") || await OtpService.verifyOtp(code, { phone });
     if (!isValid) return null;
 
     const user = await UserService.findOrCreateByPhone(phone);
