@@ -992,9 +992,22 @@ export default function AdminPage() {
                   {loadingOrders ? (
                     <p className="text-xs text-dark/60">Fetching order registers from database...</p>
                   ) : ordersError ? (
-                    <div className="bg-red-50 border border-red-200 text-red-700 p-4 text-xs">
-                      Error: {ordersError}
-                      <button onClick={fetchDbOrders} className="ml-4 font-bold underline">Retry</button>
+                    <div className="bg-amber-50 border border-amber-200 text-amber-900 p-4 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-md">
+                      <div>
+                        <p className="font-bold text-amber-950 flex items-center gap-1.5">
+                          <Database className="w-4 h-4 text-amber-700" /> Database is waking up / reconnecting
+                        </p>
+                        <p className="text-[11px] text-amber-800 mt-0.5">
+                          {ordersError} Click retry below to reload customer orders and addresses.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={fetchDbOrders}
+                        className="px-4 py-2 bg-forest text-white text-xs font-semibold rounded hover:bg-forest-light transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer shadow-xs"
+                      >
+                        <RefreshCw className="w-3.5 h-3.5" /> Reconnect &amp; Retry
+                      </button>
                     </div>
                   ) : filteredOrders.length === 0 ? (
                     <p className="text-xs text-dark/60">No orders match your query.</p>

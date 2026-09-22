@@ -45,22 +45,16 @@ export async function GET() {
         break;
       } catch (err: any) {
         lastError = err;
-        try {
-          await prisma.$executeRawUnsafe(`
-            SELECT pg_terminate_backend(pid)
-            FROM pg_stat_activity
-            WHERE datname = 'insforge'
-              AND pid <> pg_backend_pid()
-              AND (state = 'idle' OR state = 'idle in transaction');
-          `);
-        } catch {}
-        await new Promise((res) => setTimeout(res, 800));
+        await new Promise((res) => setTimeout(res, 500 * (attempt + 1)));
       }
     }
 
     if (lastError && orders.length === 0) {
       console.error("[ADMIN_ORDERS_GET_DB_ERROR]", lastError);
-      return NextResponse.json({ error: "Database busy. Please click Retry." }, { status: 500 });
+      return NextResponse.json(
+        { error: "Database is connecting/waking up. Please click Retry." },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({ orders });
