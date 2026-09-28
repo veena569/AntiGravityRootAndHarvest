@@ -172,7 +172,7 @@ export function ProductDetailsClient({ productId }: { productId: string }) {
           size: "1 L",
           bottleType: "Glass Bottle",
           label: "1 Litre - Glass Bottle",
-          salePrice: 489,
+          salePrice: 499,
           litres: 1.0,
         }),
         makeOilVariant({
