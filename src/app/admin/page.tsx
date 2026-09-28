@@ -654,12 +654,12 @@ export default function AdminPage() {
       metalPackCost: 85,
       variants: [
         { id: "gn-500ml-plastic", name: "500ML Plastic", volume: 0.5, packaging: "Plastic", packagingCost: 25, salePrice: 245 },
-        { id: "gn-500ml-glass", name: "500ML Glass", volume: 0.5, packaging: "Glass", packagingCost: 45, salePrice: 295 },
-        { id: "gn-1l-plastic", name: "1L Plastic", volume: 1.0, packaging: "Plastic", packagingCost: 45, salePrice: 469, badge: "BESTSELLER" },
-        { id: "gn-1l-glass", name: "1L Glass", volume: 1.0, packaging: "Glass", packagingCost: 65, salePrice: 549 },
-        { id: "gn-1l-tin", name: "1L Tin Metal", volume: 1.0, packaging: "Tin Metal", packagingCost: 85, salePrice: 569 },
-        { id: "gn-2l-tin", name: "2L Tin Metal", volume: 2.0, packaging: "Tin Metal", packagingCost: 140, salePrice: 999 },
-        { id: "gn-5l-tin", name: "5L Tin Metal", volume: 5.0, packaging: "Tin Metal", packagingCost: 280, salePrice: 2299, badge: "BEST VALUE" },
+        { id: "gn-500ml-glass", name: "500ML Glass", volume: 0.5, packaging: "Glass", packagingCost: 45, salePrice: 259 },
+        { id: "gn-1l-plastic", name: "1L Plastic", volume: 1.0, packaging: "Plastic", packagingCost: 45, salePrice: 479, badge: "BESTSELLER" },
+        { id: "gn-1l-glass", name: "1L Glass", volume: 1.0, packaging: "Glass", packagingCost: 65, salePrice: 489 },
+        { id: "gn-1l-tin", name: "1L Tin Metal", volume: 1.0, packaging: "Tin Metal", packagingCost: 85, salePrice: 499 },
+        { id: "gn-2l-tin", name: "2L Tin Metal", volume: 2.0, packaging: "Tin Metal", packagingCost: 140, salePrice: 979 },
+        { id: "gn-5l-tin", name: "5L Tin Metal", volume: 5.0, packaging: "Tin Metal", packagingCost: 280, salePrice: 2399, badge: "BEST VALUE" },
       ],
     },
     {
