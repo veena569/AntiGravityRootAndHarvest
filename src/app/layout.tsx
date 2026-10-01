@@ -35,6 +35,7 @@ export const metadata: Metadata = {
     "Cold Pressed Oil Hyderabad",
     "Lakdi Ghani Oil India",
     "Unpolished Rice",
+    "Semi-Polished Rice",
     "Harvest Fresh Raw Groundnuts",
     "Raw Groundnuts",
     "Traditional Indian Food",

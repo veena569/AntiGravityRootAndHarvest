@@ -16,6 +16,7 @@ export const metadata: Metadata = {
     "mara chekku oil Hyderabad",
     "wood pressed oil India",
     "unpolished rice",
+    "semi-polished rice",
     "pure cooking oils",
     "traditional food brand",
   ],
