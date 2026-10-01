@@ -216,44 +216,82 @@ export default function CheckoutPage() {
       setRawPhone(clean);
       setPhoneVerified(true);
       setValue("phone", clean);
-      if (user.name) setValue("name", user.name);
+      if (user.name && user.name !== "Customer" && !user.name.toLowerCase().includes("guest")) {
+        setValue("name", user.name);
+      }
       if (user.email) setValue("email", user.email);
 
       // Fetch saved addresses securely
-      fetchUserSavedAddresses();
+      fetchUserSavedAddresses(clean);
     }
   }, [user]);
 
-  // Fetch saved addresses from server (requires authenticated session)
-  const fetchUserSavedAddresses = async () => {
+  // Fetch saved addresses from server & localStorage
+  const fetchUserSavedAddresses = async (phoneParam?: string) => {
     setAddressLoading(true);
+    const targetPhone = phoneParam || verifiedPhone || rawPhone.replace(/\D/g, "").slice(-10) || (user?.phone ? user.phone.replace(/\D/g, "").slice(-10) : "");
+
+    let localAddrs: any[] = [];
+    if (typeof window !== "undefined" && targetPhone) {
+      try {
+        const local = localStorage.getItem(`rnh_saved_addresses_${targetPhone}`);
+        if (local) {
+          const parsed = JSON.parse(local);
+          if (Array.isArray(parsed)) localAddrs = parsed;
+        }
+        if (localAddrs.length === 0) {
+          const lastAddr = localStorage.getItem("rnh_last_address");
+          if (lastAddr) {
+            const parsedLast = JSON.parse(lastAddr);
+            if (parsedLast && parsedLast.addressLine1) localAddrs = [parsedLast];
+          }
+        }
+      } catch {}
+    }
+
     try {
       const res = await fetch("/api/addresses");
       if (res.ok) {
         const data = await res.json();
-        if (data.addresses && Array.isArray(data.addresses) && data.addresses.length > 0) {
-          setSavedAddresses(data.addresses);
+        const serverAddrs = data.addresses && Array.isArray(data.addresses) ? data.addresses : [];
+        const merged = [...serverAddrs];
+        for (const la of localAddrs) {
+          if (!merged.some((a: any) => a.id === la.id || (a.addressLine1 === la.addressLine1 && a.pincode === la.pincode))) {
+            merged.push(la);
+          }
+        }
+
+        if (merged.length > 0) {
+          setSavedAddresses(merged);
           setIsExistingCustomer(true);
-          const defaultAddr = data.addresses.find((a: any) => a.isDefault) || data.addresses[0];
+          const defaultAddr = merged.find((a: any) => a.isDefault) || merged[0];
           setSelectedAddressId(defaultAddr.id);
           applyAddressToShipping(defaultAddr);
           setShowNewAddressForm(false);
           setCurrentStep("shipping");
-          return data.addresses;
-        } else {
-          setSavedAddresses([]);
-          setIsExistingCustomer(false);
-          setShowNewAddressForm(true);
-          setCurrentStep("shipping");
-          return [];
+          return merged;
         }
       }
     } catch (err) {
       console.error("Failed to load saved addresses:", err);
-      setShowNewAddressForm(true);
     } finally {
       setAddressLoading(false);
     }
+
+    if (localAddrs.length > 0) {
+      setSavedAddresses(localAddrs);
+      setIsExistingCustomer(true);
+      const defaultAddr = localAddrs.find((a: any) => a.isDefault) || localAddrs[0];
+      setSelectedAddressId(defaultAddr.id);
+      applyAddressToShipping(defaultAddr);
+      setShowNewAddressForm(false);
+      setCurrentStep("shipping");
+      return localAddrs;
+    }
+
+    setSavedAddresses([]);
+    setIsExistingCustomer(false);
+    setShowNewAddressForm(true);
     return [];
   };
 
@@ -488,13 +526,39 @@ export default function CheckoutPage() {
       }
 
       const addresses = data.addresses || [];
-      const isExisting = Boolean(data.isExistingCustomer || addresses.length > 0);
+
+      // Check localStorage for any addresses saved on this device for this phone
+      let mergedAddresses = [...addresses];
+      if (typeof window !== "undefined") {
+        try {
+          const localSaved = localStorage.getItem(`rnh_saved_addresses_${clean}`);
+          if (localSaved) {
+            const parsed = JSON.parse(localSaved);
+            if (Array.isArray(parsed)) {
+              for (const la of parsed) {
+                if (!mergedAddresses.some((a: any) => a.id === la.id || (a.addressLine1 === la.addressLine1 && a.pincode === la.pincode))) {
+                  mergedAddresses.push(la);
+                }
+              }
+            }
+          }
+          if (mergedAddresses.length === 0) {
+            const lastAddr = localStorage.getItem("rnh_last_address");
+            if (lastAddr) {
+              const parsedLast = JSON.parse(lastAddr);
+              if (parsedLast && parsedLast.addressLine1) mergedAddresses.push(parsedLast);
+            }
+          }
+        } catch {}
+      }
+
+      const isExisting = Boolean(data.isExistingCustomer || mergedAddresses.length > 0);
       setIsExistingCustomer(isExisting);
 
       // Case A: Returning customer with saved addresses
-      if (addresses.length > 0) {
-        setSavedAddresses(addresses);
-        const defaultAddr = addresses.find((a: any) => a.isDefault) || addresses[0];
+      if (mergedAddresses.length > 0) {
+        setSavedAddresses(mergedAddresses);
+        const defaultAddr = mergedAddresses.find((a: any) => a.isDefault) || mergedAddresses[0];
         setSelectedAddressId(defaultAddr.id);
         applyAddressToShipping(defaultAddr);
         setShowNewAddressForm(false);
@@ -503,7 +567,11 @@ export default function CheckoutPage() {
         // Case B: New customer
         setSavedAddresses([]);
         setShowNewAddressForm(true);
-        if (data.user?.name) setValue("name", data.user.name);
+        if (data.user?.name && data.user.name !== "Customer" && !data.user.name.toLowerCase().includes("guest")) {
+          setValue("name", data.user.name);
+        } else {
+          setValue("name", "");
+        }
         if (data.user?.email) setValue("email", data.user.email);
         setCurrentStep("shipping");
       }
@@ -532,6 +600,34 @@ export default function CheckoutPage() {
     setShippingData(finalData);
     captureCheckoutLead(finalData.name, finalData.phone, finalData.email, "address_completed");
 
+    const cleanPhone = finalData.phone.replace(/\D/g, "").slice(-10);
+    const newAddrObj = {
+      id: `addr-${Date.now()}`,
+      name: finalData.name,
+      phone: finalData.phone,
+      addressLine1: finalData.addressLine1,
+      addressLine2: finalData.addressLine2 || "",
+      city: finalData.city,
+      state: finalData.state,
+      pincode: finalData.pincode,
+      type: finalData.addressType || "Home",
+      isDefault: savedAddresses.length === 0,
+    };
+
+    if (typeof window !== "undefined" && cleanPhone) {
+      try {
+        const key = `rnh_saved_addresses_${cleanPhone}`;
+        const existing = JSON.parse(localStorage.getItem(key) || "[]");
+        const filtered = existing.filter((a: any) => a.addressLine1 !== newAddrObj.addressLine1 || a.pincode !== newAddrObj.pincode);
+        const updated = [newAddrObj, ...filtered];
+        localStorage.setItem(key, JSON.stringify(updated));
+        localStorage.setItem("rnh_last_address", JSON.stringify(newAddrObj));
+      } catch {}
+    }
+
+    setSavedAddresses((prev) => [newAddrObj, ...prev.filter(p => p.id !== newAddrObj.id)]);
+    setSelectedAddressId(newAddrObj.id);
+
     if (finalData.saveAddress) {
       try {
         const res = await fetch("/api/addresses", {
@@ -552,7 +648,7 @@ export default function CheckoutPage() {
         if (res.ok) {
           const resData = await res.json();
           if (resData.address) {
-            setSavedAddresses((prev) => [resData.address, ...prev]);
+            setSavedAddresses((prev) => [resData.address, ...prev.filter(a => a.id !== newAddrObj.id && a.id !== resData.address.id)]);
             setSelectedAddressId(resData.address.id);
           }
         }
@@ -625,6 +721,20 @@ export default function CheckoutPage() {
         type: editType,
         isDefault: editIsDefault,
       };
+
+      if (typeof window !== "undefined") {
+        const cleanPhone = (verifiedPhone || rawPhone).replace(/\D/g, "").slice(-10);
+        if (cleanPhone) {
+          try {
+            const key = `rnh_saved_addresses_${cleanPhone}`;
+            const existing = JSON.parse(localStorage.getItem(key) || "[]");
+            const merged = existing.map((a: any) => (a.id === updated.id ? updated : editIsDefault ? { ...a, isDefault: false } : a));
+            if (!merged.some((a: any) => a.id === updated.id)) merged.unshift(updated);
+            localStorage.setItem(key, JSON.stringify(merged));
+            localStorage.setItem("rnh_last_address", JSON.stringify(updated));
+          } catch {}
+        }
+      }
 
       setSavedAddresses((prev) =>
         prev.map((a) => (a.id === updated.id ? updated : editIsDefault ? { ...a, isDefault: false } : a))

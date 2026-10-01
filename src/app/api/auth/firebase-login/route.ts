@@ -72,33 +72,72 @@ export async function POST(req: Request) {
     let isExistingCustomer = false;
     try {
       const { prisma } = await import("@/lib/db");
-      if (user.id && !user.id.startsWith("guest-")) {
-        addresses = await prisma.address.findMany({
-          where: { userId: user.id },
-          orderBy: [
-            { isDefault: "desc" },
-            { createdAt: "desc" }
+      const cleanPhoneDigits = phone.replace(/\D/g, "").slice(-10);
+      const withPlus91 = `+91${cleanPhoneDigits}`;
+
+      const addrList = await prisma.address.findMany({
+        where: {
+          OR: [
+            ...(user.id && !user.id.startsWith("guest-") ? [{ userId: user.id }] : []),
+            { phone: withPlus91 },
+            { phone: cleanPhoneDigits },
+            { phone: phone },
           ],
-          select: {
-            id: true,
-            name: true,
-            phone: true,
-            addressLine1: true,
-            addressLine2: true,
-            city: true,
-            state: true,
-            pincode: true,
-            type: true,
-            isDefault: true,
+        },
+        orderBy: [
+          { isDefault: "desc" },
+          { createdAt: "desc" }
+        ],
+        select: {
+          id: true,
+          name: true,
+          phone: true,
+          addressLine1: true,
+          addressLine2: true,
+          city: true,
+          state: true,
+          pincode: true,
+          type: true,
+          isDefault: true,
+        }
+      });
+
+      // If no address records found in Address table, check previous Orders for this customer
+      if (addrList.length === 0) {
+        const previousOrders = await prisma.order.findMany({
+          where: {
+            OR: [
+              ...(user.id && !user.id.startsWith("guest-") ? [{ userId: user.id }] : []),
+              { shippingPhone: withPlus91 },
+              { shippingPhone: cleanPhoneDigits },
+              { shippingPhone: phone },
+            ],
+          },
+          orderBy: { createdAt: "desc" },
+          take: 3,
+        });
+
+        for (const ord of previousOrders) {
+          if (ord.shippingAddress1 && ord.shippingCity && ord.shippingPincode) {
+            addrList.push({
+              id: `ord-addr-${ord.id}`,
+              name: ord.shippingName || "",
+              phone: ord.shippingPhone || withPlus91,
+              addressLine1: ord.shippingAddress1,
+              addressLine2: ord.shippingAddress2 || "",
+              city: ord.shippingCity,
+              state: ord.shippingState,
+              pincode: ord.shippingPincode,
+              type: ord.addressType || "Home",
+              isDefault: true,
+            });
+            break;
           }
-        });
-
-        const previousOrdersCount = await prisma.order.count({
-          where: { userId: user.id }
-        });
-
-        isExistingCustomer = addresses.length > 0 || previousOrdersCount > 0;
+        }
       }
+
+      addresses = addrList;
+      isExistingCustomer = addresses.length > 0;
     } catch (dbErr) {
       console.warn("[FIREBASE_LOGIN_DB_WARN]", dbErr);
     }

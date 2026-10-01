@@ -34,19 +34,58 @@ export async function GET() {
   try {
     const userId = await getAuthenticatedUserId();
 
-    // STRICT SECURITY: Only authenticated users can access saved addresses.
-    // Never allow querying addresses by unverified phone parameter.
     if (!userId) {
       return NextResponse.json({ addresses: [] });
     }
 
-    const addresses = await prisma.address.findMany({
+    let addresses = await prisma.address.findMany({
       where: { userId },
       orderBy: [
         { isDefault: "desc" },
         { createdAt: "desc" }
       ]
     });
+
+    // If no address rows found, search previous orders for this user
+    if (addresses.length === 0) {
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      const phone = user?.phone;
+      const cleanPhone = phone ? phone.replace(/\D/g, "").slice(-10) : "";
+      const withPlus91 = cleanPhone ? `+91${cleanPhone}` : "";
+
+      const previousOrders = await prisma.order.findMany({
+        where: {
+          OR: [
+            { userId },
+            ...(withPlus91 ? [{ shippingPhone: withPlus91 }] : []),
+            ...(cleanPhone ? [{ shippingPhone: cleanPhone }] : []),
+          ],
+        },
+        orderBy: { createdAt: "desc" },
+        take: 3,
+      });
+
+      const fallbackAddrs: any[] = [];
+      for (const ord of previousOrders) {
+        if (ord.shippingAddress1 && ord.shippingCity && ord.shippingPincode) {
+          fallbackAddrs.push({
+            id: `ord-addr-${ord.id}`,
+            userId,
+            name: ord.shippingName || "",
+            phone: ord.shippingPhone || withPlus91 || cleanPhone,
+            addressLine1: ord.shippingAddress1,
+            addressLine2: ord.shippingAddress2 || "",
+            city: ord.shippingCity,
+            state: ord.shippingState,
+            pincode: ord.shippingPincode,
+            type: ord.addressType || "Home",
+            isDefault: true,
+          });
+          break;
+        }
+      }
+      addresses = fallbackAddrs;
+    }
 
     return NextResponse.json({ addresses });
   } catch (error) {
