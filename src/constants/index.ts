@@ -35,7 +35,7 @@ export const FOOTER_LINKS = {
     { name: "Wood Pressed Sesame Oil", href: "/products/sesame-oil" },
     { name: "Traditional Grains & Rice", href: "/products?category=grains" },
     { name: "Jai Sriram Unpolished Rice", href: "/products/jaisriram-unpolished-rice" },
-    { name: "Jai Sriram Polished Rice", href: "/products/jaisriram-polished-rice" },
+    { name: "Jai Sriram Semi-Polished Rice", href: "/products/jaisriram-polished-rice" },
     { name: "Harvest Fresh Raw Groundnuts", href: "/products/groundnuts" },
   ],
   about: [

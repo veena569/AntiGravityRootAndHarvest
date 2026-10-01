@@ -361,10 +361,10 @@ export const INITIAL_PRODUCTS: Product[] = [
   },
   {
     id: "jaisriram-polished-rice",
-    name: "Jai Sriram Polished Rice",
-    tagline: "Fine-grain premium polished white rice.",
-    description: "Our Jai Sriram Polished Rice is carefully milled to deliver clean, fluffy white rice grains that cook evenly and digest easily. Selected from premium farm harvests, this polished white rice is thoroughly cleaned and processed under strict hygiene standards, offering a soft texture and delicate aroma perfect for everyday family meals, biryanis, and traditional curries.",
-    shortDescription: "Premium Jai Sriram polished white rice. Light, fluffy texture, easy to digest, perfect for daily meals.",
+    name: "Jai Sriram Semi-Polished Rice",
+    tagline: "Fine-grain premium semi-polished rice.",
+    description: "Our Jai Sriram Semi-Polished Rice is gently milled to retain essential bran nutrients and fiber while offering a soft, delicious texture that cooks evenly and digests easily. Selected from premium farm harvests, this semi-polished rice is thoroughly cleaned and processed under strict hygiene standards, balancing wholesome nutrition with great taste for everyday family meals.",
+    shortDescription: "Premium Jai Sriram semi-polished rice. Retains partial bran for wholesome nutrition and soft, fluffy texture.",
     image: "/images/jaisriram-polished-rice.jpg",
     gallery: ["/images/jaisriram-polished-rice.jpg", "/images/why-jaisriram-rice.jpg"],
     sizes: ["1 kg", "5 kg"],
@@ -377,24 +377,24 @@ export const INITIAL_PRODUCTS: Product[] = [
       "5 kg": 490
     },
     benefits: [
-      "Clean & Easy to Digest: Light on digestion, making it ideal for daily family meals.",
+      "Retains Natural Bran & Nutrients: Gently semi-polished to preserve dietary fiber and essential minerals.",
+      "Clean & Easy to Digest: Wholesome and light on digestion, ideal for daily family meals.",
       "Uniform Fluffy Grains: Cooks up non-sticky with excellent grain separation.",
-      "Hygienically Processed: Thoroughly de-stoned, cleaned, and packed under strict quality standards.",
-      "Aromatic & Versatile: Pairs delightfully with sambar, rasam, dal, and everyday South Indian curries."
+      "Aromatic & Versatile: Pairs delightfully with sambar, rasam, dal, and everyday traditional curries."
     ],
-    ingredients: "100% Raw Jai Sriram Polished White Rice.",
+    ingredients: "100% Raw Jai Sriram Semi-Polished Rice.",
     storage: "Store in a cool dry place. Keep airtight.",
     nutrition: [
       { label: "Energy", value: "351 kcal" },
       { label: "Protein", value: "6.8 g" },
       { label: "Total Fat", value: "0.4 g" },
       { label: "Carbohydrates", value: "80.0 g" },
-      { label: "Dietary Fibre", value: "0.6 g" }
+      { label: "Dietary Fibre", value: "1.8 g" }
     ],
     pressedOn: "N/A",
     packedOn: "N/A",
     bestBefore: "12 Months from Packing",
-    batchNumber: "RH-JSR-POL",
+    batchNumber: "RH-JSR-SEMI",
     rating: 5.0,
     reviewsCount: 3,
     reviews: [
@@ -403,14 +403,18 @@ export const INITIAL_PRODUCTS: Product[] = [
         rating: 5,
         date: "2026-07-20",
         title: "Very soft and aromatic",
-        comment: "Great quality white rice. Grains are long and cook softly. Perfect for daily lunch.",
+        comment: "Great quality semi-polished rice. Grains are long and cook softly. Perfect for daily lunch.",
         verified: true
       }
     ],
     faqs: [
       {
+        q: "What is semi-polished rice?",
+        a: "Semi-polished rice undergoes single-pass gentle milling to retain a portion of the wholesome natural bran layer, combining the high fiber benefits of unpolished rice with the soft texture of white rice."
+      },
+      {
         q: "Is this rice suitable for daily cooking?",
-        a: "Yes, Jai Sriram Polished Rice is a staple white rice variety prized for its light digestion, soft texture, and versatility."
+        a: "Yes, Jai Sriram Semi-Polished Rice is a wholesome staple rice variety prized for its balanced nutrition, soft texture, and versatility."
       }
     ],
     category: "Grains",
