@@ -6,23 +6,47 @@ export class UserService {
    * Finds or creates a user based on their phone number, optionally updating the name
    */
   static async findOrCreateByPhone(phone: string, name?: string): Promise<User> {
-    let user = await prisma.user.findUnique({
-      where: { phone }
-    });
+    const cleanDigits = phone.replace(/\D/g, "").slice(-10);
+    const withPlus91 = `+91${cleanDigits}`;
+    const rawWithPlus = phone.startsWith("+") ? phone : `+${phone}`;
 
-    if (!user) {
-      user = await prisma.user.create({
-        data: {
-          phone,
-          name: name || null,
-          role: "CUSTOMER"
+    let user: any = null;
+    try {
+      user = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { phone: phone },
+            { phone: withPlus91 },
+            { phone: cleanDigits },
+            { phone: rawWithPlus },
+          ]
         }
       });
-    } else if (name && !user.name) {
-      user = await prisma.user.update({
-        where: { id: user.id },
-        data: { name }
-      });
+
+      if (!user) {
+        user = await prisma.user.create({
+          data: {
+            phone: withPlus91,
+            name: name || null,
+            role: "CUSTOMER"
+          }
+        });
+      } else if (name && !user.name) {
+        user = await prisma.user.update({
+          where: { id: user.id },
+          data: { name }
+        });
+      }
+    } catch (err) {
+      console.error("[USER_SERVICE_DB_ERROR]", err);
+      // Graceful fallback customer session
+      return {
+        id: `guest-${cleanDigits}`,
+        name: name || "Customer",
+        email: null,
+        phone: withPlus91,
+        role: "CUSTOMER"
+      };
     }
 
     return {

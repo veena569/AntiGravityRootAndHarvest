@@ -67,33 +67,41 @@ export async function POST(req: Request) {
       path: "/",
     });
 
-    // Fetch saved addresses and determine customer status
-    const { prisma } = await import("@/lib/db");
-    const addresses = await prisma.address.findMany({
-      where: { userId: user.id },
-      orderBy: [
-        { isDefault: "desc" },
-        { createdAt: "desc" }
-      ],
-      select: {
-        id: true,
-        name: true,
-        phone: true,
-        addressLine1: true,
-        addressLine2: true,
-        city: true,
-        state: true,
-        pincode: true,
-        type: true,
-        isDefault: true,
+    // Fetch saved addresses and determine customer status safely
+    let addresses: any[] = [];
+    let isExistingCustomer = false;
+    try {
+      const { prisma } = await import("@/lib/db");
+      if (user.id && !user.id.startsWith("guest-")) {
+        addresses = await prisma.address.findMany({
+          where: { userId: user.id },
+          orderBy: [
+            { isDefault: "desc" },
+            { createdAt: "desc" }
+          ],
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+            addressLine1: true,
+            addressLine2: true,
+            city: true,
+            state: true,
+            pincode: true,
+            type: true,
+            isDefault: true,
+          }
+        });
+
+        const previousOrdersCount = await prisma.order.count({
+          where: { userId: user.id }
+        });
+
+        isExistingCustomer = addresses.length > 0 || previousOrdersCount > 0;
       }
-    });
-
-    const previousOrdersCount = await prisma.order.count({
-      where: { userId: user.id }
-    });
-
-    const isExistingCustomer = addresses.length > 0 || previousOrdersCount > 0;
+    } catch (dbErr) {
+      console.warn("[FIREBASE_LOGIN_DB_WARN]", dbErr);
+    }
 
     return NextResponse.json({
       success: true,
