@@ -36,9 +36,9 @@ import { ALL_INDIAN_STATES, getCitiesForState } from "@/data/india-locations";
 // Zod Schema for New Address / Shipping
 const shippingSchema = z.object({
   name: z.string().min(2, "Name is required"),
-  phone: z.string().regex(/^[0-9]{10}$/, "Enter a valid 10-digit number"),
+  phone: z.string().optional().default(""),
   email: z.string().email("Enter a valid email address").optional().or(z.literal("")),
-  addressLine1: z.string().min(5, "Address is required"),
+  addressLine1: z.string().min(3, "Address is required"),
   addressLine2: z.string().optional(),
   city: z.string().min(2, "City is required"),
   state: z.string().min(2, "State is required"),
@@ -1549,6 +1549,13 @@ export default function CheckoutPage() {
                                   Locked to verified number
                                 </span>
                               </div>
+                              <Controller
+                                name="phone"
+                                control={control}
+                                render={({ field }) => (
+                                  <input type="hidden" {...field} value={verifiedPhone || rawPhone.replace(/\D/g, "").slice(-10)} />
+                                )}
+                              />
                             </div>
 
                             {/* Email Address (Optional) */}
