@@ -188,6 +188,14 @@ export async function POST(req: Request) {
     }
   } catch (error: any) {
     console.error("[CREATE_ORDER_GENERAL_ERROR]", error);
-    return NextResponse.json({ error: error.message || "Failed to create order" }, { status: 500 });
+    const isDbError =
+      error.message?.includes("prisma") ||
+      error.message?.includes("connection") ||
+      error.message?.includes("Server has closed") ||
+      error.code?.startsWith?.("P");
+    const userMessage = isDbError
+      ? "Database server is currently waking up or reconnecting. Please wait 10 seconds and try again."
+      : (error.message || "Failed to initialize order");
+    return NextResponse.json({ error: userMessage }, { status: 500 });
   }
 }

@@ -7,12 +7,12 @@ function getFormattedDbUrl() {
   let url = process.env.DATABASE_URL || defaultDbUrl;
   if (!url.includes("connection_limit=")) {
     const sep = url.includes("?") ? "&" : "?";
-    url = `${url}${sep}connection_limit=1&pool_timeout=15`;
+    url = `${url}${sep}connection_limit=5&pool_timeout=20`;
   }
   return url;
 }
 
-const globalForPrisma = global as unknown as { prisma: PrismaClient };
+const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
 export const prisma =
   globalForPrisma.prisma ||
@@ -21,5 +21,5 @@ export const prisma =
     log: ["error", "warn"],
   });
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+globalForPrisma.prisma = prisma;
 
