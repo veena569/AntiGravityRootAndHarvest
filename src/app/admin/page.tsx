@@ -34,6 +34,7 @@ import { useApp } from "@/context/AppContext";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { SEO_CONFIG } from "@/config/seo";
+import { OrderReceipt } from "@/components/admin/OrderReceipt";
 
 export default function AdminPage() {
   const { products, orders: contextOrders } = useApp();
@@ -487,8 +488,9 @@ export default function AdminPage() {
   const [ordersError, setOrdersError] = useState<string | null>(null);
   const [orderSearchQuery, setOrderSearchQuery] = useState("");
 
-  // Invoice Modal State
+  // Invoice & Receipt Modal State
   const [selectedInvoiceOrder, setSelectedInvoiceOrder] = useState<any | null>(null);
+  const [selectedReceiptOrder, setSelectedReceiptOrder] = useState<any | null>(null);
 
   // Analytics State
   const [analyticsData, setAnalyticsData] = useState<{
@@ -1022,7 +1024,7 @@ export default function AdminPage() {
                                 {new Date(ord.createdAt).toLocaleString("en-IN")}
                               </span>
                             </div>
-                            <div className="flex items-center gap-3">
+                            <div className="flex flex-wrap items-center gap-2">
                               <span className={`text-[10px] font-bold px-2 py-1 uppercase ${
                                 ord.paymentStatus === "paid" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
                               }`}>
@@ -1038,6 +1040,15 @@ export default function AdminPage() {
                                 <option value="shipped">Shipped</option>
                                 <option value="delivered">Delivered</option>
                               </select>
+                              <button
+                                type="button"
+                                onClick={() => setSelectedReceiptOrder(ord)}
+                                className="inline-flex items-center gap-1.5 px-3 py-1 bg-forest hover:bg-forest-light text-white text-[11px] font-semibold uppercase tracking-wider rounded-xs shadow-xs transition-colors cursor-pointer"
+                                title="Print Order Receipt & Return Address Slip"
+                              >
+                                <Printer className="w-3.5 h-3.5 text-gold" />
+                                <span>Print Receipt</span>
+                              </button>
                             </div>
                           </div>
 
@@ -1152,10 +1163,10 @@ export default function AdminPage() {
                               <td className="p-3 font-semibold text-forest">₹{ord.total}</td>
                               <td className="p-3 text-right">
                                 <button
-                                  onClick={() => setSelectedInvoiceOrder(ord)}
-                                  className="inline-flex items-center gap-1 px-3 py-1.5 bg-forest text-brand-bg hover:bg-forest-light text-[10px] uppercase font-semibold transition-colors"
+                                  onClick={() => setSelectedReceiptOrder(ord)}
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-forest text-brand-bg hover:bg-forest-light text-[10px] uppercase font-semibold transition-colors rounded-xs shadow-xs"
                                 >
-                                  <FileText className="w-3 h-3" /> View Invoice
+                                  <Printer className="w-3 h-3 text-gold" /> Print Receipt
                                 </button>
                               </td>
                             </tr>
@@ -2928,129 +2939,18 @@ export default function AdminPage() {
         </div>
       </main>
 
-      {/* PRINTABLE INVOICE / BILL MODAL */}
-      {selectedInvoiceOrder && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white text-dark w-full max-w-2xl p-8 space-y-6 shadow-2xl relative border border-forest/20 my-8">
-            
-            {/* Modal Header Controls */}
-            <div className="flex justify-between items-center border-b border-forest/10 pb-4 print:hidden">
-              <span className="text-xs uppercase tracking-widest text-gold font-bold flex items-center gap-2">
-                <FileText className="w-4 h-4" /> Tax Invoice & Bill
-              </span>
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => window.print()}
-                  className="px-4 py-2 bg-forest text-brand-bg text-xs font-semibold uppercase flex items-center gap-2 hover:bg-forest-light"
-                >
-                  <Printer className="w-4 h-4" /> Print / Download PDF
-                </button>
-                <button
-                  onClick={() => setSelectedInvoiceOrder(null)}
-                  className="p-2 text-dark/60 hover:text-dark hover:bg-forest/5"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-
-            {/* Printable Invoice Header */}
-            <div className="flex justify-between items-start border-b-2 border-forest pb-6">
-              <div>
-                <h2 className="text-2xl font-serif text-forest font-bold tracking-wider">ROOT &amp; HARVEST</h2>
-                <p className="text-[10px] text-dark/60 uppercase tracking-widest mt-1">Honest Food, Naturally Crafted</p>
-                <p className="text-[10px] text-dark/60 mt-1">Hyderabad Operations Hub, India</p>
-                <p className="text-[10px] text-dark/60">support@rootandharvest.in | www.rootandharvest.in</p>
-              </div>
-              <div className="text-right">
-                <span className="text-xs font-bold uppercase tracking-widest text-forest block">ORDER INVOICE</span>
-                <p className="font-mono text-sm font-bold text-forest mt-1">{selectedInvoiceOrder.orderNumber}</p>
-                <p className="text-[10px] font-mono text-dark/60">
-                  Date: {new Date(selectedInvoiceOrder.createdAt).toLocaleDateString("en-IN")}
-                </p>
-                <p className="text-[10px] uppercase font-bold text-green-700 mt-1">
-                  Status: {selectedInvoiceOrder.paymentStatus}
-                </p>
-              </div>
-            </div>
-
-            {/* Addresses Block */}
-            <div className="grid grid-cols-2 gap-6 text-xs bg-brand-bg/30 p-4 border border-forest/10">
-              <div className="space-y-1">
-                <span className="text-[10px] font-bold uppercase text-forest block">Billed & Shipped To</span>
-                <p className="font-bold text-forest">{selectedInvoiceOrder.shippingName}</p>
-                <p>{selectedInvoiceOrder.shippingAddress1}</p>
-                {selectedInvoiceOrder.shippingAddress2 && <p>{selectedInvoiceOrder.shippingAddress2}</p>}
-                <p>{selectedInvoiceOrder.shippingCity}, {selectedInvoiceOrder.shippingState} - {selectedInvoiceOrder.shippingPincode}</p>
-                <p className="text-dark/70 font-mono text-[11px]">Phone: {selectedInvoiceOrder.shippingPhone}</p>
-                {selectedInvoiceOrder.shippingEmail && <p className="text-dark/70 text-[11px]">Email: {selectedInvoiceOrder.shippingEmail}</p>}
-              </div>
-
-              <div className="space-y-1 text-right">
-                <span className="text-[10px] font-bold uppercase text-forest block">Payment Details</span>
-                <p className="font-semibold">{selectedInvoiceOrder.paymentId ? "Online Gateway (Razorpay/UPI)" : "Cash on Delivery (COD)"}</p>
-                {selectedInvoiceOrder.paymentId && (
-                  <p className="font-mono text-[10px] text-dark/60">Txn Ref: {selectedInvoiceOrder.paymentId}</p>
-                )}
-                <p className="text-[10px] text-dark/60 mt-2">Delivery Type: Standard Express</p>
-              </div>
-            </div>
-
-            {/* Itemized Invoice Table */}
-            <table className="w-full text-xs divide-y divide-forest/10">
-              <thead className="bg-forest/5 text-forest font-semibold uppercase text-[10px]">
-                <tr>
-                  <th className="p-3 text-left">Item Description</th>
-                  <th className="p-3 text-center">Qty</th>
-                  <th className="p-3 text-right">Unit Price</th>
-                  <th className="p-3 text-right">Amount</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-forest/5">
-                {selectedInvoiceOrder.items && selectedInvoiceOrder.items.length > 0 ? (
-                  selectedInvoiceOrder.items.map((it: any) => (
-                    <tr key={it.id}>
-                      <td className="p-3 font-semibold text-forest">
-                        {it.name} <span className="text-[10px] font-normal text-dark/60">({it.size})</span>
-                      </td>
-                      <td className="p-3 text-center font-mono">{it.quantity}</td>
-                      <td className="p-3 text-right font-mono">₹{it.price}</td>
-                      <td className="p-3 text-right font-mono font-semibold">₹{it.price * it.quantity}</td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td className="p-3 font-semibold text-forest">Wood Pressed Sunflower Oil (1 L)</td>
-                    <td className="p-3 text-center font-mono">1</td>
-                    <td className="p-3 text-right font-mono">₹{selectedInvoiceOrder.total}</td>
-                    <td className="p-3 text-right font-mono font-semibold">₹{selectedInvoiceOrder.total}</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-
-            {/* Totals Breakdown */}
-            <div className="border-t border-forest/20 pt-4 flex justify-between items-start text-xs">
-              <div className="text-[10px] text-dark/60 space-y-1">
-                <p>Thank you for choosing 100% natural, farm-fresh produce from Root &amp; Harvest!</p>
-                <p>This is a computer-generated order receipt.</p>
-              </div>
-              <div className="space-y-1 text-right w-48 font-mono">
-                <div className="flex justify-between text-dark/70">
-                  <span>Subtotal:</span>
-                  <span>₹{selectedInvoiceOrder.total}</span>
-                </div>
-                <div className="flex justify-between text-dark/70">
-                  <span>Shipping Fee:</span>
-                  <span className="text-green-700 font-bold uppercase text-[10px]">FREE</span>
-                </div>
-                <div className="flex justify-between border-t border-forest/20 pt-2 text-sm font-bold text-forest">
-                  <span>Total Bill:</span>
-                  <span>₹{selectedInvoiceOrder.total}</span>
-                </div>
-              </div>
-            </div>
-
+      {/* PRINTABLE ORDER RECEIPT & RETURN ADDRESS SLIP MODAL */}
+      {(selectedReceiptOrder || selectedInvoiceOrder) && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+          <div className="bg-white text-dark w-full max-w-2xl my-6 rounded-lg shadow-2xl overflow-hidden border border-forest/20 relative animate-in fade-in duration-200">
+            <OrderReceipt
+              order={selectedReceiptOrder || selectedInvoiceOrder}
+              onClose={() => {
+                setSelectedReceiptOrder(null);
+                setSelectedInvoiceOrder(null);
+              }}
+              showModalControls={true}
+            />
           </div>
         </div>
       )}

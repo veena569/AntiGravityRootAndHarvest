@@ -21,11 +21,34 @@ async function checkAdminAuth() {
   return false;
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const isAuthorized = await checkAdminAuth();
     if (!isAuthorized) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const orderId = searchParams.get("orderId") || searchParams.get("id");
+
+    if (orderId) {
+      const order = await prisma.order.findFirst({
+        where: {
+          OR: [
+            { id: orderId },
+            { orderNumber: orderId },
+          ],
+        },
+        include: {
+          items: true,
+        },
+      });
+
+      if (!order) {
+        return NextResponse.json({ error: "Order not found" }, { status: 404 });
+      }
+
+      return NextResponse.json({ order });
     }
 
     let orders: any[] = [];
