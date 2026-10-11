@@ -10,6 +10,7 @@ import {
   Tag,
   Newspaper,
   Printer,
+  Download,
   FileText,
   Search,
   Activity,
@@ -855,7 +856,10 @@ export default function AdminPage() {
     <>
       <Navbar />
 
-      <main className="min-h-screen bg-brand-bg py-12 md:py-20 text-left">
+      <main
+        id="admin-main-content"
+        className={`min-h-screen bg-brand-bg py-12 md:py-20 text-left ${(selectedReceiptOrder || selectedInvoiceOrder) ? "print:hidden" : ""}`}
+      >
         <div className="max-w-7xl mx-auto px-6 md:px-12 space-y-10">
           
           {/* Header */}
@@ -1043,11 +1047,20 @@ export default function AdminPage() {
                               <button
                                 type="button"
                                 onClick={() => setSelectedReceiptOrder(ord)}
+                                className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-600 hover:bg-amber-500 text-white text-[11px] font-semibold uppercase tracking-wider rounded-xs shadow-xs transition-colors cursor-pointer"
+                                title="Download Order Receipt (PDF) & Return Address Slip"
+                              >
+                                <Download className="w-3.5 h-3.5" />
+                                <span>Download Receipt</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setSelectedReceiptOrder(ord)}
                                 className="inline-flex items-center gap-1.5 px-3 py-1 bg-forest hover:bg-forest-light text-white text-[11px] font-semibold uppercase tracking-wider rounded-xs shadow-xs transition-colors cursor-pointer"
                                 title="Print Order Receipt & Return Address Slip"
                               >
                                 <Printer className="w-3.5 h-3.5 text-gold" />
-                                <span>Print Receipt</span>
+                                <span>Print</span>
                               </button>
                             </div>
                           </div>
@@ -1162,12 +1175,22 @@ export default function AdminPage() {
                               </td>
                               <td className="p-3 font-semibold text-forest">₹{ord.total}</td>
                               <td className="p-3 text-right">
-                                <button
-                                  onClick={() => setSelectedReceiptOrder(ord)}
-                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-forest text-brand-bg hover:bg-forest-light text-[10px] uppercase font-semibold transition-colors rounded-xs shadow-xs"
-                                >
-                                  <Printer className="w-3 h-3 text-gold" /> Print Receipt
-                                </button>
+                                <div className="flex items-center justify-end gap-1.5">
+                                  <button
+                                    onClick={() => setSelectedReceiptOrder(ord)}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-600 text-white hover:bg-amber-500 text-[10px] uppercase font-semibold transition-colors rounded-xs shadow-xs cursor-pointer"
+                                    title="Download Receipt (PDF)"
+                                  >
+                                    <Download className="w-3 h-3" /> Download
+                                  </button>
+                                  <button
+                                    onClick={() => setSelectedReceiptOrder(ord)}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-forest text-brand-bg hover:bg-forest-light text-[10px] uppercase font-semibold transition-colors rounded-xs shadow-xs cursor-pointer"
+                                    title="Print Receipt"
+                                  >
+                                    <Printer className="w-3 h-3 text-gold" /> Print
+                                  </button>
+                                </div>
                               </td>
                             </tr>
                           ))}
@@ -2941,7 +2964,7 @@ export default function AdminPage() {
 
       {/* PRINTABLE ORDER RECEIPT & RETURN ADDRESS SLIP MODAL */}
       {(selectedReceiptOrder || selectedInvoiceOrder) && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+        <div id="receipt-modal-container" className="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
           <div className="bg-white text-dark w-full max-w-2xl my-6 rounded-lg shadow-2xl overflow-hidden border border-forest/20 relative animate-in fade-in duration-200">
             <OrderReceipt
               order={selectedReceiptOrder || selectedInvoiceOrder}

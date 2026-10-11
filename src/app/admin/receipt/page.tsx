@@ -3,7 +3,7 @@
 import React, { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Printer, RefreshCw, AlertCircle } from "lucide-react";
+import { ArrowLeft, Printer, RefreshCw, AlertCircle, Download, Loader2 } from "lucide-react";
 import { OrderReceipt, OrderReceiptData } from "@/components/admin/OrderReceipt";
 
 function ReceiptContent() {
@@ -14,6 +14,38 @@ function ReceiptContent() {
   const [order, setOrder] = useState<OrderReceiptData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+
+  const handleDownloadPdf = async () => {
+    if (typeof window === "undefined" || !order) return;
+
+    const element = document.getElementById("receipt-paper-sheet");
+    if (!element) {
+      window.print();
+      return;
+    }
+
+    try {
+      setIsDownloadingPdf(true);
+      const html2pdfModule = await import("html2pdf.js");
+      const html2pdf = (html2pdfModule as any).default || html2pdfModule;
+
+      const opt = {
+        margin: [4, 4, 4, 4],
+        filename: `Receipt-INV-${order.orderNumber}.pdf`,
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, logging: false },
+        jsPDF: { unit: "mm", format: "a5", orientation: "portrait" },
+      };
+
+      await html2pdf().set(opt).from(element).save();
+    } catch (err) {
+      console.error("PDF generation failed, falling back to window.print():", err);
+      window.print();
+    } finally {
+      setIsDownloadingPdf(false);
+    }
+  };
 
   const fetchOrder = async () => {
     if (!orderId) {
@@ -102,11 +134,31 @@ function ReceiptContent() {
         <div className="flex items-center gap-2">
           <button
             type="button"
+            onClick={handleDownloadPdf}
+            disabled={isDownloadingPdf}
+            className="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold rounded shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+            title="Download Receipt directly as PDF file"
+          >
+            {isDownloadingPdf ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <span>Downloading...</span>
+              </>
+            ) : (
+              <>
+                <Download className="w-3.5 h-3.5" />
+                <span>Download Receipt</span>
+              </>
+            )}
+          </button>
+
+          <button
+            type="button"
             onClick={() => window.print()}
             className="px-3.5 py-1.5 bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-semibold rounded shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
           >
             <Printer className="w-3.5 h-3.5" />
-            <span>Print Receipt / PDF</span>
+            <span>Print</span>
           </button>
         </div>
       </div>

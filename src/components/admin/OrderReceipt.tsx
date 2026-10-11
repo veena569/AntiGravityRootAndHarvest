@@ -2,7 +2,7 @@
 
 import React from "react";
 import Image from "next/image";
-import { Printer, X, ExternalLink, MapPin, Phone, Mail, CheckCircle2, AlertCircle, Clock, RotateCcw } from "lucide-react";
+import { Printer, X, ExternalLink, MapPin, Phone, Mail, CheckCircle2, AlertCircle, Clock, RotateCcw, Download, Loader2 } from "lucide-react";
 
 export interface OrderReceiptItem {
   id?: string;
@@ -175,6 +175,7 @@ export function computeReceiptTotals(order: OrderReceiptData) {
 
 export function OrderReceipt({ order, onClose, showModalControls = true }: OrderReceiptProps) {
   const totals = computeReceiptTotals(order);
+  const [isDownloadingPdf, setIsDownloadingPdf] = React.useState(false);
 
   const formattedDate = React.useMemo(() => {
     try {
@@ -200,6 +201,37 @@ export function OrderReceipt({ order, onClose, showModalControls = true }: Order
     }
   };
 
+  const handleDownloadPdf = async () => {
+    if (typeof window === "undefined") return;
+
+    const element = document.getElementById("receipt-paper-sheet");
+    if (!element) {
+      window.print();
+      return;
+    }
+
+    try {
+      setIsDownloadingPdf(true);
+      const html2pdfModule = await import("html2pdf.js");
+      const html2pdf = (html2pdfModule as any).default || html2pdfModule;
+
+      const opt = {
+        margin: [4, 4, 4, 4],
+        filename: `Receipt-INV-${order.orderNumber}.pdf`,
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, logging: false },
+        jsPDF: { unit: "mm", format: "a5", orientation: "portrait" },
+      };
+
+      await html2pdf().set(opt).from(element).save();
+    } catch (err) {
+      console.error("PDF generation failed, falling back to window.print():", err);
+      window.print();
+    } finally {
+      setIsDownloadingPdf(false);
+    }
+  };
+
   const handleOpenStandalone = () => {
     if (typeof window !== "undefined") {
       window.open(`/admin/receipt?orderId=${encodeURIComponent(order.orderNumber)}`, "_blank");
@@ -207,50 +239,88 @@ export function OrderReceipt({ order, onClose, showModalControls = true }: Order
   };
 
   return (
-    <div className="receipt-wrapper w-full bg-white text-gray-900 font-sans">
-      {/* Print CSS Stylesheet (A5 Portrait default with graceful A4 scaling) */}
+    <div id="printable-order-receipt" className="receipt-wrapper w-full bg-white text-gray-900 font-sans">
+      {/* Print CSS Stylesheet (A5 Portrait default with graceful A4 scaling and full admin-background isolation) */}
       <style jsx global>{`
         @page {
           size: A5 portrait;
-          margin: 6mm 6mm 6mm 6mm;
+          margin: 4mm 4mm 4mm 4mm;
         }
 
         @media print {
+          /* 1. Reset root page & canvas */
           html, body {
             background: #ffffff !important;
             color: #111827 !important;
             margin: 0 !important;
             padding: 0 !important;
-            font-size: 11px !important;
+            width: 100% !important;
+            height: auto !important;
+            min-height: 0 !important;
+            font-size: 10.5px !important;
             line-height: 1.3 !important;
           }
 
-          /* Hide all surrounding website/admin UI */
-          header, footer, nav, aside, .no-print, .print\\:hidden {
+          /* 2. COMPLETELY HIDE ALL surrounding layout & admin dashboard pages */
+          header, footer, nav, aside, main, #admin-main-content, .no-print, .print\\:hidden {
             display: none !important;
           }
 
-          /* Ensure modal backdrop is removed in print */
-          .fixed, .backdrop-blur-sm, .bg-black\\/60 {
+          /* Hide any other top-level elements in body except the receipt modal container */
+          body > *:not(#receipt-modal-container):not(.receipt-wrapper):not(#printable-order-receipt) {
+            display: none !important;
+          }
+
+          /* 3. Modal backdrop flattening: Remove fixed overlays, background colors, and scrollbars */
+          #receipt-modal-container,
+          .fixed,
+          .backdrop-blur-xs,
+          .backdrop-blur-sm,
+          .bg-black\\/70,
+          .bg-black\\/60 {
             position: static !important;
+            display: block !important;
             background: transparent !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
             padding: 0 !important;
             margin: 0 !important;
             overflow: visible !important;
             height: auto !important;
+            max-height: none !important;
             width: 100% !important;
             inset: auto !important;
+            z-index: auto !important;
+            box-shadow: none !important;
+            border: none !important;
           }
 
+          /* Flatten inner modal dialog frame */
+          #receipt-modal-container > div,
+          .receipt-wrapper {
+            position: static !important;
+            display: block !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            border: none !important;
+            overflow: visible !important;
+          }
+
+          /* 4. Receipt Paper Styling */
           .receipt-paper {
             width: 100% !important;
             max-width: 100% !important;
             margin: 0 !important;
-            padding: 4mm !important;
+            padding: 2mm 3mm !important;
             box-shadow: none !important;
-            border: 1px solid #9ca3af !important;
+            border: none !important;
             background: #ffffff !important;
             page-break-after: auto;
+            page-break-inside: auto;
           }
 
           .page-break-avoid {
@@ -277,6 +347,28 @@ export function OrderReceipt({ order, onClose, showModalControls = true }: Order
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Primary Action 1: Direct Download Receipt PDF */}
+            <button
+              type="button"
+              onClick={handleDownloadPdf}
+              disabled={isDownloadingPdf}
+              className="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold rounded shadow-sm transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              title="Download Receipt directly as PDF file"
+            >
+              {isDownloadingPdf ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <span>Downloading...</span>
+                </>
+              ) : (
+                <>
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Download Receipt</span>
+                </>
+              )}
+            </button>
+
+            {/* Primary Action 2: Print / Save as PDF via Browser */}
             <button
               type="button"
               onClick={handlePrint}
@@ -284,9 +376,10 @@ export function OrderReceipt({ order, onClose, showModalControls = true }: Order
               title="Print Receipt or Save as PDF"
             >
               <Printer className="w-3.5 h-3.5" />
-              <span>Print / Save PDF</span>
+              <span>Print</span>
             </button>
 
+            {/* Helper Action: Open Dedicated Tab */}
             <button
               type="button"
               onClick={handleOpenStandalone}
@@ -312,7 +405,7 @@ export function OrderReceipt({ order, onClose, showModalControls = true }: Order
       )}
 
       {/* Printable Receipt Document (Styled for A5 & A4) */}
-      <div className="receipt-paper bg-white p-5 md:p-6 max-w-2xl mx-auto border border-gray-300 shadow-sm text-xs leading-relaxed">
+      <div id="receipt-paper-sheet" className="receipt-paper bg-white p-5 md:p-6 max-w-2xl mx-auto border border-gray-300 shadow-sm text-xs leading-relaxed">
         
         {/* ========================================================= */}
         {/* 1. RECEIPT HEADER */}
