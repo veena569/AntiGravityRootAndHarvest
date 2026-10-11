@@ -344,7 +344,7 @@ export function OrderReceipt({ order, onClose, showModalControls = true }: Order
                   Flat No. 201, Majestic Pleasant Homes, Serilingampally, Hyderabad, TS - 500019
                 </p>
                 <p className="text-[9px] text-gray-500 leading-tight">
-                  Ph: +91 9121603832 | Email: hello@rootandharvest.in | www.rootandharvest.in
+                  Ph: +91 9121603832, 8008076707 | Email: hello@rootandharvest.in | www.rootandharvest.in
                 </p>
               </div>
             </div>
@@ -603,6 +603,7 @@ export function OrderReceipt({ order, onClose, showModalControls = true }: Order
                 <p className="font-medium">Flat No. 201, Majestic Pleasant Homes,</p>
                 <p className="font-medium">Central Park Phase - 1, Serilingampally,</p>
                 <p className="font-medium">Hyderabad, Telangana - 500019, India.</p>
+                <p className="font-medium mt-0.5 text-gray-900">Contact / Phone: <span className="font-mono font-bold text-[#1E4A3A]">8008076707</span></p>
               </div>
 
               <p className="text-[9px] italic text-gray-600 mt-1.5 border-t border-gray-300 pt-1">
