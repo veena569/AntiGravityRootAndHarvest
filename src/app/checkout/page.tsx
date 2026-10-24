@@ -1100,6 +1100,12 @@ export default function CheckoutPage() {
                         </div>
                       )}
 
+                      {(rawPhone.slice(-10) === "9666913832" || rawPhone.slice(-10) === "8008076707") && (
+                        <div className="p-2.5 bg-amber-50 border border-amber-200 text-xs text-amber-900 rounded text-center">
+                          <span className="font-semibold">Admin / Test Account:</span> You can instantly enter <strong className="font-mono text-forest font-bold">123456</strong> to proceed.
+                        </div>
+                      )}
+
                       <form onSubmit={handleVerifyOtp} className="space-y-6 pt-2">
                         <div className="space-y-3">
                           <label className="text-[10px] uppercase tracking-widest text-dark/60 font-semibold block text-center">
