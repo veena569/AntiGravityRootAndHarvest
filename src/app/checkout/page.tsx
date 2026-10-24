@@ -1032,7 +1032,7 @@ export default function CheckoutPage() {
                         <div className="p-3.5 bg-emerald-50/60 border border-emerald-200/70 rounded text-xs text-emerald-900 flex items-start gap-2.5 leading-relaxed">
                           <ShieldCheck className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
                           <span>
-                            We&apos;ll send a quick 6-digit OTP to verify your order and automatically retrieve your saved addresses.
+                            We&apos;ll send a quick 6-digit OTP via WhatsApp &amp; SMS to verify your order and retrieve your saved addresses.
                           </span>
                         </div>
 
@@ -1076,7 +1076,7 @@ export default function CheckoutPage() {
                           <h2 className="text-2xl font-serif text-forest">Verify your mobile number</h2>
                         </div>
                         <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 text-xs sm:text-sm text-dark/65">
-                          <span>We sent a 6-digit code to</span>
+                          <span>We sent a 6-digit code via WhatsApp &amp; SMS to</span>
                           <span className="font-semibold text-forest font-mono">
                             {formatMaskedPhone(rawPhone)}
                           </span>

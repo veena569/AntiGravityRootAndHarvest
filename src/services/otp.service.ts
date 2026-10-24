@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import otpGenerator from "otp-generator";
 import { addMinutes } from "date-fns";
 import { authConfig } from "@/config/auth";
+import { WhatsappMetaService } from "./whatsapp-meta.service";
 
 export class OtpService {
   /**
@@ -44,9 +45,16 @@ export class OtpService {
       }
     });
 
-    // If Fast2SMS API key is set in environment, send real SMS via 'q' (Quick SMS) route in the background
+    // 1. Send OTP instantly via WhatsApp Cloud API (Free & Real-time)
+    if (phone) {
+      const rawPhone = phone.replace(/\D/g, "").slice(-10);
+      const waMessage = `🌿 *Root & Harvest*\n\nYour 6-digit verification code is: *${code}*\n\nValid for 10 minutes. Please do not share this code with anyone.`;
+      WhatsappMetaService.queueMessage(rawPhone, waMessage, "CUSTOMER");
+    }
+
+    // 2. Secondary fallback via Fast2SMS if available
     if (process.env.FAST2SMS_API_KEY && phone) {
-      const rawPhone = phone.replace(/\D/g, "").slice(-10); // get last 10 digits for Indian numbers
+      const rawPhone = phone.replace(/\D/g, "").slice(-10);
       fetch("https://www.fast2sms.com/dev/bulkV2", {
         method: "POST",
         headers: {
