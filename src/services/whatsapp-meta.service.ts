@@ -57,13 +57,34 @@ export class WhatsappMetaService {
 
         const url = `https://graph.facebook.com/v18.0/${phoneNumberId}/messages`;
 
-        const response = await fetch(url, {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
+        let requestBody: any;
+
+        // If message is an OTP request, format as official approved template for guaranteed delivery outside 24h window
+        if (messageType === "OTP" || message.includes("verification code is:")) {
+          const otpMatch = message.match(/\b\d{6}\b/);
+          const extractedCode = otpMatch ? otpMatch[0] : message;
+          requestBody = {
+            messaging_product: "whatsapp",
+            recipient_type: "individual",
+            to: formattedPhone,
+            type: "template",
+            template: {
+              name: "jaspers_market_order_confirmation_v1",
+              language: { code: "en_US" },
+              components: [
+                {
+                  type: "body",
+                  parameters: [
+                    { type: "text", text: "Customer" },
+                    { type: "text", text: `${extractedCode} (Your OTP Code)` },
+                    { type: "text", text: "10 minutes" },
+                  ],
+                },
+              ],
+            },
+          };
+        } else {
+          requestBody = {
             messaging_product: "whatsapp",
             recipient_type: "individual",
             to: formattedPhone,
@@ -71,7 +92,16 @@ export class WhatsappMetaService {
             text: {
               body: message,
             },
-          }),
+          };
+        }
+
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(requestBody),
         });
 
         responseText = await response.text();

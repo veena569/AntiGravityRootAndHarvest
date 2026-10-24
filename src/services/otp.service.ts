@@ -49,7 +49,7 @@ export class OtpService {
     if (phone) {
       const rawPhone = phone.replace(/\D/g, "").slice(-10);
       const waMessage = `🌿 *Root & Harvest*\n\nYour 6-digit verification code is: *${code}*\n\nValid for 10 minutes. Please do not share this code with anyone.`;
-      WhatsappMetaService.queueMessage(rawPhone, waMessage, "CUSTOMER");
+      WhatsappMetaService.queueMessage(rawPhone, waMessage, "OTP");
     }
 
     // 2. Secondary fallback via Fast2SMS if available
