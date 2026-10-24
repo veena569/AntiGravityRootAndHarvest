@@ -45,11 +45,24 @@ export class OtpService {
       }
     });
 
-    // 1. Send OTP instantly via WhatsApp Cloud API (Free & Real-time)
+    // 1. Send OTP instantly via WhatsApp Cloud API (Real-time)
     if (phone) {
       const rawPhone = phone.replace(/\D/g, "").slice(-10);
       const waMessage = `🌿 *Root & Harvest*\n\nYour 6-digit verification code is: *${code}*\n\nValid for 10 minutes. Please do not share this code with anyone.`;
       WhatsappMetaService.queueMessage(rawPhone, waMessage, "OTP");
+
+      // Also trigger via Fast2SMS WhatsApp if template is configured
+      if (process.env.FAST2SMS_API_KEY && process.env.FAST2SMS_WHATSAPP_MESSAGE_ID) {
+        const phoneId = process.env.FAST2SMS_WHATSAPP_PHONE_ID || "1258161287387175";
+        const messageId = process.env.FAST2SMS_WHATSAPP_MESSAGE_ID;
+        const fast2SmsWaUrl = `https://www.fast2sms.com/dev/whatsapp?message_id=${messageId}&phone_number_id=${phoneId}&numbers=${rawPhone}&variables_values=${code}`;
+        fetch(fast2SmsWaUrl, {
+          headers: { Authorization: process.env.FAST2SMS_API_KEY }
+        })
+          .then(res => res.json())
+          .then(json => console.log("[Fast2SMS WhatsApp Response]", json))
+          .catch(err => console.error("[Fast2SMS WhatsApp Error]", err));
+      }
     }
 
     // 2. Secondary fallback via Fast2SMS if available
