@@ -9,7 +9,7 @@ export class WhatsAppProviderFactory {
   static getProvider(): IWhatsAppMessagingProvider {
     const mode = process.env.WHATSAPP_PROVIDER_MODE?.toUpperCase();
 
-    if (mode === "META_AUTHENTICATION_TEMPLATE") {
+    if (mode === "META_AUTHENTICATION_TEMPLATE" || process.env.WHATSAPP_AUTH_TEMPLATE_NAME) {
       if (!this.templateProvider) {
         this.templateProvider = new TemplateWhatsAppProvider();
       }

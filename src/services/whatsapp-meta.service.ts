@@ -59,8 +59,8 @@ export class WhatsappMetaService {
 
         let requestBody: any;
 
-        // If message is explicitly marked for Jaspers market template testing
-        if (messageType === "JASPERS_ORDER_TEMPLATE") {
+        // If message is for customer login OTP or explicitly marked for Jaspers market template testing
+        if (messageType === "CUSTOMER_LOGIN_OTP" || messageType === "JASPERS_ORDER_TEMPLATE") {
           const otpMatch = message.match(/\b\d{6}\b/);
           const extractedCode = otpMatch ? otpMatch[0] : message;
           requestBody = {
@@ -75,9 +75,9 @@ export class WhatsappMetaService {
                 {
                   type: "body",
                   parameters: [
-                    { type: "text", text: "Customer" },
-                    { type: "text", text: extractedCode },
-                    { type: "text", text: "10 minutes" },
+                    { type: "text", text: "Customer (Login Verification)" },
+                    { type: "text", text: `${extractedCode} (Your 6-digit Login OTP - No purchase made)` },
+                    { type: "text", text: "5 minutes (Code Validity)" },
                   ],
                 },
               ],
