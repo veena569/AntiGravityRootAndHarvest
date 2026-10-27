@@ -54,7 +54,7 @@ export async function POST(req: Request) {
     cookies().set(authConfig.cookies.accessToken, accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      sameSite: "lax",
       maxAge: 15 * 60, // 15 minutes
       path: "/",
     });
@@ -62,7 +62,7 @@ export async function POST(req: Request) {
     cookies().set(authConfig.cookies.refreshToken, refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      sameSite: "lax",
       maxAge: 7 * 24 * 60 * 60, // 7 days
       path: "/",
     });
