@@ -656,13 +656,13 @@ export default function AdminPage() {
       glassPackCost: 65,
       metalPackCost: 85,
       variants: [
-        { id: "gn-500ml-plastic", name: "500ML Plastic", volume: 0.5, packaging: "Plastic", packagingCost: 25, salePrice: 245 },
-        { id: "gn-500ml-glass", name: "500ML Glass", volume: 0.5, packaging: "Glass", packagingCost: 45, salePrice: 259 },
-        { id: "gn-1l-plastic", name: "1L Plastic", volume: 1.0, packaging: "Plastic", packagingCost: 45, salePrice: 479, badge: "BESTSELLER" },
-        { id: "gn-1l-glass", name: "1L Glass", volume: 1.0, packaging: "Glass", packagingCost: 65, salePrice: 499 },
-        { id: "gn-1l-tin", name: "1L Tin Metal", volume: 1.0, packaging: "Tin Metal", packagingCost: 85, salePrice: 499 },
-        { id: "gn-2l-tin", name: "2L Tin Metal", volume: 2.0, packaging: "Tin Metal", packagingCost: 140, salePrice: 979 },
-        { id: "gn-5l-tin", name: "5L Tin Metal", volume: 5.0, packaging: "Tin Metal", packagingCost: 280, salePrice: 2399, badge: "BEST VALUE" },
+        { id: "gn-500ml-plastic", name: "500ML Plastic", volume: 0.5, packaging: "Plastic", packagingCost: 25, salePrice: 259 },
+        { id: "gn-500ml-glass", name: "500ML Glass", volume: 0.5, packaging: "Glass", packagingCost: 45, salePrice: 279 },
+        { id: "gn-1l-plastic", name: "1L Plastic", volume: 1.0, packaging: "Plastic", packagingCost: 45, salePrice: 499, badge: "BESTSELLER" },
+        { id: "gn-1l-glass", name: "1L Glass", volume: 1.0, packaging: "Glass", packagingCost: 65, salePrice: 529 },
+        { id: "gn-1l-tin", name: "1L Tin Metal", volume: 1.0, packaging: "Tin Metal", packagingCost: 85, salePrice: 549 },
+        { id: "gn-2l-tin", name: "2L Tin Metal", volume: 2.0, packaging: "Tin Metal", packagingCost: 140, salePrice: 1049 },
+        { id: "gn-5l-tin", name: "5L Tin Metal", volume: 5.0, packaging: "Tin Metal", packagingCost: 280, salePrice: 2449, badge: "BEST VALUE" },
       ],
     },
     {
@@ -743,8 +743,8 @@ export default function AdminPage() {
 
   const [grainRates, setGrainRates] = useState<any[]>([
     { id: "groundnuts", name: "Harvest Fresh Raw Groundnuts", purchaseCostPerKg: 140, packingCostPerKg: 20, sellingPricePerKg: 199 },
-    { id: "jaisriram-unpolished-rice", name: "Jai Sriram Unpolished Rice", purchaseCostPerKg: 65, packingCostPerKg: 15, sellingPricePerKg: 95 },
-    { id: "jaisriram-polished-rice", name: "Jai Sriram Semi-Polished Rice", purchaseCostPerKg: 58, packingCostPerKg: 15, sellingPricePerKg: 88 },
+    { id: "jaisriram-unpolished-rice", name: "Jai Sriram Unpolished Rice", purchaseCostPerKg: 65, packingCostPerKg: 15, sellingPricePerKg: 99 },
+    { id: "jaisriram-polished-rice", name: "Jai Sriram Semi-Polished Rice", purchaseCostPerKg: 58, packingCostPerKg: 15, sellingPricePerKg: 89 },
   ]);
 
   // Form for Adding New Custom Grains / Products

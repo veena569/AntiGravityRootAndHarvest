@@ -54,16 +54,16 @@ export const INITIAL_PRODUCTS: Product[] = [
     ],
     sizes: ["500 ml", "1 L", "2 L", "5 L"],
     sizePrices: {
-      "500 ml": 245,
-      "1 L": 479,
-      "2 L": 979,
-      "5 L": 2399
+      "500 ml": 259,
+      "1 L": 499,
+      "2 L": 1049,
+      "5 L": 2449
     },
     originalSizePrices: {
-      "500 ml": 272.22,
-      "1 L": 532.22,
-      "2 L": 1087.78,
-      "5 L": 2665.56
+      "500 ml": 287.78,
+      "1 L": 554.44,
+      "2 L": 1165.56,
+      "5 L": 2721.11
     },
     benefits: [
       "Rich in Monounsaturated Fatty Acids (MUFA) which support healthy lipid levels.",
@@ -312,12 +312,12 @@ export const INITIAL_PRODUCTS: Product[] = [
     gallery: ["/images/jaisriram-unpolished-rice.jpg", "/images/why-jaisriram-rice.jpg"],
     sizes: ["1 kg", "5 kg"],
     sizePrices: {
-      "1 kg": 95,
-      "5 kg": 450
+      "1 kg": 99,
+      "5 kg": 479
     },
     originalSizePrices: {
-      "1 kg": 115,
-      "5 kg": 520
+      "1 kg": 110,
+      "5 kg": 532.22
     },
     benefits: [
       "Retains Natural Bran Layer: High in natural dietary fiber which aids healthy digestion.",
@@ -369,12 +369,12 @@ export const INITIAL_PRODUCTS: Product[] = [
     gallery: ["/images/jaisriram-polished-rice.jpg", "/images/why-jaisriram-rice.jpg"],
     sizes: ["1 kg", "5 kg"],
     sizePrices: {
-      "1 kg": 88,
-      "5 kg": 420
+      "1 kg": 89,
+      "5 kg": 429
     },
     originalSizePrices: {
-      "1 kg": 105,
-      "5 kg": 490
+      "1 kg": 98.89,
+      "5 kg": 476.67
     },
     benefits: [
       "Retains Natural Bran & Nutrients: Gently semi-polished to preserve dietary fiber and essential minerals.",
