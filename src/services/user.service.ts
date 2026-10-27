@@ -3,6 +3,42 @@ import { Role, User } from "@/types/auth";
 
 export class UserService {
   /**
+   * Finds an existing user by phone without creating a new record (Login-only)
+   */
+  static async findByPhone(phone: string): Promise<User | null> {
+    const cleanDigits = phone.replace(/\D/g, "").slice(-10);
+    if (!cleanDigits) return null;
+    const withPlus91 = `+91${cleanDigits}`;
+    const rawWithPlus = phone.startsWith("+") ? phone : `+${phone}`;
+
+    try {
+      const user = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { phone: phone },
+            { phone: withPlus91 },
+            { phone: cleanDigits },
+            { phone: rawWithPlus },
+          ],
+        },
+      });
+
+      if (!user) return null;
+
+      return {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role as Role,
+      };
+    } catch (err) {
+      console.error("[USER_SERVICE_FIND_BY_PHONE_ERROR]", err);
+      return null;
+    }
+  }
+
+  /**
    * Finds or creates a user based on their phone number, optionally updating the name
    */
   static async findOrCreateByPhone(phone: string, name?: string): Promise<User> {

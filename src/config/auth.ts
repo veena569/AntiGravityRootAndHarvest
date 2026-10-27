@@ -8,8 +8,8 @@ export const authConfig = {
   },
   otp: {
     length: 6,
-    expiryMinutes: 10,
-    maxAttempts: 3
+    expiryMinutes: 5,
+    maxAttempts: 5
   },
   cookies: {
     accessToken: "rh_access_token",

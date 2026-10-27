@@ -8,17 +8,18 @@ import { authConfig } from "@/config/auth";
 const verifyOtpSchema = z.object({
   phone: z.string().min(10, "Invalid phone number"),
   code: z.string().length(authConfig.otp.length, "Invalid OTP length"),
+  isLoginOnly: z.boolean().optional(),
 });
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { phone, code } = verifyOtpSchema.parse(body);
+    const { phone, code, isLoginOnly } = verifyOtpSchema.parse(body);
 
-    const session = await AuthService.verifyAndLogin(phone, code);
+    const session = await AuthService.verifyAndLogin(phone, code, !!isLoginOnly);
 
     if (!session) {
-      return NextResponse.json({ error: "Invalid or expired OTP" }, { status: 401 });
+      return NextResponse.json({ error: "Invalid or expired verification code" }, { status: 401 });
     }
 
     // Set Cookies

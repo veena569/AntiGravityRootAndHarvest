@@ -14,11 +14,20 @@ export class AuthService {
   /**
    * Verify OTP and return session
    */
-  static async verifyAndLogin(phone: string, code: string): Promise<Session | null> {
+  static async verifyAndLogin(phone: string, code: string, isLoginOnly: boolean = false): Promise<Session | null> {
     const isValid = await OtpService.verifyOtp(code, { phone });
     if (!isValid) return null;
 
-    const user = await UserService.findOrCreateByPhone(phone);
+    let user: User | null = null;
+    if (isLoginOnly) {
+      user = await UserService.findByPhone(phone);
+      if (!user) {
+        // Enforce constraint: Do not automatically create customer accounts through login-only flow
+        return null;
+      }
+    } else {
+      user = await UserService.findOrCreateByPhone(phone);
+    }
     
     let accessToken = "";
     let refreshToken = "";

@@ -1,132 +1,161 @@
 import { prisma } from "@/lib/db";
-import otpGenerator from "otp-generator";
+import crypto from "crypto";
 import { addMinutes } from "date-fns";
 import { authConfig } from "@/config/auth";
-import { WhatsappMetaService } from "./whatsapp-meta.service";
+import { WhatsAppProviderFactory } from "./messaging/whatsapp-provider.factory";
+
+// In-memory tracker for failed verification attempts per phone
+const failedAttemptsMap = new Map<string, { count: number; lastAttempt: number }>();
 
 export class OtpService {
   /**
-   * Generates a new OTP for the given phone or email
+   * Generates a cryptographically secure 6-digit OTP for phone or email
    */
-  static async generateOtp({ phone, email }: { phone?: string; email?: string }): Promise<{ referenceId: string; code: string }> {
+  static async generateOtp({
+    phone,
+    email,
+    purpose = "LOGIN",
+  }: {
+    phone?: string;
+    email?: string;
+    purpose?: string;
+  }): Promise<{ referenceId: string; code: string }> {
     if (!phone && !email) {
       throw new Error("Phone or email is required to generate OTP");
     }
 
-    // Invalidate previous OTPs for this user
+    const normalizedTarget = phone
+      ? `+91${phone.replace(/\D/g, "").slice(-10)}`
+      : email!.toLowerCase().trim();
+
+    // Invalidate any existing unverified OTPs for this phone/email
     await prisma.otp.updateMany({
       where: {
         OR: [
-          ...(phone ? [{ phone }] : []),
-          ...(email ? [{ email }] : [])
+          ...(phone ? [{ phone: normalizedTarget }, { phone }] : []),
+          ...(email ? [{ email: normalizedTarget }] : []),
         ],
-        verified: false
+        verified: false,
       },
       data: {
-        verified: true // Technically invalidating them
-      }
+        verified: true, // Invalidate previous challenges
+      },
     });
 
-    const code = otpGenerator.generate(authConfig.otp.length, {
-      upperCaseAlphabets: false,
-      specialChars: false,
-      lowerCaseAlphabets: false,
-      digits: true
-    });
+    // Reset failed attempts counter on new OTP generation
+    if (phone) {
+      failedAttemptsMap.delete(normalizedTarget);
+    }
 
+    // Cryptographically secure 6-digit numeric code
+    const code = crypto.randomInt(100000, 1000000).toString();
     const expiresAt = addMinutes(new Date(), authConfig.otp.expiryMinutes);
 
     const otpRecord = await prisma.otp.create({
       data: {
-        phone: phone || null,
-        email: email || null,
+        phone: phone ? normalizedTarget : null,
+        email: email ? normalizedTarget : null,
         code,
-        expiresAt
-      }
+        expiresAt,
+      },
     });
 
-    // 1. Send OTP instantly via WhatsApp Cloud API (Real-time)
+    // Send through decoupled WhatsApp messaging provider if phone is provided
     if (phone) {
-      const rawPhone = phone.replace(/\D/g, "").slice(-10);
-      const waMessage = `🌿 *Root & Harvest*\n\nYour 6-digit verification code is: *${code}*\n\nValid for 10 minutes. Please do not share this code with anyone.`;
-      WhatsappMetaService.queueMessage(rawPhone, waMessage, "OTP");
-
-      // Also trigger via Fast2SMS WhatsApp if template is configured
-      if (process.env.FAST2SMS_API_KEY && process.env.FAST2SMS_WHATSAPP_MESSAGE_ID) {
-        const phoneId = process.env.FAST2SMS_WHATSAPP_PHONE_ID || "1258161287387175";
-        const messageId = process.env.FAST2SMS_WHATSAPP_MESSAGE_ID;
-        const fast2SmsWaUrl = `https://www.fast2sms.com/dev/whatsapp?message_id=${messageId}&phone_number_id=${phoneId}&numbers=${rawPhone}&variables_values=${code}`;
-        fetch(fast2SmsWaUrl, {
-          headers: { Authorization: process.env.FAST2SMS_API_KEY }
-        })
-          .then(res => res.json())
-          .then(json => console.log("[Fast2SMS WhatsApp Response]", json))
-          .catch(err => console.error("[Fast2SMS WhatsApp Error]", err));
+      const cleanPhone = normalizedTarget.replace(/\D/g, "").slice(-10);
+      try {
+        const provider = WhatsAppProviderFactory.getProvider();
+        await provider.sendLoginOtp(cleanPhone, code, {
+          expiresInMinutes: authConfig.otp.expiryMinutes,
+        });
+      } catch (waErr) {
+        console.error("[OTP_SERVICE_WHATSAPP_DISPATCH_ERROR]", waErr);
       }
     }
-
-    // 2. Secondary fallback via Fast2SMS if available
-    if (process.env.FAST2SMS_API_KEY && phone) {
-      const rawPhone = phone.replace(/\D/g, "").slice(-10);
-      fetch("https://www.fast2sms.com/dev/bulkV2", {
-        method: "POST",
-        headers: {
-          "Authorization": process.env.FAST2SMS_API_KEY,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          route: "q",
-          message: `Your Root & Harvest verification code is: ${code}. Valid for 10 minutes.`,
-          numbers: rawPhone,
-        }),
-      })
-        .then(res => res.json())
-        .then(resJson => {
-          console.log(`[Fast2SMS SMS Sent] Phone: ${rawPhone}, Status:`, resJson);
-        })
-        .catch(smsErr => {
-          console.error("[Fast2SMS Error sending SMS]", smsErr);
-        });
-    }
-
-    // Console fallback
-    console.log(`\n\n========================================`);
-    console.log(`[MOCK NOTIFICATION] OTP for ${phone || email}: ${code}`);
-    console.log(`========================================\n\n`);
 
     return { referenceId: otpRecord.id, code };
   }
 
   /**
-   * Verifies the OTP
+   * Verifies the OTP with attempt limiting, atomic state transition, and replay prevention
    */
-  static async verifyOtp(code: string, { phone, email }: { phone?: string; email?: string }): Promise<boolean> {
+  static async verifyOtp(
+    code: string,
+    { phone, email }: { phone?: string; email?: string }
+  ): Promise<boolean> {
     if (!phone && !email) return false;
 
+    const normalizedTarget = phone
+      ? `+91${phone.replace(/\D/g, "").slice(-10)}`
+      : email!.toLowerCase().trim();
+
+    // Check failed attempts limit (max 5)
+    if (phone) {
+      const attemptData = failedAttemptsMap.get(normalizedTarget);
+      if (attemptData && attemptData.count >= authConfig.otp.maxAttempts) {
+        // Invalidate all active OTPs for this phone due to brute-force threshold
+        await prisma.otp.updateMany({
+          where: {
+            OR: [{ phone: normalizedTarget }, { phone }],
+            verified: false,
+          },
+          data: { verified: true },
+        });
+        console.warn(`[OTP_LOCKOUT] Max verification attempts exceeded for ${normalizedTarget.slice(0, 6)}***`);
+        return false;
+      }
+    }
+
+    // Look up unverified, unexpired OTP
     const record = await prisma.otp.findFirst({
       where: {
         OR: [
-          ...(phone ? [{ phone }] : []),
-          ...(email ? [{ email }] : [])
+          ...(phone ? [{ phone: normalizedTarget }, { phone }] : []),
+          ...(email ? [{ email: normalizedTarget }] : []),
         ],
         code,
         verified: false,
         expiresAt: {
-          gt: new Date()
-        }
+          gt: new Date(),
+        },
       },
       orderBy: {
-        createdAt: 'desc'
+        createdAt: "desc",
+      },
+    });
+
+    if (!record) {
+      // Record failed attempt
+      if (phone) {
+        const current = failedAttemptsMap.get(normalizedTarget) || { count: 0, lastAttempt: Date.now() };
+        failedAttemptsMap.set(normalizedTarget, {
+          count: current.count + 1,
+          lastAttempt: Date.now(),
+        });
       }
+      return false;
+    }
+
+    // Atomic update to mark verified and prevent concurrent verification race conditions
+    const updateResult = await prisma.otp.updateMany({
+      where: {
+        id: record.id,
+        verified: false,
+      },
+      data: {
+        verified: true,
+      },
     });
 
-    if (!record) return false;
+    if (updateResult.count === 0) {
+      // Already verified by concurrent request (replay attack prevented)
+      return false;
+    }
 
-    // Mark as verified
-    await prisma.otp.update({
-      where: { id: record.id },
-      data: { verified: true }
-    });
+    // Clear failed attempts upon successful verification
+    if (phone) {
+      failedAttemptsMap.delete(normalizedTarget);
+    }
 
     return true;
   }

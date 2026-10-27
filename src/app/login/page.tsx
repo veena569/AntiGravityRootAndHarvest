@@ -4,7 +4,7 @@ import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, Lock, ShieldCheck, Truck, CheckCircle2, ChevronRight, User, Phone, RefreshCw, Mail } from "lucide-react";
+import { ArrowLeft, Lock, ShieldCheck, Truck, CheckCircle2, ChevronRight, User, Phone, RefreshCw, Mail, MessageSquare } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/Button";
 import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from "firebase/auth";
@@ -12,13 +12,13 @@ import { auth } from "@/lib/firebase";
 import { useAuth } from "@/components/layout/AuthProvider";
 
 function SecureCheckoutContent() {
-  const { login, loginWithEmail } = useAuth();
+  const { login, loginWithEmail, loginWithPhoneOtp } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
 
   // Authentication Step
   const [step, setStep] = useState<"input" | "otp">("input");
-  const [loginMethod, setLoginMethod] = useState<"phone" | "email">("phone");
+  const [loginMethod, setLoginMethod] = useState<"whatsapp" | "phone" | "email">("whatsapp");
 
   // Inputs state
   const [name, setName] = useState("");
@@ -192,9 +192,33 @@ function SecureCheckoutContent() {
     }
   };
 
+  // Step 1c: Open WhatsApp Click-to-Chat to request login code
+  const handleSendWhatsAppCode = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setError("");
+
+    const cleanPhone = phone.replace(/\D/g, "");
+    if (cleanPhone.length < 10) {
+      setError("Please enter a valid 10-digit mobile number");
+      return;
+    }
+
+    const businessNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "919121603832";
+    const waUrl = `https://wa.me/${businessNumber}?text=${encodeURIComponent("Hi Root & Harvest, please send my login code")}`;
+
+    if (typeof window !== "undefined") {
+      window.open(waUrl, "_blank");
+    }
+
+    setStep("otp");
+    setResendTimer(30);
+  };
+
   // Unified send handler
   const handleSendCode = (e: React.FormEvent) => {
-    if (loginMethod === "phone") {
+    if (loginMethod === "whatsapp") {
+      handleSendWhatsAppCode(e);
+    } else if (loginMethod === "phone") {
       handleSendOtp(e);
     } else {
       handleSendEmailOtp(e);
@@ -297,9 +321,52 @@ function SecureCheckoutContent() {
     }
   };
 
+  // Step 2c: Confirm WhatsApp OTP code
+  const handleVerifyWhatsAppOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+
+    const cleanOtp = otpCode.replace(/\D/g, "");
+    if (cleanOtp.length < 6) {
+      setError("Please enter the 6-digit verification code received on WhatsApp");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const formattedPhone = `+91${phone.replace(/\D/g, "").slice(-10)}`;
+      const result = await loginWithPhoneOtp(formattedPhone, cleanOtp, true);
+
+      if (result.success) {
+        try {
+          localStorage.setItem(
+            "rh_guest",
+            JSON.stringify({
+              name: name.trim() || "Customer",
+              phone: formattedPhone,
+            })
+          );
+        } catch {}
+
+        const callbackUrl = searchParams.get("callbackUrl") || "/account/profile";
+        router.push(callbackUrl);
+      } else {
+        setError(result.error || "Invalid or expired verification code. Please check your WhatsApp messages or request a new code.");
+      }
+    } catch (err: any) {
+      console.error("[WHATSAPP_VERIFY_ERROR]", err);
+      setError("Verification failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Unified verify handler
   const handleVerifyCode = (e: React.FormEvent) => {
-    if (loginMethod === "phone") {
+    if (loginMethod === "whatsapp") {
+      handleVerifyWhatsAppOtp(e);
+    } else if (loginMethod === "phone") {
       handleVerifyOtp(e);
     } else {
       handleVerifyEmailOtp(e);
@@ -341,8 +408,8 @@ function SecureCheckoutContent() {
               </h2>
               <p className="text-sm md:text-base text-dark/70 leading-relaxed max-w-sm">
                 {step === "input"
-                  ? "Verify your identity using your phone number or email address."
-                  : `Enter the 6-digit code sent to your ${loginMethod === "phone" ? "mobile phone" : "email address"}.`}
+                  ? "Verify your identity using WhatsApp, SMS, or email."
+                  : `Enter the 6-digit code sent to your ${loginMethod === "whatsapp" ? "WhatsApp" : loginMethod === "phone" ? "mobile phone" : "email address"}.`}
               </p>
             </div>
 
@@ -359,21 +426,36 @@ function SecureCheckoutContent() {
 
               {/* Login Method Tabs */}
               {step === "input" && (
-                <div className="grid grid-cols-2 gap-2 mb-8 border-b border-forest/10 pb-4">
+                <div className="grid grid-cols-3 gap-1 mb-8 border-b border-forest/10 pb-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLoginMethod("whatsapp");
+                      setError("");
+                    }}
+                    className={`flex items-center justify-center gap-1.5 py-3 text-xs uppercase tracking-wider font-semibold border-b-2 transition-all ${
+                      loginMethod === "whatsapp"
+                        ? "border-[#25D366] text-forest"
+                        : "border-transparent text-dark/40 hover:text-dark/60"
+                    }`}
+                  >
+                    <MessageSquare className="w-3.5 h-3.5 text-[#25D366]" />
+                    <span>WhatsApp</span>
+                  </button>
                   <button
                     type="button"
                     onClick={() => {
                       setLoginMethod("phone");
                       setError("");
                     }}
-                    className={`flex items-center justify-center gap-2 py-3 text-xs uppercase tracking-wider font-semibold border-b-2 transition-all ${
+                    className={`flex items-center justify-center gap-1.5 py-3 text-xs uppercase tracking-wider font-semibold border-b-2 transition-all ${
                       loginMethod === "phone"
                         ? "border-forest text-forest"
                         : "border-transparent text-dark/40 hover:text-dark/60"
                     }`}
                   >
                     <Phone className="w-3.5 h-3.5" />
-                    Phone Number
+                    <span>SMS</span>
                   </button>
                   <button
                     type="button"
@@ -381,14 +463,14 @@ function SecureCheckoutContent() {
                       setLoginMethod("email");
                       setError("");
                     }}
-                    className={`flex items-center justify-center gap-2 py-3 text-xs uppercase tracking-wider font-semibold border-b-2 transition-all ${
+                    className={`flex items-center justify-center gap-1.5 py-3 text-xs uppercase tracking-wider font-semibold border-b-2 transition-all ${
                       loginMethod === "email"
                         ? "border-forest text-forest"
                         : "border-transparent text-dark/40 hover:text-dark/60"
                     }`}
                   >
                     <Mail className="w-3.5 h-3.5" />
-                    Email Address
+                    <span>Email</span>
                   </button>
                 </div>
               )}
@@ -419,11 +501,23 @@ function SecureCheckoutContent() {
                       />
                     </div>
 
-                    {/* Phone Input */}
-                    {loginMethod === "phone" ? (
+                    {/* Phone Input (Used for both WhatsApp and SMS) */}
+                    {loginMethod === "whatsapp" || loginMethod === "phone" ? (
                       <div className="space-y-2">
-                        <label className="text-[11px] uppercase tracking-widest text-dark/60 font-semibold flex items-center gap-1.5">
-                          <Phone className="w-3 h-3" /> Mobile Number
+                        <label className="text-[11px] uppercase tracking-widest text-dark/60 font-semibold flex items-center justify-between">
+                          <span className="flex items-center gap-1.5">
+                            {loginMethod === "whatsapp" ? (
+                              <MessageSquare className="w-3 h-3 text-[#25D366]" />
+                            ) : (
+                              <Phone className="w-3 h-3" />
+                            )}
+                            {loginMethod === "whatsapp" ? "WhatsApp Mobile Number" : "Mobile Number"}
+                          </span>
+                          {loginMethod === "whatsapp" && (
+                            <span className="text-[10px] text-[#25D366] font-medium bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+                              Instant &amp; Free
+                            </span>
+                          )}
                         </label>
                         <div className="flex gap-3">
                           <div className="w-[80px] p-4 text-sm rounded-none border border-forest/10 bg-brand-bg/30 text-dark/50 flex items-center justify-center select-none shadow-sm">
@@ -468,6 +562,12 @@ function SecureCheckoutContent() {
                           <RefreshCw className="w-4 h-4 animate-spin" />
                           Sending Code...
                         </>
+                      ) : loginMethod === "whatsapp" ? (
+                        <>
+                          <MessageSquare className="w-4 h-4 text-[#25D366]" />
+                          Get Login Code via WhatsApp
+                          <ChevronRight className="w-4 h-4" />
+                        </>
                       ) : (
                         <>
                           Send Verification Code
@@ -477,7 +577,9 @@ function SecureCheckoutContent() {
                     </Button>
 
                     <p className="text-[11px] text-center text-dark/40 leading-relaxed">
-                      By continuing, you agree to our Terms. A secure one-time verification code will be sent.
+                      {loginMethod === "whatsapp"
+                        ? "Opens WhatsApp chat with Root & Harvest. Tap 'Send' to instantly receive your 6-digit login code."
+                        : "By continuing, you agree to our Terms. A secure one-time verification code will be sent."}
                     </p>
                   </motion.form>
                 ) : (
@@ -490,6 +592,18 @@ function SecureCheckoutContent() {
                     onSubmit={handleVerifyCode}
                     className="space-y-6"
                   >
+                    {/* Guidance banner for WhatsApp users */}
+                    {loginMethod === "whatsapp" && (
+                      <div className="p-3.5 bg-emerald-50/80 border border-emerald-100 text-xs text-emerald-900 flex items-start gap-2.5">
+                        <MessageSquare className="w-4 h-4 text-[#25D366] shrink-0 mt-0.5" />
+                        <div className="space-y-1">
+                          <p className="font-semibold text-emerald-950">Sent to WhatsApp (+91 {phone})</p>
+                          <p className="text-[11px] text-emerald-800 leading-relaxed">
+                            Please make sure you tapped <strong>Send</strong> in WhatsApp. Your 6-digit code will appear in the chat.
+                          </p>
+                        </div>
+                      </div>
+                    )}
                     {/* OTP input field */}
                     <div className="space-y-2">
                       <label className="text-[11px] uppercase tracking-widest text-dark/60 font-semibold flex items-center justify-between">

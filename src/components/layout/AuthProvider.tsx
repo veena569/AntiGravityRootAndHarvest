@@ -9,6 +9,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (phone: string, firebaseIdToken: string, name?: string) => Promise<boolean>;
   loginWithEmail: (email: string, code: string, name?: string) => Promise<boolean>;
+  loginWithPhoneOtp: (phone: string, code: string, isLoginOnly?: boolean) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
 }
@@ -99,6 +100,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const loginWithPhoneOtp = async (phone: string, code: string, isLoginOnly: boolean = false) => {
+    try {
+      const res = await fetch("/api/auth/verify-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone, code, isLoginOnly }),
+      });
+      const data = await res.json();
+      if (res.ok && data.user) {
+        setUser(data.user);
+        return { success: true };
+      }
+      return { success: false, error: data.error || "Invalid verification code" };
+    } catch {
+      return { success: false, error: "Network error. Please try again." };
+    }
+  };
+
   const logout = async () => {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
@@ -110,7 +129,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, loginWithEmail, logout, refresh }}>
+    <AuthContext.Provider value={{ user, isLoading, login, loginWithEmail, loginWithPhoneOtp, logout, refresh }}>
       {children}
     </AuthContext.Provider>
   );

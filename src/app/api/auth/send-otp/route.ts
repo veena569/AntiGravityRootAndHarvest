@@ -38,15 +38,11 @@ export async function POST(req: Request) {
       }, { status: 429 });
     }
 
-    const { referenceId, code } = await AuthService.requestOtp(formattedPhone);
-
-    const isDev = process.env.NODE_ENV !== "production";
+    await AuthService.requestOtp(formattedPhone);
 
     return NextResponse.json({ 
       success: true, 
-      message: "OTP sent successfully",
-      referenceId,
-      ...(isDev ? { code } : {})
+      message: "Verification code dispatched successfully",
     });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
