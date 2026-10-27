@@ -8,13 +8,15 @@ export const SEO_CONFIG = {
   
   // Google Business Profile & Reviews Configuration
   // Can be configured via environment variables in production
+  googlePlaceId: process.env.NEXT_PUBLIC_GOOGLE_PLACE_ID || process.env.GOOGLE_PLACE_ID || "",
   googleReviewUrl:
     process.env.NEXT_PUBLIC_GOOGLE_REVIEW_URL ||
-    "https://search.google.com/local/writereview?placeid=RootAndHarvestIndia",
+    (process.env.NEXT_PUBLIC_GOOGLE_PLACE_ID || process.env.GOOGLE_PLACE_ID
+      ? `https://search.google.com/local/writereview?placeid=${process.env.NEXT_PUBLIC_GOOGLE_PLACE_ID || process.env.GOOGLE_PLACE_ID}`
+      : "https://www.google.com/maps/search/?api=1&query=Root+and+Harvest+Serilingampally+Hyderabad"),
   googleBusinessUrl:
     process.env.NEXT_PUBLIC_GOOGLE_BUSINESS_URL ||
-    "https://maps.google.com/?q=Root+and+Harvest+Hyderabad",
-  googlePlaceId: process.env.GOOGLE_PLACE_ID || "",
+    "https://www.google.com/maps/search/?api=1&query=Root+and+Harvest+Serilingampally+Hyderabad",
   
   // Official Business Identifiers & Contact Details
   business: {

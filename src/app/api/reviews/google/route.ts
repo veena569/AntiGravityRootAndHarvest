@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   const apiKey = process.env.GOOGLE_MAPS_API_KEY;
-  const placeId = process.env.GOOGLE_PLACE_ID;
+  const placeId = process.env.GOOGLE_PLACE_ID || process.env.NEXT_PUBLIC_GOOGLE_PLACE_ID;
   const directReviewUrl = SEO_CONFIG.googleReviewUrl;
   const businessUrl = SEO_CONFIG.googleBusinessUrl;
 
