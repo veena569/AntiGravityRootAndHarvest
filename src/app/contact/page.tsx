@@ -163,18 +163,18 @@ export default function ContactPage() {
                 </div>
               </div>
 
-              {/* Google Business & Review Card */}
+              {/* Customer Reviews Card */}
               <div className="bg-forest text-brand-bg p-8 space-y-4 shadow-sm rounded-sm">
                 <div className="flex items-center gap-2">
                   <Star className="w-4 h-4 text-gold fill-gold" />
-                  <span className="text-[10px] uppercase tracking-widest text-gold font-semibold">Google Business Profile</span>
+                  <span className="text-[10px] uppercase tracking-widest text-gold font-semibold">Customer Reviews</span>
                 </div>
-                <h3 className="text-xl font-serif text-white font-semibold">Review Us on Google</h3>
+                <h3 className="text-xl font-serif text-white font-semibold">Share Your Experience</h3>
                 <p className="text-xs text-brand-bg/80 leading-relaxed font-light">
-                  Have you experienced our traditional wood-pressed oils? Your genuine review on Google Maps helps more families find authentic, chemical-free food.
+                  Have you experienced our traditional wood-pressed oils? Your genuine review helps more families find authentic, chemical-free nourishment.
                 </p>
                 <div className="pt-2">
-                  <GoogleReviewButton variant="gold" className="w-full justify-center" />
+                  <GoogleReviewButton variant="gold" className="w-full justify-center" text="Write a Customer Review ⭐" />
                 </div>
               </div>
 

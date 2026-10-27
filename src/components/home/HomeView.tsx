@@ -357,7 +357,7 @@ export function HomeView() {
                 >
                   READ OUR STORY
                 </Link>
-                <GoogleReviewButton variant="outline" size="lg" text="Review us on Google ❤️" />
+                <GoogleReviewButton variant="outline" size="lg" text="Read Customer Reviews ⭐" />
               </div>
             </RevealSection>
 
@@ -397,7 +397,7 @@ export function HomeView() {
                   <Star key={i} size={20} className="fill-current text-gold" />
                 ))}
               </div>
-              <GoogleReviewButton variant="primary" size="md" text="Review us on Google ❤️" />
+              <GoogleReviewButton variant="primary" size="md" text="Customer Reviews ⭐" />
             </div>
           </div>
 
@@ -408,7 +408,7 @@ export function HomeView() {
           ) : reviews.length === 0 ? (
             <div className="text-center py-12 text-sm text-dark/50 font-sans font-medium space-y-4">
               <p>No website reviews yet. Be the first to share your experience!</p>
-              <GoogleReviewButton variant="gold" size="md" text="Review us on Google ❤️" />
+              <GoogleReviewButton variant="gold" size="md" text="Write a Review ⭐" />
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -516,7 +516,7 @@ export function HomeView() {
             >
               SHOP WOOD PRESSED OILS
             </Link>
-            <GoogleReviewButton variant="outline" size="lg" text="Review us on Google ❤️" />
+            <GoogleReviewButton variant="outline" size="lg" text="Customer Reviews ⭐" />
           </div>
         </div>
       </section>

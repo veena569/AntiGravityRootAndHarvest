@@ -7,7 +7,6 @@ import { Star, Check, MessageSquare, Heart, ShieldCheck, Filter, ArrowRight } fr
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/Button";
-import { GoogleReviewButton } from "@/components/ui/GoogleReviewButton";
 import { INITIAL_PRODUCTS } from "@/data/products";
 
 export function ReviewsView() {
@@ -180,31 +179,41 @@ export function ReviewsView() {
             </div>
           </div>
 
-          {/* Google Review Spotlight Card */}
+          {/* Share Experience Spotlight Card */}
           <div className="md:col-span-7 bg-forest text-brand-bg p-8 rounded-2xl flex flex-col justify-between space-y-6 relative overflow-hidden shadow-sm">
             <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-l from-gold/15 to-transparent pointer-events-none" />
             <div className="space-y-3 relative z-10">
               <div className="flex items-center gap-2">
                 <span className="w-6 h-[1px] bg-gold" />
                 <span className="text-[10px] uppercase tracking-widest text-gold font-semibold">
-                  Google Search & Maps
+                  Verified Customer Feedback
                 </span>
               </div>
               <h2 className="text-2xl sm:text-3xl font-serif font-semibold text-white">
-                Find & Review Us on Google
+                Share Your Family’s Experience
               </h2>
               <p className="text-xs sm:text-sm text-brand-bg/80 leading-relaxed font-light">
-                Your direct rating on our Google Business Profile helps other families discover authentic wood-pressed oils and keeps traditional Indian farming thriving.
+                Your honest feedback helps conscious households discover cold-pressed purity and directly empowers traditional Indian farmers. Submit your review in seconds — no Google account or sign-in needed.
               </p>
             </div>
 
             <div className="flex flex-wrap items-center gap-4 relative z-10 pt-2">
-              <GoogleReviewButton variant="gold" />
+              <button
+                type="button"
+                onClick={() => {
+                  setSubmitted(false);
+                  setShowModal(true);
+                }}
+                className="inline-flex items-center justify-center px-6 py-3 bg-gold hover:bg-gold-light text-forest font-semibold text-xs uppercase tracking-wider rounded-sm shadow-sm transition-colors"
+              >
+                <MessageSquare className="w-4 h-4 mr-2" />
+                Write Your Review
+              </button>
               <Link
-                href="/about"
+                href="/products"
                 className="text-xs text-brand-bg/80 hover:text-white underline underline-offset-4 font-light flex items-center gap-1"
               >
-                Read our story <ArrowRight className="w-3 h-3" />
+                Explore our oils <ArrowRight className="w-3 h-3" />
               </Link>
             </div>
           </div>
@@ -313,31 +322,27 @@ export function ReviewsView() {
                       Thank You for Supporting Root & Harvest ❤️
                     </h3>
                     <p className="text-xs text-dark/70 leading-relaxed max-w-md mx-auto">
-                      Your review has been submitted to our website. Would you also like to share your experience on our official Google Business Profile to help other families find healthy wood-pressed oils?
+                      Your review has been successfully submitted and verified! It is published to our website and contributes to our official Google Search aggregate ratings.
                     </p>
                   </div>
 
-                  <div className="p-5 bg-white rounded-xl border border-forest/10 space-y-3 text-left">
-                    <div className="flex items-center gap-2">
-                      <Star className="w-4 h-4 text-gold fill-gold" />
-                      <h4 className="text-xs font-semibold text-forest uppercase tracking-wider">
-                        Share on Google Maps
-                      </h4>
+                  <div className="p-5 bg-white rounded-xl border border-forest/10 space-y-3 text-center">
+                    <div className="flex items-center justify-center gap-1 text-gold">
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <Star key={s} className="w-5 h-5 fill-gold" />
+                      ))}
                     </div>
-                    <p className="text-xs text-dark/70 leading-relaxed font-light">
-                      It only takes 30 seconds and means the world to our small team and farmers!
+                    <p className="text-xs text-dark/80 font-medium">
+                      Thank you for standing with traditional wood-pressed oils and ethical farming!
                     </p>
-                    <div className="pt-2">
-                      <GoogleReviewButton variant="gold" className="w-full justify-center" />
-                    </div>
                   </div>
 
                   <Button
-                    variant="outline"
+                    variant="primary"
                     onClick={() => setShowModal(false)}
-                    className="w-full py-2.5 text-xs uppercase tracking-widest font-semibold border-forest/20"
+                    className="w-full py-2.5 text-xs uppercase tracking-widest font-semibold"
                   >
-                    Close
+                    Close & View All Reviews
                   </Button>
                 </div>
               ) : (

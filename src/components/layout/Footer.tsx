@@ -54,19 +54,11 @@ export const Footer: React.FC = () => {
             </form>
 
             <div className="pt-4 space-y-3">
-              <span className="text-[10px] uppercase tracking-[0.2em] text-gold font-bold block">Rate Our Experience</span>
-              <GoogleReviewButton size="sm" variant="gold" text="Review us on Google ❤️" />
+              <span className="text-[10px] uppercase tracking-[0.2em] text-gold font-bold block">Customer Feedback</span>
+              <GoogleReviewButton size="sm" variant="gold" text="Customer Reviews ⭐" />
               <div className="pt-2 text-[11px] text-brand-bg/60 space-y-1">
                 <p>📍 Central Park Phase -1, Serilingampally, Hyderabad 500019</p>
                 <p>📞 +91 9121603832 | ✉️ hello@rootandharvest.in</p>
-                <a
-                  href={SEO_CONFIG.googleBusinessUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-gold hover:underline inline-block pt-1"
-                >
-                  View on Google Maps →
-                </a>
               </div>
             </div>
           </div>

@@ -29,7 +29,6 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/Button";
-import { GoogleReviewButton } from "@/components/ui/GoogleReviewButton";
 
 interface VariantOption {
   id: string;
@@ -805,7 +804,12 @@ export function ProductDetailsClient({ productId }: { productId: string }) {
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
-              <GoogleReviewButton variant="gold" />
+              <Link
+                href="/reviews"
+                className="py-2 px-4 text-xs font-semibold uppercase tracking-wider text-forest border border-forest/20 hover:bg-forest/5 rounded-sm transition-colors"
+              >
+                All Customer Reviews →
+              </Link>
               <Button
                 onClick={() => {
                   setReviewSubmitted(false);
@@ -911,27 +915,23 @@ export function ProductDetailsClient({ productId }: { productId: string }) {
                       </p>
                     </div>
 
-                    <div className="p-5 bg-white rounded-xl border border-forest/10 space-y-3 text-left">
-                      <div className="flex items-center gap-2">
-                        <Star className="w-4 h-4 text-gold fill-gold" />
-                        <h4 className="text-xs font-semibold text-forest uppercase tracking-wider">
-                          Share your experience on Google
-                        </h4>
+                    <div className="p-5 bg-white rounded-xl border border-forest/10 space-y-3 text-center">
+                      <div className="flex items-center justify-center gap-1 text-gold">
+                        {[1, 2, 3, 4, 5].map((s) => (
+                          <Star key={s} className="w-5 h-5 fill-gold" />
+                        ))}
                       </div>
-                      <p className="text-xs text-dark/70 leading-relaxed font-light">
-                        As an independent family business, honest reviews on Google Maps help families across India discover real wood-pressed oils.
+                      <p className="text-xs text-dark/80 font-medium">
+                        Thank you for standing with traditional wood-pressed oils and ethical Indian farming!
                       </p>
-                      <div className="pt-2">
-                        <GoogleReviewButton variant="gold" className="w-full justify-center" />
-                      </div>
                     </div>
 
                     <Button
-                      variant="outline"
+                      variant="primary"
                       onClick={() => setShowReviewModal(false)}
-                      className="w-full py-2.5 text-xs uppercase tracking-widest font-semibold border-forest/20"
+                      className="w-full py-2.5 text-xs uppercase tracking-widest font-semibold"
                     >
-                      Close
+                      Close & View Reviews
                     </Button>
                   </div>
                 ) : (
