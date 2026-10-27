@@ -89,6 +89,11 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
+  verification: {
+    other: {
+      "facebook-domain-verification": ["t13dxb2lnn032r2rzn9v5gokgiea4x"],
+    },
+  },
 };
 
 export default function RootLayout({
@@ -172,6 +177,10 @@ export default function RootLayout({
   return (
     <html lang="en" className="scroll-smooth">
       <head>
+        <meta
+          name="facebook-domain-verification"
+          content="t13dxb2lnn032r2rzn9v5gokgiea4x"
+        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
