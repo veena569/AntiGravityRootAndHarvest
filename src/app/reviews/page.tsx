@@ -4,12 +4,12 @@ import { SEO_CONFIG } from "@/config/seo";
 import { INITIAL_PRODUCTS } from "@/data/products";
 
 export const metadata: Metadata = {
-  title: "Customer Reviews & Verified Ratings | Root & Harvest",
+  title: "Customer Reviews on Root & Harvest | Verified Household Ratings",
   description:
-    "Read genuine, verified 5-star customer ratings and household experiences for Root & Harvest wood-pressed cooking oils and unpolished heritage grains.",
+    "Read genuine customer reviews on Root & Harvest wood-pressed cooking oils and heritage grains. Verified ratings from families across India.",
   keywords: [
     "Root and Harvest reviews",
-    "Root & Harvest customer reviews",
+    "Customer Reviews on Root & Harvest",
     "wood pressed oil reviews",
     "cold pressed oil ratings",
     "Root and Harvest feedback",
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     canonical: `${SEO_CONFIG.siteUrl}/reviews`,
   },
   openGraph: {
-    title: "Customer Reviews & Verified Ratings | Root & Harvest",
+    title: "Customer Reviews on Root & Harvest | Verified Household Ratings",
     description:
       "Genuine customer stories and verified ratings for Root & Harvest wood pressed oils and farm staples.",
     url: `${SEO_CONFIG.siteUrl}/reviews`,

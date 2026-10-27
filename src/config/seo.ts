@@ -7,16 +7,14 @@ export const SEO_CONFIG = {
     "Naturally wood-pressed groundnut & sesame oils and heritage grains. Cold-extracted in small batches below 14 RPM from trusted Indian farms directly to your family kitchen.",
   
   // Google Business Profile & Reviews Configuration
-  // Can be configured via environment variables in production
+  // Configured strictly via verified environment variables in production
   googlePlaceId: process.env.NEXT_PUBLIC_GOOGLE_PLACE_ID || process.env.GOOGLE_PLACE_ID || "",
   googleReviewUrl:
     process.env.NEXT_PUBLIC_GOOGLE_REVIEW_URL ||
     (process.env.NEXT_PUBLIC_GOOGLE_PLACE_ID || process.env.GOOGLE_PLACE_ID
       ? `https://search.google.com/local/writereview?placeid=${process.env.NEXT_PUBLIC_GOOGLE_PLACE_ID || process.env.GOOGLE_PLACE_ID}`
-      : "https://www.google.com/maps/search/?api=1&query=Root+and+Harvest+Serilingampally+Hyderabad"),
-  googleBusinessUrl:
-    process.env.NEXT_PUBLIC_GOOGLE_BUSINESS_URL ||
-    "https://www.google.com/maps/search/?api=1&query=Root+and+Harvest+Serilingampally+Hyderabad",
+      : ""),
+  googleBusinessUrl: process.env.NEXT_PUBLIC_GOOGLE_BUSINESS_URL || "",
   
   // Official Business Identifiers & Contact Details
   business: {

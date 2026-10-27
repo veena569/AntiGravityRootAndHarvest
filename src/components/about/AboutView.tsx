@@ -200,12 +200,12 @@ export function AboutView() {
                   Explore Our Collection
                 </Link>
                 <Link
-                  href="/contact"
+                  href="/reviews"
                   className="px-6 py-3 border border-brand-bg/30 text-brand-bg uppercase tracking-widest text-[10px] font-semibold hover:bg-brand-bg hover:text-forest transition-all"
                 >
-                  Contact Us
+                  Customer Reviews
                 </Link>
-                <GoogleReviewButton variant="gold" />
+                <GoogleReviewButton variant="gold" text="⭐ Review us on Google" />
               </div>
             </div>
           </div>

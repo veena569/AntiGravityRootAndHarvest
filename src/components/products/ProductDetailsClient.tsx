@@ -29,6 +29,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/Button";
+import { GoogleReviewButton } from "@/components/ui/GoogleReviewButton";
 
 interface VariantOption {
   id: string;
@@ -795,8 +796,11 @@ export function ProductDetailsClient({ productId }: { productId: string }) {
         <section id="reviews" className="space-y-8 pt-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-forest/10 pb-4">
             <div>
-              <h2 className="text-2xl font-serif text-forest font-semibold">
-                Customer Reviews
+              <span className="text-[10px] uppercase tracking-[0.25em] text-gold font-bold">
+                Household Verified
+              </span>
+              <h2 className="text-2xl font-serif text-forest font-semibold mt-0.5">
+                Customer Reviews on Root & Harvest
               </h2>
               <p className="text-xs text-dark/60 mt-1">
                 Real feedback from verified households cooking with Root & Harvest.
@@ -804,12 +808,11 @@ export function ProductDetailsClient({ productId }: { productId: string }) {
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
-              <Link
-                href="/reviews"
-                className="py-2 px-4 text-xs font-semibold uppercase tracking-wider text-forest border border-forest/20 hover:bg-forest/5 rounded-sm transition-colors"
-              >
-                All Customer Reviews →
-              </Link>
+              <GoogleReviewButton
+                variant="gold"
+                size="sm"
+                text="⭐ Review us on Google"
+              />
               <Button
                 onClick={() => {
                   setReviewSubmitted(false);
@@ -924,6 +927,16 @@ export function ProductDetailsClient({ productId }: { productId: string }) {
                       <p className="text-xs text-dark/80 font-medium">
                         Thank you for standing with traditional wood-pressed oils and ethical Indian farming!
                       </p>
+                      <div className="pt-2 flex flex-col items-center gap-1.5 border-t border-forest/10 pt-3">
+                        <GoogleReviewButton
+                          variant="gold"
+                          size="sm"
+                          text="⭐ Review us on Google"
+                        />
+                        <p className="text-[11px] text-dark/60 font-light max-w-xs">
+                          Enjoyed your experience with Root & Harvest? Share your honest feedback on Google. Your feedback helps our small business grow.
+                        </p>
+                      </div>
                     </div>
 
                     <Button

@@ -8,6 +8,7 @@ import { useApp } from "@/context/AppContext";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { motion, AnimatePresence } from "framer-motion";
+import { GoogleReviewButton } from "@/components/ui/GoogleReviewButton";
 
 function OrderSuccessContent() {
   const searchParams = useSearchParams();
@@ -168,9 +169,17 @@ function OrderSuccessContent() {
             href="/reviews"
             className="inline-flex items-center justify-center px-6 py-2.5 bg-forest hover:bg-forest-light text-white text-xs uppercase tracking-wider font-semibold rounded-sm transition-colors"
           >
-            ⭐ Write a Customer Review
+            Write a Website Review
           </Link>
+          <GoogleReviewButton
+            variant="gold"
+            size="md"
+            text="⭐ Review us on Google"
+          />
         </div>
+        <p className="text-[11px] text-dark/60 leading-relaxed font-light max-w-md mx-auto pt-1">
+          Enjoyed your experience with Root & Harvest? Share your honest feedback on Google. Your feedback helps our small business grow.
+        </p>
       </div>
 
       <div className="flex justify-center pb-20">

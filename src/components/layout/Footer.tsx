@@ -55,7 +55,15 @@ export const Footer: React.FC = () => {
 
             <div className="pt-4 space-y-3">
               <span className="text-[10px] uppercase tracking-[0.2em] text-gold font-bold block">Customer Feedback</span>
-              <GoogleReviewButton size="sm" variant="gold" text="Customer Reviews ⭐" />
+              <div className="flex flex-wrap items-center gap-2">
+                <Link
+                  href="/reviews"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-sm bg-forest-light text-white hover:text-gold text-[11px] font-semibold uppercase tracking-wider transition-colors border border-white/20"
+                >
+                  ⭐ Customer Reviews
+                </Link>
+                <GoogleReviewButton size="sm" variant="gold" text="⭐ Review us on Google" />
+              </div>
               <div className="pt-2 text-[11px] text-brand-bg/60 space-y-1">
                 <p>📍 Central Park Phase -1, Serilingampally, Hyderabad 500019</p>
                 <p>📞 +91 9121603832 | ✉️ hello@rootandharvest.in</p>

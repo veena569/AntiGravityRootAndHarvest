@@ -384,8 +384,8 @@ export function HomeView() {
               </span>
               <span className="w-4 h-[1px] bg-gold" />
             </div>
-            <h2 className="text-4xl font-serif text-forest tracking-tight uppercase font-bold">
-              Customer Voices
+            <h2 className="text-3xl sm:text-4xl font-serif text-forest tracking-tight uppercase font-bold">
+              Customer Reviews on Root & Harvest
             </h2>
             <p className="text-sm text-dark/60 max-w-lg mx-auto leading-relaxed font-sans">
               Real feedback from verified buyers. Your honest reviews help fellow families choose clean, pure food.
@@ -397,7 +397,22 @@ export function HomeView() {
                   <Star key={i} size={20} className="fill-current text-gold" />
                 ))}
               </div>
-              <GoogleReviewButton variant="primary" size="md" text="Customer Reviews ⭐" />
+              <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
+                <Link
+                  href="/reviews"
+                  className="inline-flex items-center justify-center px-6 py-2.5 bg-forest hover:bg-forest-light text-white text-xs font-semibold uppercase tracking-wider rounded-sm shadow-sm transition-colors"
+                >
+                  Write a Customer Review
+                </Link>
+                <GoogleReviewButton
+                  variant="gold"
+                  size="md"
+                  text="⭐ Review us on Google"
+                />
+              </div>
+              <p className="text-[11px] text-dark/60 max-w-md text-center font-light">
+                Enjoyed your experience with Root & Harvest? Share your honest feedback on Google. Your feedback helps our small business grow.
+              </p>
             </div>
           </div>
 
@@ -408,7 +423,15 @@ export function HomeView() {
           ) : reviews.length === 0 ? (
             <div className="text-center py-12 text-sm text-dark/50 font-sans font-medium space-y-4">
               <p>No website reviews yet. Be the first to share your experience!</p>
-              <GoogleReviewButton variant="gold" size="md" text="Write a Review ⭐" />
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                <Link
+                  href="/reviews"
+                  className="inline-flex items-center justify-center px-6 py-2.5 bg-forest text-white text-xs font-semibold uppercase tracking-wider rounded-sm shadow-sm"
+                >
+                  Write a Customer Review
+                </Link>
+                <GoogleReviewButton variant="gold" size="md" text="⭐ Review us on Google" />
+              </div>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

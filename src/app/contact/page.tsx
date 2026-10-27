@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import Image from "next/image";
 import { Mail, MapPin, Phone, Send, Check, Star } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
@@ -167,14 +168,20 @@ export default function ContactPage() {
               <div className="bg-forest text-brand-bg p-8 space-y-4 shadow-sm rounded-sm">
                 <div className="flex items-center gap-2">
                   <Star className="w-4 h-4 text-gold fill-gold" />
-                  <span className="text-[10px] uppercase tracking-widest text-gold font-semibold">Customer Reviews</span>
+                  <span className="text-[10px] uppercase tracking-widest text-gold font-semibold">Customer Reviews on Root & Harvest</span>
                 </div>
                 <h3 className="text-xl font-serif text-white font-semibold">Share Your Experience</h3>
                 <p className="text-xs text-brand-bg/80 leading-relaxed font-light">
-                  Have you experienced our traditional wood-pressed oils? Your genuine review helps more families find authentic, chemical-free nourishment.
+                  Enjoyed your experience with Root & Harvest? Share your honest feedback on Google or on our website. Your feedback helps our small business grow.
                 </p>
-                <div className="pt-2">
-                  <GoogleReviewButton variant="gold" className="w-full justify-center" text="Write a Customer Review ⭐" />
+                <div className="pt-2 flex flex-col sm:flex-row gap-3">
+                  <Link
+                    href="/reviews"
+                    className="inline-flex items-center justify-center px-4 py-2.5 bg-gold hover:bg-gold-light text-forest text-xs font-semibold uppercase tracking-wider rounded-sm transition-colors text-center"
+                  >
+                    Write Website Review
+                  </Link>
+                  <GoogleReviewButton variant="outline" className="border-white/30 text-white hover:bg-white/10" text="⭐ Review us on Google" />
                 </div>
               </div>
 

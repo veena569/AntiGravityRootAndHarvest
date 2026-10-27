@@ -7,6 +7,7 @@ import { Star, Check, MessageSquare, Heart, ShieldCheck, Filter, ArrowRight } fr
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/Button";
+import { GoogleReviewButton } from "@/components/ui/GoogleReviewButton";
 import { INITIAL_PRODUCTS } from "@/data/products";
 
 export function ReviewsView() {
@@ -134,10 +135,10 @@ export function ReviewsView() {
         {/* Hero Banner */}
         <div className="text-center space-y-4 max-w-3xl mx-auto">
           <span className="text-[10px] sm:text-xs uppercase tracking-[0.3em] text-gold font-semibold block">
-            GENUINE HOUSEHOLD FEEDBACK
+            VERIFIED HOUSEHOLD FEEDBACK
           </span>
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-serif text-forest font-semibold tracking-tight">
-            Loved by Conscious Indian Families
+            Customer Reviews on Root & Harvest
           </h1>
           <p className="text-sm md:text-base text-dark/70 font-light leading-relaxed">
             Every drop of our wood-pressed oil is extracted with honesty and respect for tradition.
@@ -179,42 +180,47 @@ export function ReviewsView() {
             </div>
           </div>
 
-          {/* Share Experience Spotlight Card */}
+          {/* Share Experience & Google Review Spotlight Card */}
           <div className="md:col-span-7 bg-forest text-brand-bg p-8 rounded-2xl flex flex-col justify-between space-y-6 relative overflow-hidden shadow-sm">
             <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-l from-gold/15 to-transparent pointer-events-none" />
             <div className="space-y-3 relative z-10">
               <div className="flex items-center gap-2">
                 <span className="w-6 h-[1px] bg-gold" />
                 <span className="text-[10px] uppercase tracking-widest text-gold font-semibold">
-                  Verified Customer Feedback
+                  Customer Reviews on Root & Harvest
                 </span>
               </div>
               <h2 className="text-2xl sm:text-3xl font-serif font-semibold text-white">
                 Share Your Family’s Experience
               </h2>
               <p className="text-xs sm:text-sm text-brand-bg/80 leading-relaxed font-light">
-                Your honest feedback helps conscious households discover cold-pressed purity and directly empowers traditional Indian farmers. Submit your review in seconds — no Google account or sign-in needed.
+                Enjoyed your experience with Root & Harvest? Share your honest feedback on Google or submit your review below. Your feedback helps our small business grow and keeps traditional cold-pressed oils thriving.
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-4 relative z-10 pt-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setSubmitted(false);
-                  setShowModal(true);
-                }}
-                className="inline-flex items-center justify-center px-6 py-3 bg-gold hover:bg-gold-light text-forest font-semibold text-xs uppercase tracking-wider rounded-sm shadow-sm transition-colors"
-              >
-                <MessageSquare className="w-4 h-4 mr-2" />
-                Write Your Review
-              </button>
-              <Link
-                href="/products"
-                className="text-xs text-brand-bg/80 hover:text-white underline underline-offset-4 font-light flex items-center gap-1"
-              >
-                Explore our oils <ArrowRight className="w-3 h-3" />
-              </Link>
+            <div className="space-y-3 relative z-10 pt-2">
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSubmitted(false);
+                    setShowModal(true);
+                  }}
+                  className="inline-flex items-center justify-center px-6 py-3 bg-gold hover:bg-gold-light text-forest font-semibold text-xs uppercase tracking-wider rounded-sm shadow-sm transition-colors"
+                >
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  Write a Website Review
+                </button>
+                <GoogleReviewButton
+                  variant="outline"
+                  size="md"
+                  text="⭐ Review us on Google"
+                  className="border-white/30 text-white hover:bg-white/10"
+                />
+              </div>
+              <p className="text-[11px] text-brand-bg/70 font-light leading-relaxed">
+                Enjoyed your experience with Root & Harvest? Share your honest feedback on Google. Your feedback helps our small business grow.
+              </p>
             </div>
           </div>
         </div>
@@ -335,6 +341,16 @@ export function ReviewsView() {
                     <p className="text-xs text-dark/80 font-medium">
                       Thank you for standing with traditional wood-pressed oils and ethical farming!
                     </p>
+                    <div className="pt-2 flex flex-col items-center gap-1.5 border-t border-forest/10 pt-3">
+                      <GoogleReviewButton
+                        variant="gold"
+                        size="sm"
+                        text="⭐ Review us on Google"
+                      />
+                      <p className="text-[11px] text-dark/60 font-light max-w-xs">
+                        Enjoyed your experience with Root & Harvest? Share your honest feedback on Google. Your feedback helps our small business grow.
+                      </p>
+                    </div>
                   </div>
 
                   <Button
