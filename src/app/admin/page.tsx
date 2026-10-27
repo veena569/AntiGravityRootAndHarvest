@@ -742,7 +742,7 @@ export default function AdminPage() {
   };
 
   const [grainRates, setGrainRates] = useState<any[]>([
-    { id: "groundnuts", name: "Harvest Fresh Raw Groundnuts", purchaseCostPerKg: 140, packingCostPerKg: 20, sellingPricePerKg: 199 },
+    { id: "groundnuts", name: "Harvest Fresh Raw Groundnuts", purchaseCostPerKg: 140, packingCostPerKg: 20, sellingPricePerKg: 209 },
     { id: "jaisriram-unpolished-rice", name: "Jai Sriram Unpolished Rice", purchaseCostPerKg: 65, packingCostPerKg: 15, sellingPricePerKg: 99 },
     { id: "jaisriram-polished-rice", name: "Jai Sriram Semi-Polished Rice", purchaseCostPerKg: 58, packingCostPerKg: 15, sellingPricePerKg: 89 },
   ]);

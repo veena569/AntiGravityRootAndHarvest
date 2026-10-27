@@ -250,13 +250,13 @@ export const INITIAL_PRODUCTS: Product[] = [
     gallery: ["/images/groundnuts.jpg"],
     sizes: ["500 g", "1 kg", "2 kg", "5 kg"],
     sizePrices: {
-      "500 g": 99,
-      "1 kg": 199,
-      "2 kg": 399,
-      "5 kg": 999
+      "500 g": 109,
+      "1 kg": 209,
+      "2 kg": 415,
+      "5 kg": 1029
     },
     originalSizePrices: {
-      "500 g": 120,
+      "500 g": 125,
       "1 kg": 240,
       "2 kg": 480,
       "5 kg": 1199
