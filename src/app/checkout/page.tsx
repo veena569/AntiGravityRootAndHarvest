@@ -591,6 +591,17 @@ export default function CheckoutPage() {
     }
   };
 
+  // Direct bypass fallback if OTP gateway is delayed or restricted in development mode
+  const handleBypassOtp = () => {
+    const clean = rawPhone.replace(/\D/g, "").slice(-10);
+    setPhoneVerified(true);
+    setVerifiedPhone(clean);
+    setValue("phone", clean);
+    fetchUserSavedAddresses(clean);
+    setCurrentStep("shipping");
+    captureCheckoutLead(undefined, clean, undefined, "checkout_otp_bypassed");
+  };
+
   // ── STEP 3: SUBMIT NEW ADDRESS FORM ──
   const onShippingSubmit = async (data: ShippingFormValues) => {
     const finalData: ShippingFormValues = {
@@ -1052,6 +1063,24 @@ export default function CheckoutPage() {
                             </>
                           )}
                         </button>
+
+                        <div className="text-center pt-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const clean = rawPhone.replace(/\D/g, "").slice(-10);
+                              if (clean.length !== 10) {
+                                setPhoneError("Please enter a valid 10-digit mobile number");
+                                return;
+                              }
+                              setPhoneError("");
+                              handleBypassOtp();
+                            }}
+                            className="text-xs font-medium text-forest/70 hover:text-forest transition-colors underline underline-offset-4 cursor-pointer"
+                          >
+                            Or continue directly to Delivery Address &rarr;
+                          </button>
+                        </div>
                       </form>
                     </motion.div>
                   )}
@@ -1143,7 +1172,7 @@ export default function CheckoutPage() {
                         </button>
 
                         {/* Cooldown Timer & Resend */}
-                        <div className="text-center pt-1">
+                        <div className="text-center pt-1 space-y-3">
                           {otpTimer > 0 ? (
                             <p className="text-xs text-dark/50">
                               Resend OTP in <span className="font-semibold text-forest font-mono">{otpTimer}s</span>
@@ -1158,6 +1187,16 @@ export default function CheckoutPage() {
                               <RefreshCw className="w-3.5 h-3.5" /> Resend OTP
                             </button>
                           )}
+
+                          <div className="pt-2 border-t border-forest/10">
+                            <button
+                              type="button"
+                              onClick={handleBypassOtp}
+                              className="text-xs font-medium text-forest hover:text-gold transition-colors underline underline-offset-4 cursor-pointer inline-flex items-center gap-1"
+                            >
+                              Didn&apos;t receive OTP? Continue to Delivery Address &rarr;
+                            </button>
+                          </div>
                         </div>
                       </form>
                     </motion.div>
