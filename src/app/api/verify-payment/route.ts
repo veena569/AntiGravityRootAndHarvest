@@ -141,6 +141,7 @@ export async function POST(req: Request) {
     // 3. Send email notifications to customer and admins (failsafe - will log but not crash the order completion)
     try {
       await EmailService.sendOrderConfirmationEmail(updatedOrder, orderItems);
+      await EmailService.sendPaymentSuccessEmail(updatedOrder, orderItems, razorpay_payment_id);
     } catch (emailErr) {
       console.error("[CUSTOMER_EMAIL_NOTIFICATION_FAILED]", emailErr);
     }

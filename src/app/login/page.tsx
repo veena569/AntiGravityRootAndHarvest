@@ -1,781 +1,352 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, Lock, ShieldCheck, Truck, CheckCircle2, ChevronRight, User, Phone, RefreshCw, Mail, MessageSquare } from "lucide-react";
+import { ArrowLeft, Lock, ShieldCheck, Mail, RefreshCw, UserPlus, Phone } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Button } from "@/components/ui/Button";
-import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from "firebase/auth";
-import { auth } from "@/lib/firebase";
 import { useAuth } from "@/components/layout/AuthProvider";
 
-function SecureCheckoutContent() {
-  const { login, loginWithEmail, loginWithPhoneOtp } = useAuth();
+function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const redirectUrl = searchParams.get("redirect") || "/account";
 
-  // Authentication Step
-  const [step, setStep] = useState<"input" | "otp">("input");
-  const [loginMethod, setLoginMethod] = useState<"whatsapp" | "phone" | "email">("whatsapp");
+  const { loginWithPassword, registerWithPassword } = useAuth();
 
-  // Inputs state
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
-  const [otpCode, setOtpCode] = useState("");
+  const [tab, setTab] = useState<"login" | "register">("login");
 
-  // UI state
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [resendTimer, setResendTimer] = useState(0);
+  // Login form state
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [loginError, setLoginError] = useState("");
 
-  // Firebase auth state objects
-  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
-  const [recaptchaVerifier, setRecaptchaVerifier] = useState<RecaptchaVerifier | null>(null);
+  // Register form state
+  const [regName, setRegName] = useState("");
+  const [regEmail, setRegEmail] = useState("");
+  const [regPhone, setRegPhone] = useState("");
+  const [regPassword, setRegPassword] = useState("");
+  const [regConfirmPassword, setRegConfirmPassword] = useState("");
+  const [regLoading, setRegLoading] = useState(false);
+  const [regError, setRegError] = useState("");
 
-  // Resend OTP timer countdown
-  useEffect(() => {
-    if (resendTimer <= 0) return;
-    const interval = setInterval(() => {
-      setResendTimer((prev) => prev - 1);
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [resendTimer]);
-
-  // Safely initialize Invisible reCAPTCHA on Mount for Firebase Phone Auth
-  useEffect(() => {
-    if (typeof window !== "undefined" && !recaptchaVerifier && loginMethod === "phone") {
-      try {
-        const verifier = new RecaptchaVerifier(auth, "recaptcha-container", {
-          size: "invisible",
-          callback: () => {
-            // reCAPTCHA verification passed
-          },
-          "expired-callback": () => {
-            setError("reCAPTCHA session expired. Please send OTP again.");
-          },
-        });
-        setRecaptchaVerifier(verifier);
-      } catch (err: any) {
-        console.error("reCAPTCHA init error:", err);
-      }
-    }
-    // Cleanup on unmount
-    return () => {
-      if (recaptchaVerifier) {
-        try {
-          recaptchaVerifier.clear();
-        } catch {}
-      }
-    };
-  }, [recaptchaVerifier, loginMethod]);
-
-  // Step 1a: Send Firebase SMS Code
-  const handleSendOtp = async (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    setLoginError("");
 
-    if (name.trim().length < 2) {
-      setError("Please enter your full name");
+    if (!loginEmail || !loginEmail.includes("@")) {
+      setLoginError("Please enter a valid email address.");
+      return;
+    }
+    if (!loginPassword) {
+      setLoginError("Please enter your password.");
       return;
     }
 
-    const cleanPhone = phone.replace(/\D/g, "");
-    if (cleanPhone.length < 10) {
-      setError("Please enter a valid 10-digit mobile number");
-      return;
-    }
-
-    setLoading(true);
-
+    setLoginLoading(true);
     try {
-      if (!auth || !auth.app) {
-        throw new Error("Firebase configuration is missing or incomplete. Please check your .env file.");
-      }
-      if (!recaptchaVerifier) {
-        throw new Error("Security verification (reCAPTCHA) is not ready. Refresh and try again.");
-      }
-
-      // Hardcode Indian Phone Number Prefix (+91)
-      const formattedPhone = `+91${cleanPhone.slice(-10)}`;
-      
-      const isDev = process.env.NODE_ENV !== "production";
-      if (isDev) {
-        console.log("[DEV BYPASS] Simulating phone OTP confirmation result directly...");
-        setConfirmationResult({
-          confirm: async (code: string) => {
-            const verifyRes = await fetch("/api/auth/verify-otp", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ phone: formattedPhone, code }),
-            });
-            const verifyData = await verifyRes.json();
-            if (verifyRes.ok) {
-              return {
-                user: {
-                  getIdToken: async () => "mock-firebase-id-token"
-                }
-              };
-            } else {
-              throw new Error(verifyData.error || "Invalid OTP code");
-            }
-          }
-        } as any);
-        setStep("otp");
-        setResendTimer(30);
+      const res = await loginWithPassword(loginEmail, loginPassword);
+      if (res.success) {
+        router.push(redirectUrl);
       } else {
-        const result = await signInWithPhoneNumber(auth, formattedPhone, recaptchaVerifier);
-        setConfirmationResult(result);
-        setStep("otp");
-        setResendTimer(30);
+        setLoginError(res.error || "Incorrect email or password");
       }
-    } catch (err: any) {
-      console.error("[FIREBASE_SEND_OTP_ERROR]", err);
-      let userMessage = `Failed to send OTP. Error: ${err.message || err.code || "Unknown error"}`;
-      if (err.code === "auth/invalid-phone-number") {
-        userMessage = "The phone number entered is invalid. Please make sure it is a valid 10-digit number.";
-      } else if (err.code === "auth/too-many-requests") {
-        userMessage = "Too many verification requests. Please wait a few minutes and try again.";
-      }
-      setError(userMessage);
-
-      // Re-initialize recaptcha on failure
-      if (recaptchaVerifier) {
-        try {
-          recaptchaVerifier.clear();
-        } catch {}
-        setRecaptchaVerifier(null);
-      }
+    } catch {
+      setLoginError("Network error. Please try again.");
     } finally {
-      setLoading(false);
+      setLoginLoading(false);
     }
   };
 
-  // Step 1b: Send Email OTP Code
-  const handleSendEmailOtp = async (e: React.FormEvent) => {
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    setRegError("");
 
-    if (name.trim().length < 2) {
-      setError("Please enter your full name");
+    if (!regName.trim()) {
+      setRegError("Please enter your full name.");
+      return;
+    }
+    if (!regEmail || !regEmail.includes("@")) {
+      setRegError("Please enter a valid email address.");
+      return;
+    }
+    if (regPassword.length < 8) {
+      setRegError("Password must be at least 8 characters long.");
+      return;
+    }
+    if (regPassword !== regConfirmPassword) {
+      setRegError("Passwords do not match.");
       return;
     }
 
-    const trimmedEmail = email.trim();
-    if (!trimmedEmail || !trimmedEmail.includes("@")) {
-      setError("Please enter a valid email address");
-      return;
-    }
-
-    setLoading(true);
-
+    setRegLoading(true);
     try {
-      const res = await fetch("/api/auth/send-email-otp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: trimmedEmail }),
+      const res = await registerWithPassword({
+        name: regName.trim(),
+        email: regEmail.trim(),
+        password: regPassword,
+        phone: regPhone || undefined,
       });
-      
-      const data = await res.json();
-      if (res.ok) {
-        setStep("otp");
-        setResendTimer(30);
+
+      if (res.success) {
+        router.push(redirectUrl);
       } else {
-        setError(data.error || "Failed to send verification code");
+        setRegError(res.error || "Failed to create account.");
       }
-    } catch (err: any) {
-      setError("An error occurred. Please check your internet connection.");
+    } catch {
+      setRegError("Network error. Please try again.");
     } finally {
-      setLoading(false);
-    }
-  };
-
-  // Step 1c: Open WhatsApp Click-to-Chat to request login code
-  const handleSendWhatsAppCode = (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    setError("");
-
-    const cleanPhone = phone.replace(/\D/g, "");
-    if (cleanPhone.length < 10) {
-      setError("Please enter a valid 10-digit mobile number");
-      return;
-    }
-
-    const businessNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "919121603832";
-    const waUrl = `https://wa.me/${businessNumber}?text=${encodeURIComponent("Hi Root & Harvest, please send my login code")}`;
-
-    if (typeof window !== "undefined") {
-      window.open(waUrl, "_blank");
-    }
-
-    setStep("otp");
-    setResendTimer(30);
-  };
-
-  // Unified send handler
-  const handleSendCode = (e: React.FormEvent) => {
-    if (loginMethod === "whatsapp") {
-      handleSendWhatsAppCode(e);
-    } else if (loginMethod === "phone") {
-      handleSendOtp(e);
-    } else {
-      handleSendEmailOtp(e);
-    }
-  };
-
-  // Step 2a: Confirm Firebase OTP SMS & Create DB session
-  const handleVerifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-
-    const cleanOtp = otpCode.replace(/\D/g, "");
-    if (cleanOtp.length < 6) {
-      setError("Please enter the 6-digit OTP code");
-      return;
-    }
-
-    if (!confirmationResult) {
-      setError("Session expired. Please request a new OTP.");
-      setStep("input");
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const userCredential = await confirmationResult.confirm(cleanOtp);
-      const idToken = await userCredential.user.getIdToken();
-      const formattedPhone = `+91${phone.replace(/\D/g, "").slice(-10)}`;
-      const loginSuccess = await login(formattedPhone, idToken, name.trim());
-
-      if (loginSuccess) {
-        try {
-          localStorage.setItem(
-            "rh_guest",
-            JSON.stringify({
-              name: name.trim(),
-              phone: formattedPhone,
-            })
-          );
-        } catch {}
-
-        const callbackUrl = searchParams.get("callbackUrl") || "/account/profile";
-        router.push(callbackUrl);
-      } else {
-        setError("Failed to initialize session database records. Try again.");
-      }
-    } catch (err: any) {
-      console.error("[FIREBASE_VERIFY_OTP_ERROR]", err);
-      let userMessage = "Incorrect or expired verification code. Please check and try again.";
-      if (err.code === "auth/invalid-verification-code") {
-        userMessage = "The OTP code entered is incorrect.";
-      } else if (err.code === "auth/code-expired") {
-        userMessage = "This OTP has expired. Please click resend to get a new code.";
-      }
-      setError(userMessage);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Step 2b: Confirm Email OTP & Create DB session
-  const handleVerifyEmailOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-
-    const cleanOtp = otpCode.replace(/\D/g, "");
-    if (cleanOtp.length < 6) {
-      setError("Please enter the 6-digit verification code");
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const trimmedEmail = email.trim();
-      const loginSuccess = await loginWithEmail(trimmedEmail, cleanOtp, name.trim());
-
-      if (loginSuccess) {
-        try {
-          localStorage.setItem(
-            "rh_guest",
-            JSON.stringify({
-              name: name.trim(),
-              email: trimmedEmail,
-            })
-          );
-        } catch {}
-
-        const callbackUrl = searchParams.get("callbackUrl") || "/account/profile";
-        router.push(callbackUrl);
-      } else {
-        setError("The verification code is incorrect or has expired.");
-      }
-    } catch (err: any) {
-      console.error("[EMAIL_VERIFY_ERROR]", err);
-      setError("Verification failed. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Step 2c: Confirm WhatsApp OTP code
-  const handleVerifyWhatsAppOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-
-    const cleanOtp = otpCode.replace(/\D/g, "");
-    if (cleanOtp.length < 6) {
-      setError("Please enter the 6-digit verification code received on WhatsApp");
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const formattedPhone = `+91${phone.replace(/\D/g, "").slice(-10)}`;
-      const result = await loginWithPhoneOtp(formattedPhone, cleanOtp, true);
-
-      if (result.success) {
-        try {
-          localStorage.setItem(
-            "rh_guest",
-            JSON.stringify({
-              name: name.trim() || "Customer",
-              phone: formattedPhone,
-            })
-          );
-        } catch {}
-
-        const callbackUrl = searchParams.get("callbackUrl") || "/account/profile";
-        router.push(callbackUrl);
-      } else {
-        setError(result.error || "Invalid or expired verification code. Please check your WhatsApp messages or request a new code.");
-      }
-    } catch (err: any) {
-      console.error("[WHATSAPP_VERIFY_ERROR]", err);
-      setError("Verification failed. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Unified verify handler
-  const handleVerifyCode = (e: React.FormEvent) => {
-    if (loginMethod === "whatsapp") {
-      handleVerifyWhatsAppOtp(e);
-    } else if (loginMethod === "phone") {
-      handleVerifyOtp(e);
-    } else {
-      handleVerifyEmailOtp(e);
+      setRegLoading(false);
     }
   };
 
   return (
-    <div className="bg-brand-bg text-dark font-sans font-light min-h-screen flex flex-col selection:bg-gold/20">
-      {/* Invisible reCAPTCHA container required by Firebase Phone Auth */}
-      <div id="recaptcha-container" className="invisible absolute"></div>
-
-      {/* Minimal Header */}
-      <header className="w-full bg-white/80 backdrop-blur-md border-b border-forest/5 sticky top-0 z-50">
-        <div className="max-w-[1280px] mx-auto px-6 h-20 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 text-sm text-forest/70 hover:text-forest transition-colors group">
-            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-            <span className="hidden sm:inline">Back to Home</span>
+    <div className="min-h-screen bg-brand-bg flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md px-4">
+        <div className="text-center space-y-2 mb-6">
+          <Link href="/" className="inline-block">
+            <span className="font-serif text-2xl sm:text-3xl text-forest tracking-wider uppercase font-semibold">
+              Root &amp; Harvest
+            </span>
           </Link>
-
-          <Link href="/" className="absolute left-1/2 -translate-x-1/2">
-            <h1 className="text-xl font-serif text-forest tracking-widest uppercase font-semibold">ROOT & HARVEST</h1>
-          </Link>
-
-          <div className="flex items-center gap-2 text-forest/50 text-sm">
-            <Lock className="w-4 h-4" />
-            <span className="hidden sm:inline">Secure Session</span>
-          </div>
-        </div>
-      </header>
-
-      <main className="flex-grow w-full max-w-[1280px] mx-auto flex flex-col lg:flex-row">
-        {/* LEFT COLUMN: AUTHENTICATION */}
-        <div className="w-full lg:w-1/2 p-6 md:p-12 lg:p-24 flex flex-col justify-center relative">
-          <div className="w-full max-w-md mx-auto space-y-12">
-            
-            <div className="space-y-4">
-              <h2 className="text-5xl font-serif text-forest tracking-tight uppercase font-semibold">
-                Sign In
-              </h2>
-              <p className="text-sm md:text-base text-dark/70 leading-relaxed max-w-sm">
-                {step === "input"
-                  ? "Verify your identity using WhatsApp, SMS, or email."
-                  : `Enter the 6-digit code sent to your ${loginMethod === "whatsapp" ? "WhatsApp" : loginMethod === "phone" ? "mobile phone" : "email address"}.`}
-              </p>
-            </div>
-
-            <div className="bg-white p-8 md:p-10 rounded-none shadow-sm border border-forest/10">
-              {error && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mb-6 text-xs text-red-600 bg-red-50 p-4 rounded-none border border-red-100 text-center"
-                >
-                  {error}
-                </motion.div>
-              )}
-
-              {/* Login Method Tabs */}
-              {step === "input" && (
-                <div className="grid grid-cols-3 gap-1 mb-8 border-b border-forest/10 pb-4">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setLoginMethod("whatsapp");
-                      setError("");
-                    }}
-                    className={`flex items-center justify-center gap-1.5 py-3 text-xs uppercase tracking-wider font-semibold border-b-2 transition-all ${
-                      loginMethod === "whatsapp"
-                        ? "border-[#25D366] text-forest"
-                        : "border-transparent text-dark/40 hover:text-dark/60"
-                    }`}
-                  >
-                    <MessageSquare className="w-3.5 h-3.5 text-[#25D366]" />
-                    <span>WhatsApp</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setLoginMethod("phone");
-                      setError("");
-                    }}
-                    className={`flex items-center justify-center gap-1.5 py-3 text-xs uppercase tracking-wider font-semibold border-b-2 transition-all ${
-                      loginMethod === "phone"
-                        ? "border-forest text-forest"
-                        : "border-transparent text-dark/40 hover:text-dark/60"
-                    }`}
-                  >
-                    <Phone className="w-3.5 h-3.5" />
-                    <span>SMS</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setLoginMethod("email");
-                      setError("");
-                    }}
-                    className={`flex items-center justify-center gap-1.5 py-3 text-xs uppercase tracking-wider font-semibold border-b-2 transition-all ${
-                      loginMethod === "email"
-                        ? "border-forest text-forest"
-                        : "border-transparent text-dark/40 hover:text-dark/60"
-                    }`}
-                  >
-                    <Mail className="w-3.5 h-3.5" />
-                    <span>Email</span>
-                  </button>
-                </div>
-              )}
-
-              <AnimatePresence mode="wait">
-                {step === "input" ? (
-                  <motion.form
-                    key="input-form"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.2 }}
-                    onSubmit={handleSendCode}
-                    className="space-y-6"
-                  >
-                    {/* Full Name */}
-                    <div className="space-y-2">
-                      <label className="text-[11px] uppercase tracking-widest text-dark/60 font-semibold flex items-center gap-1.5">
-                        <User className="w-3 h-3" /> Full Name
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        placeholder="e.g. Rahul Sharma"
-                        className="w-full p-4 text-sm rounded-none border border-forest/10 focus:border-forest/40 outline-none bg-brand-bg/50 transition-all shadow-sm hover:border-forest/20 focus:ring-4 focus:ring-forest/5"
-                      />
-                    </div>
-
-                    {/* Phone Input (Used for both WhatsApp and SMS) */}
-                    {loginMethod === "whatsapp" || loginMethod === "phone" ? (
-                      <div className="space-y-2">
-                        <label className="text-[11px] uppercase tracking-widest text-dark/60 font-semibold flex items-center justify-between">
-                          <span className="flex items-center gap-1.5">
-                            {loginMethod === "whatsapp" ? (
-                              <MessageSquare className="w-3 h-3 text-[#25D366]" />
-                            ) : (
-                              <Phone className="w-3 h-3" />
-                            )}
-                            {loginMethod === "whatsapp" ? "WhatsApp Mobile Number" : "Mobile Number"}
-                          </span>
-                          {loginMethod === "whatsapp" && (
-                            <span className="text-[10px] text-[#25D366] font-medium bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
-                              Instant &amp; Free
-                            </span>
-                          )}
-                        </label>
-                        <div className="flex gap-3">
-                          <div className="w-[80px] p-4 text-sm rounded-none border border-forest/10 bg-brand-bg/30 text-dark/50 flex items-center justify-center select-none shadow-sm">
-                            +91
-                          </div>
-                          <input
-                            type="tel"
-                            required
-                            value={phone}
-                            onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
-                            placeholder="10-digit number"
-                            maxLength={10}
-                            className="flex-1 p-4 text-sm rounded-none border border-forest/10 focus:border-forest/30 outline-none bg-brand-bg/50 transition-all shadow-sm hover:border-forest/20 focus:ring-4 focus:ring-forest/5"
-                          />
-                        </div>
-                      </div>
-                    ) : (
-                      /* Email Input */
-                      <div className="space-y-2">
-                        <label className="text-[11px] uppercase tracking-widest text-dark/60 font-semibold flex items-center gap-1.5">
-                          <Mail className="w-3 h-3" /> Email Address
-                        </label>
-                        <input
-                          type="email"
-                          required
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          placeholder="e.g. rahul@example.com"
-                          className="w-full p-4 text-sm rounded-none border border-forest/10 focus:border-forest/40 outline-none bg-brand-bg/50 transition-all shadow-sm hover:border-forest/20 focus:ring-4 focus:ring-forest/5"
-                        />
-                      </div>
-                    )}
-
-                    <Button
-                      type="submit"
-                      variant="primary"
-                      disabled={loading}
-                      className="w-full h-14 flex items-center justify-center gap-2"
-                    >
-                      {loading ? (
-                        <>
-                          <RefreshCw className="w-4 h-4 animate-spin" />
-                          Sending Code...
-                        </>
-                      ) : loginMethod === "whatsapp" ? (
-                        <>
-                          <MessageSquare className="w-4 h-4 text-[#25D366]" />
-                          Get Login Code via WhatsApp
-                          <ChevronRight className="w-4 h-4" />
-                        </>
-                      ) : (
-                        <>
-                          Send Verification Code
-                          <ChevronRight className="w-4 h-4" />
-                        </>
-                      )}
-                    </Button>
-
-                    <p className="text-[11px] text-center text-dark/40 leading-relaxed">
-                      {loginMethod === "whatsapp"
-                        ? "Opens WhatsApp chat with Root & Harvest. Tap 'Send' to instantly receive your 6-digit login code."
-                        : "By continuing, you agree to our Terms. A secure one-time verification code will be sent."}
-                    </p>
-                  </motion.form>
-                ) : (
-                  <motion.form
-                    key="otp-form"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.2 }}
-                    onSubmit={handleVerifyCode}
-                    className="space-y-6"
-                  >
-                    {/* Guidance banner for WhatsApp users */}
-                    {loginMethod === "whatsapp" && (
-                      <div className="p-3.5 bg-emerald-50/80 border border-emerald-100 text-xs text-emerald-900 flex items-start gap-2.5">
-                        <MessageSquare className="w-4 h-4 text-[#25D366] shrink-0 mt-0.5" />
-                        <div className="space-y-1">
-                          <p className="font-semibold text-emerald-950">Sent to WhatsApp (+91 {phone})</p>
-                          <p className="text-[11px] text-emerald-800 leading-relaxed">
-                            Please make sure you tapped <strong>Send</strong> in WhatsApp. Your 6-digit code will appear in the chat.
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                    {/* OTP input field */}
-                    <div className="space-y-2">
-                      <label className="text-[11px] uppercase tracking-widest text-dark/60 font-semibold flex items-center justify-between">
-                        <span>Enter 6-Digit Code</span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setStep("input");
-                            setOtpCode("");
-                          }}
-                          className="text-gold hover:underline lowercase tracking-normal"
-                        >
-                          change details
-                        </button>
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={otpCode}
-                        onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
-                        placeholder="••••••"
-                        maxLength={6}
-                        className="w-full p-4 text-center text-2xl font-mono tracking-[0.3em] rounded-none border border-forest/10 focus:border-forest/40 outline-none bg-brand-bg/50 transition-all shadow-sm focus:ring-4 focus:ring-forest/5"
-                      />
-                    </div>
-
-                    <Button
-                      type="submit"
-                      variant="primary"
-                      disabled={loading || otpCode.length < 6}
-                      className="w-full h-14 flex items-center justify-center gap-2"
-                    >
-                      {loading ? (
-                        <>
-                          <RefreshCw className="w-4 h-4 animate-spin" />
-                          Verifying Code...
-                        </>
-                      ) : (
-                        <>
-                          Verify &amp; Continue
-                          <ChevronRight className="w-4 h-4" />
-                        </>
-                      )}
-                    </Button>
-
-                    {/* Resend Actions */}
-                    <div className="text-center">
-                      {resendTimer > 0 ? (
-                        <p className="text-xs text-dark/45">
-                          Resend code in <span className="font-semibold text-forest">{resendTimer}s</span>
-                        </p>
-                      ) : (
-                        <button
-                          type="button"
-                          disabled={loading}
-                          onClick={handleSendCode}
-                          className="text-xs font-semibold uppercase tracking-widest text-forest hover:text-gold transition-colors flex items-center gap-1.5 mx-auto animate-pulse"
-                        >
-                          <RefreshCw className="w-3 h-3" /> Resend Code
-                        </button>
-                      )}
-                    </div>
-                  </motion.form>
-                )}
-              </AnimatePresence>
-            </div>
-
-            {/* Security Notice */}
-            <div className="flex gap-4 items-start p-4 rounded-none bg-forest/5 border border-forest/10">
-              <Lock className="w-5 h-5 text-forest shrink-0 mt-0.5" />
-              <div className="space-y-1 text-sm text-dark/70">
-                <p className="font-medium text-forest">Your information is encrypted and securely protected.</p>
-                <p>We never share your personal contact details.</p>
-              </div>
-            </div>
-
-            {/* Trust Badges under Auth */}
-            <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 pt-4 border-t border-forest/10 text-xs text-dark/60 font-medium">
-              <div className="flex items-center gap-1.5">
-                <ShieldCheck className="w-4 h-4 text-forest/60" /> 256-bit Encryption
-              </div>
-              <div className="flex items-center gap-1.5">
-                <Lock className="w-4 h-4 text-forest/60" /> Secure Sessions
-              </div>
-              <div className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-forest/60" /> Trusted by Families
-              </div>
-              <div className="flex items-center gap-1.5">
-                <Truck className="w-4 h-4 text-forest/60" /> Fast Delivery
-              </div>
-            </div>
-          </div>
+          <p className="text-xs sm:text-sm text-dark/70">
+            Pure, Wood-Pressed Oils &amp; Harvest-Fresh Staples
+          </p>
         </div>
 
-        {/* RIGHT COLUMN: TRUST SECTION */}
-        <div className="hidden lg:flex w-1/2 bg-forest/5 p-12 xl:p-24 relative overflow-hidden flex-col justify-center">
-          <div className="absolute inset-0 opacity-10 pointer-events-none">
-            <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-              <defs>
-                <pattern id="leaf-pattern" x="0" y="0" width="100" height="100" patternUnits="userSpaceOnUse">
-                  <path d="M50 25 C70 5, 95 30, 75 50 C55 70, 30 45, 50 25 Z" fill="currentColor" className="text-forest" />
-                </pattern>
-              </defs>
-              <rect width="100%" height="100%" fill="url(#leaf-pattern)" />
-            </svg>
+        <div className="bg-white py-8 px-6 sm:px-10 shadow-md rounded-xl border border-forest/10 space-y-6">
+          {/* Tabs */}
+          <div className="flex border-b border-forest/10">
+            <button
+              type="button"
+              onClick={() => {
+                setTab("login");
+                setLoginError("");
+              }}
+              className={`flex-1 pb-3 text-center text-sm font-semibold transition-colors border-b-2 cursor-pointer ${
+                tab === "login"
+                  ? "border-forest text-forest"
+                  : "border-transparent text-dark/50 hover:text-dark/80"
+              }`}
+            >
+              Sign In
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setTab("register");
+                setRegError("");
+              }}
+              className={`flex-1 pb-3 text-center text-sm font-semibold transition-colors border-b-2 cursor-pointer ${
+                tab === "register"
+                  ? "border-forest text-forest"
+                  : "border-transparent text-dark/50 hover:text-dark/80"
+              }`}
+            >
+              Create Account
+            </button>
           </div>
 
-          <div className="relative z-10 max-w-md mx-auto space-y-12">
-            <div className="space-y-4">
-              <span className="text-xs uppercase tracking-[0.4em] text-gold font-semibold">The Root & Harvest Promise</span>
-              <h3 className="text-3xl font-serif text-forest">Why Root & Harvest?</h3>
-            </div>
-
-            <div className="space-y-6">
-              {[
-                "Freshly Wood Pressed",
-                "Small Batch Crafted",
-                "Secure Payments",
-                "Direct From Trusted Farms",
-                "No Artificial Preservatives",
-              ].map((benefit, i) => (
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.1 }}
-                  key={benefit}
-                  className="flex items-center gap-4 bg-white/50 backdrop-blur-sm p-4 rounded-none border border-forest/5 shadow-sm"
-                >
-                  <div className="w-8 h-8 rounded-full bg-forest/10 flex items-center justify-center shrink-0 text-forest">
-                    <CheckCircle2 className="w-4 h-4" />
+          <AnimatePresence mode="wait">
+            {tab === "login" ? (
+              <motion.form
+                key="login-form"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                onSubmit={handleLoginSubmit}
+                className="space-y-4"
+              >
+                {loginError && (
+                  <div className="p-3 bg-red-50 border border-red-200 text-xs text-red-600 rounded">
+                    {loginError}
                   </div>
-                  <span className="font-medium text-dark/80">{benefit}</span>
-                </motion.div>
-              ))}
-            </div>
+                )}
 
-            <div className="bg-white p-6 rounded-none border border-forest/10 shadow-md flex gap-6 items-center relative overflow-hidden group">
-              <div className="w-24 h-24 bg-brand-bg rounded-none relative shrink-0 overflow-hidden border border-forest/10">
-                <div className="absolute inset-0 flex items-center justify-center bg-forest/5 text-forest/40">
-                  <Image
-                    src="/images/sunflower-oil-1l.jpg"
-                    alt="Premium Product"
-                    fill
-                    className="object-cover transition-transform duration-700 group-hover:scale-110"
-                    onError={(e) => {
-                      (e.target as HTMLElement).style.display = "none";
-                    }}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-dark/70 block">
+                    Email Address
+                  </label>
+                  <div className="relative">
+                    <Mail className="w-4 h-4 text-forest/40 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="email"
+                      required
+                      placeholder="name@example.com"
+                      value={loginEmail}
+                      onChange={(e) => setLoginEmail(e.target.value)}
+                      className="w-full pl-10 pr-3.5 py-2.5 text-sm border border-forest/20 rounded-lg focus:border-forest focus:ring-2 focus:ring-forest/10 outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold uppercase tracking-wider text-dark/70 block">
+                      Password
+                    </label>
+                    <Link
+                      href="/forgot-password"
+                      className="text-xs text-gold hover:text-forest underline underline-offset-2"
+                    >
+                      Forgot password?
+                    </Link>
+                  </div>
+                  <div className="relative">
+                    <Lock className="w-4 h-4 text-forest/40 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="password"
+                      required
+                      placeholder="••••••••"
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
+                      className="w-full pl-10 pr-3.5 py-2.5 text-sm border border-forest/20 rounded-lg focus:border-forest focus:ring-2 focus:ring-forest/10 outline-none"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loginLoading}
+                  className="w-full py-3 bg-forest hover:bg-forest-light text-white text-sm font-semibold rounded-lg transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-2"
+                >
+                  {loginLoading ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" /> Signing In...
+                    </>
+                  ) : (
+                    "Sign In"
+                  )}
+                </button>
+              </motion.form>
+            ) : (
+              <motion.form
+                key="register-form"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                onSubmit={handleRegisterSubmit}
+                className="space-y-4"
+              >
+                {regError && (
+                  <div className="p-3 bg-red-50 border border-red-200 text-xs text-red-600 rounded">
+                    {regError}
+                  </div>
+                )}
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-dark/70 block">
+                    Full Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Your Name"
+                    value={regName}
+                    onChange={(e) => setRegName(e.target.value)}
+                    className="w-full px-3.5 py-2.5 text-sm border border-forest/20 rounded-lg focus:border-forest focus:ring-2 focus:ring-forest/10 outline-none"
                   />
                 </div>
-              </div>
-              <div className="space-y-2">
-                <p className="font-serif text-xl text-forest italic">"Nature’s finest, brought to your family’s table with absolute care."</p>
-                <p className="text-xs uppercase tracking-widest text-dark/50 font-semibold">— Veena &amp; Srinivas</p>
-              </div>
-            </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-dark/70 block">
+                    Email Address *
+                  </label>
+                  <div className="relative">
+                    <Mail className="w-4 h-4 text-forest/40 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="email"
+                      required
+                      placeholder="name@example.com"
+                      value={regEmail}
+                      onChange={(e) => setRegEmail(e.target.value)}
+                      className="w-full pl-10 pr-3.5 py-2.5 text-sm border border-forest/20 rounded-lg focus:border-forest focus:ring-2 focus:ring-forest/10 outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-dark/70 block">
+                    Mobile Number (Optional)
+                  </label>
+                  <div className="relative">
+                    <Phone className="w-4 h-4 text-forest/40 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="tel"
+                      maxLength={10}
+                      placeholder="10-digit mobile number"
+                      value={regPhone}
+                      onChange={(e) => setRegPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                      className="w-full pl-10 pr-3.5 py-2.5 text-sm border border-forest/20 rounded-lg focus:border-forest focus:ring-2 focus:ring-forest/10 outline-none font-mono"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold uppercase tracking-wider text-dark/70 block">
+                      Password *
+                    </label>
+                    <input
+                      type="password"
+                      required
+                      placeholder="Min 8 chars"
+                      value={regPassword}
+                      onChange={(e) => setRegPassword(e.target.value)}
+                      className="w-full px-3.5 py-2.5 text-sm border border-forest/20 rounded-lg focus:border-forest focus:ring-2 focus:ring-forest/10 outline-none"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold uppercase tracking-wider text-dark/70 block">
+                      Confirm *
+                    </label>
+                    <input
+                      type="password"
+                      required
+                      placeholder="Re-enter"
+                      value={regConfirmPassword}
+                      onChange={(e) => setRegConfirmPassword(e.target.value)}
+                      className="w-full px-3.5 py-2.5 text-sm border border-forest/20 rounded-lg focus:border-forest focus:ring-2 focus:ring-forest/10 outline-none"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={regLoading}
+                  className="w-full py-3 bg-forest hover:bg-forest-light text-white text-sm font-semibold rounded-lg transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-2"
+                >
+                  {regLoading ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" /> Creating Account...
+                    </>
+                  ) : (
+                    "Create Account"
+                  )}
+                </button>
+              </motion.form>
+            )}
+          </AnimatePresence>
+
+          <div className="text-center pt-2 border-t border-forest/10">
+            <Link
+              href="/cart"
+              className="text-xs text-forest/70 hover:text-forest transition-colors inline-flex items-center gap-1 font-medium"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" /> Return to Cart
+            </Link>
           </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 }
 
 export default function LoginPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen bg-brand-bg flex items-center justify-center text-forest text-sm uppercase tracking-widest font-semibold animate-pulse">
-          Loading Secure Checkout...
-        </div>
-      }
-    >
-      <SecureCheckoutContent />
+    <Suspense fallback={<div className="min-h-screen bg-brand-bg flex items-center justify-center">Loading...</div>}>
+      <LoginContent />
     </Suspense>
   );
 }

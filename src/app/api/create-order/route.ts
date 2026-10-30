@@ -38,25 +38,15 @@ export async function POST(req: Request) {
       }
     }
 
-    // Guest checkout fallback: find or create a user by phone number so data is stored in DB
-    if (!userId && shippingData?.phone) {
-      const rawPhone = shippingData.phone.replace(/\D/g, "");
-      const formattedPhone = rawPhone.length === 10 ? `+91${rawPhone}` : `+${rawPhone}`;
-      
-      let user = await prisma.user.findFirst({
-        where: { phone: formattedPhone }
+    // Guest checkout: associate order with existing user if email/token matches, or leave null for pure guest
+    if (!userId && shippingData?.email) {
+      const normalizedEmail = shippingData.email.trim().toLowerCase();
+      const existingUser = await prisma.user.findFirst({
+        where: { email: normalizedEmail }
       });
-      
-      if (!user) {
-        user = await prisma.user.create({
-          data: {
-            name: shippingData.name,
-            phone: formattedPhone,
-            role: "CUSTOMER"
-          }
-        });
+      if (existingUser) {
+        userId = existingUser.id;
       }
-      userId = user.id;
     }
 
     // Generate a unique order number

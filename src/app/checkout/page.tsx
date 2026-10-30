@@ -20,6 +20,9 @@ import {
   Phone,
   Edit2,
   X,
+  Mail,
+  UserCheck,
+  UserPlus,
 } from "lucide-react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -64,6 +67,30 @@ export default function CheckoutPage() {
   // Primary checkout state
   const [currentStep, setCurrentStep] = useState<CheckoutStep>("phone");
   const [shippingData, setShippingData] = useState<ShippingFormValues | null>(null);
+
+  // Checkout Authentication Mode: "guest" | "login" | "register"
+  const [authMode, setAuthMode] = useState<"guest" | "login" | "register">("guest");
+
+  // Guest quick inputs (Step 1)
+  const [guestName, setGuestName] = useState("");
+  const [guestEmail, setGuestEmail] = useState("");
+  const [guestPhone, setGuestPhone] = useState("");
+  const [guestError, setGuestError] = useState("");
+
+  // Existing Customer Login inputs
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [loginError, setLoginError] = useState("");
+
+  // New Customer Registration inputs
+  const [regName, setRegName] = useState("");
+  const [regEmail, setRegEmail] = useState("");
+  const [regPhone, setRegPhone] = useState("");
+  const [regPassword, setRegPassword] = useState("");
+  const [regConfirmPassword, setRegConfirmPassword] = useState("");
+  const [regLoading, setRegLoading] = useState(false);
+  const [regError, setRegError] = useState("");
 
   // Phone & OTP state
   const [rawPhone, setRawPhone] = useState("");
@@ -602,6 +629,164 @@ export default function CheckoutPage() {
     captureCheckoutLead(undefined, clean, undefined, "checkout_otp_bypassed");
   };
 
+  // Option A: Continue as Guest (NO OTP, NO Password required)
+  const handleGuestContinue = (e: React.FormEvent) => {
+    e.preventDefault();
+    setGuestError("");
+
+    const clean = guestPhone.replace(/\D/g, "").slice(-10);
+    if (clean.length !== 10) {
+      setGuestError("Please enter a valid 10-digit mobile number");
+      return;
+    }
+    if (!guestName.trim()) {
+      setGuestError("Please enter your name");
+      return;
+    }
+    if (!guestEmail.trim() || !guestEmail.includes("@")) {
+      setGuestError("Please enter a valid email address for order updates");
+      return;
+    }
+
+    setRawPhone(clean);
+    setVerifiedPhone(clean);
+    setPhoneVerified(true);
+    setValue("name", guestName.trim());
+    setValue("phone", clean);
+    setValue("email", guestEmail.trim().toLowerCase());
+
+    fetchUserSavedAddresses(clean);
+    setShowNewAddressForm(true);
+    setCurrentStep("shipping");
+    captureCheckoutLead(guestName.trim(), clean, guestEmail.trim().toLowerCase(), "guest_checkout_started");
+  };
+
+  // Option B: Existing Customer Login (Email & Password)
+  const handleCustomerLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError("");
+
+    if (!loginEmail || !loginEmail.includes("@")) {
+      setLoginError("Please enter a valid email address");
+      return;
+    }
+    if (!loginPassword) {
+      setLoginError("Please enter your password");
+      return;
+    }
+
+    setLoginLoading(true);
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: loginEmail, password: loginPassword }),
+      });
+      const data = await res.json();
+
+      if (res.ok && data.user) {
+        if (refresh) {
+          try { await refresh(); } catch {}
+        }
+        if (data.user.phone) {
+          const clean = data.user.phone.replace(/\D/g, "").slice(-10);
+          setRawPhone(clean);
+          setVerifiedPhone(clean);
+          setPhoneVerified(true);
+          setValue("phone", clean);
+        }
+        if (data.user.name) setValue("name", data.user.name);
+        setValue("email", data.user.email);
+
+        const addrs = data.addresses && Array.isArray(data.addresses) ? data.addresses : [];
+        if (addrs.length > 0) {
+          setSavedAddresses(addrs);
+          setIsExistingCustomer(true);
+          const defaultAddr = addrs.find((a: any) => a.isDefault) || addrs[0];
+          setSelectedAddressId(defaultAddr.id);
+          applyAddressToShipping(defaultAddr);
+          setShowNewAddressForm(false);
+        } else {
+          setShowNewAddressForm(true);
+        }
+
+        setCurrentStep("shipping");
+      } else {
+        setLoginError(data.error || "Incorrect email or password");
+      }
+    } catch {
+      setLoginError("Network error. Please try again.");
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
+  // Option C: Create Account (Email & Password)
+  const handleCustomerRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setRegError("");
+
+    if (!regName.trim()) {
+      setRegError("Please enter your full name");
+      return;
+    }
+    if (!regEmail.trim() || !regEmail.includes("@")) {
+      setRegError("Please enter a valid email address");
+      return;
+    }
+    const clean = regPhone.replace(/\D/g, "").slice(-10);
+    if (regPhone && clean.length !== 10) {
+      setRegError("Please enter a valid 10-digit mobile number");
+      return;
+    }
+    if (regPassword.length < 8) {
+      setRegError("Password must be at least 8 characters long");
+      return;
+    }
+    if (regPassword !== regConfirmPassword) {
+      setRegError("Passwords do not match");
+      return;
+    }
+
+    setRegLoading(true);
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: regName.trim(),
+          email: regEmail.trim().toLowerCase(),
+          password: regPassword,
+          phone: clean || undefined,
+        }),
+      });
+      const data = await res.json();
+
+      if (res.ok && data.user) {
+        if (refresh) {
+          try { await refresh(); } catch {}
+        }
+        if (clean) {
+          setRawPhone(clean);
+          setVerifiedPhone(clean);
+          setPhoneVerified(true);
+          setValue("phone", clean);
+        }
+        setValue("name", regName.trim());
+        setValue("email", regEmail.trim().toLowerCase());
+
+        setShowNewAddressForm(true);
+        setCurrentStep("shipping");
+      } else {
+        setRegError(data.error || "Failed to create account");
+      }
+    } catch {
+      setRegError("Network error. Please try again.");
+    } finally {
+      setRegLoading(false);
+    }
+  };
+
   // ── STEP 3: SUBMIT NEW ADDRESS FORM ──
   const onShippingSubmit = async (data: ShippingFormValues) => {
     const finalData: ShippingFormValues = {
@@ -895,7 +1080,7 @@ export default function CheckoutPage() {
 
   // Visual Steps Progress Indicator
   const stepsConfig = [
-    { id: "phone", label: "Mobile", icon: Phone },
+    { id: "phone", label: "Account", icon: UserCheck },
     { id: "otp", label: "Verify", icon: ShieldCheck },
     { id: "shipping", label: "Address", icon: MapPin },
     { id: "review", label: "Payment", icon: CreditCard },
@@ -992,7 +1177,7 @@ export default function CheckoutPage() {
                 <AnimatePresence mode="wait">
 
                   {/* ──────────────────────────────────────────────────────────── */}
-                  {/* STEP 1: PHONE NUMBER INPUT                                  */}
+                  {/* STEP 1: AUTHENTICATION & CHECKOUT ENTRY                     */}
                   {/* ──────────────────────────────────────────────────────────── */}
                   {currentStep === "phone" && (
                     <motion.div
@@ -1003,89 +1188,316 @@ export default function CheckoutPage() {
                       transition={{ duration: 0.25 }}
                       className="space-y-6"
                     >
-                      <div className="space-y-1.5 text-center sm:text-left pb-2 border-b border-forest/10">
+                      <div className="space-y-1.5 text-center sm:text-left pb-3 border-b border-forest/10">
                         <h2 className="text-2xl sm:text-3xl font-serif text-forest flex items-center justify-center sm:justify-start gap-2">
-                          Let&apos;s get your order delivered <span className="text-red-500">❤️</span>
+                          Welcome to Checkout <span className="text-red-500">❤️</span>
                         </h2>
-                        <p className="text-sm text-dark/60 font-light">
-                          Enter your mobile number to continue.
+                        <p className="text-sm text-dark/65 font-light">
+                          Choose how you would like to proceed with your order:
                         </p>
                       </div>
 
-                      <form onSubmit={handleSendOtp} className="space-y-6 pt-2">
-                        <div className="space-y-2">
-                          <label className="text-[11px] uppercase tracking-widest text-dark/70 font-semibold block">
-                            Mobile Number
-                          </label>
-                          <div className="flex rounded-sm overflow-hidden border border-forest/30 focus-within:border-forest focus-within:ring-2 focus-within:ring-forest/10 transition-all bg-brand-bg/30">
-                            <span className="px-4 py-3.5 bg-forest/5 text-forest font-semibold text-sm border-r border-forest/20 flex items-center">
-                              +91
+                      {/* 3 Checkout Mode Tabs */}
+                      <div className="grid grid-cols-3 gap-2 p-1.5 bg-forest/5 rounded-lg border border-forest/10 text-xs sm:text-sm font-medium">
+                        <button
+                          type="button"
+                          onClick={() => setAuthMode("guest")}
+                          className={`py-2.5 px-2 rounded-md transition-all text-center flex flex-col sm:flex-row items-center justify-center gap-1.5 cursor-pointer ${
+                            authMode === "guest"
+                              ? "bg-white text-forest font-semibold shadow-sm border border-forest/15"
+                              : "text-dark/60 hover:text-forest"
+                          }`}
+                        >
+                          <ShoppingBag className="w-4 h-4 text-forest" />
+                          <span>Guest Checkout</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setAuthMode("login")}
+                          className={`py-2.5 px-2 rounded-md transition-all text-center flex flex-col sm:flex-row items-center justify-center gap-1.5 cursor-pointer ${
+                            authMode === "login"
+                              ? "bg-white text-forest font-semibold shadow-sm border border-forest/15"
+                              : "text-dark/60 hover:text-forest"
+                          }`}
+                        >
+                          <Lock className="w-4 h-4 text-forest" />
+                          <span>Customer Login</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setAuthMode("register")}
+                          className={`py-2.5 px-2 rounded-md transition-all text-center flex flex-col sm:flex-row items-center justify-center gap-1.5 cursor-pointer ${
+                            authMode === "register"
+                              ? "bg-white text-forest font-semibold shadow-sm border border-forest/15"
+                              : "text-dark/60 hover:text-forest"
+                          }`}
+                        >
+                          <UserPlus className="w-4 h-4 text-forest" />
+                          <span>Create Account</span>
+                        </button>
+                      </div>
+
+                      {/* MODE A: GUEST CHECKOUT (Zero OTP, zero password) */}
+                      {authMode === "guest" && (
+                        <form onSubmit={handleGuestContinue} className="space-y-4 pt-1">
+                          <div className="p-3.5 bg-emerald-50/70 border border-emerald-200/80 rounded text-xs text-emerald-950 flex items-start gap-2.5 leading-relaxed">
+                            <ShieldCheck className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
+                            <span>
+                              <strong>Instant Guest Checkout:</strong> No password or OTP needed. We only use your email and phone to send your tracking link and order delivery updates.
                             </span>
+                          </div>
+
+                          {guestError && (
+                            <div className="p-3 bg-red-50 border border-red-200 text-xs text-red-600 rounded">
+                              {guestError}
+                            </div>
+                          )}
+
+                          <div className="space-y-1.5">
+                            <label className="text-[11px] uppercase tracking-wider text-dark/70 font-semibold block">
+                              Full Name *
+                            </label>
                             <input
-                              type="tel"
-                              maxLength={10}
-                              autoFocus
-                              value={rawPhone}
-                              onChange={(e) => {
-                                const val = e.target.value.replace(/\D/g, "").slice(0, 10);
-                                setRawPhone(val);
-                                if (phoneError) setPhoneError("");
-                              }}
-                              placeholder="Enter 10-digit mobile number"
-                              className="w-full px-4 py-3.5 text-base tracking-wider font-mono outline-none bg-transparent placeholder:font-sans placeholder:tracking-normal placeholder:text-dark/35"
+                              type="text"
+                              required
+                              value={guestName}
+                              onChange={(e) => setGuestName(e.target.value)}
+                              placeholder="e.g. Ramesh Kumar"
+                              className="w-full px-3.5 py-3 text-sm border border-forest/20 rounded-md focus:border-forest focus:ring-2 focus:ring-forest/10 outline-none bg-brand-bg/20"
                             />
                           </div>
-                          {phoneError && (
-                            <p className="text-xs text-red-600 font-medium pt-1">{phoneError}</p>
-                          )}
-                        </div>
 
-                        <div className="p-3.5 bg-emerald-50/60 border border-emerald-200/70 rounded text-xs text-emerald-900 flex items-start gap-2.5 leading-relaxed">
-                          <ShieldCheck className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
-                          <span>
-                            We&apos;ll send a quick 6-digit OTP via WhatsApp &amp; SMS to verify your order and retrieve your saved addresses.
-                          </span>
-                        </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="space-y-1.5">
+                              <label className="text-[11px] uppercase tracking-wider text-dark/70 font-semibold block">
+                                Mobile Number *
+                              </label>
+                              <div className="flex rounded-md border border-forest/20 focus-within:border-forest focus-within:ring-2 focus-within:ring-forest/10 overflow-hidden bg-brand-bg/20">
+                                <span className="px-3 py-3 bg-forest/5 text-forest font-semibold text-xs border-r border-forest/20 flex items-center">
+                                  +91
+                                </span>
+                                <input
+                                  type="tel"
+                                  required
+                                  maxLength={10}
+                                  value={guestPhone}
+                                  onChange={(e) => setGuestPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                                  placeholder="10-digit number"
+                                  className="w-full px-3 py-3 text-sm font-mono outline-none bg-transparent"
+                                />
+                              </div>
+                            </div>
 
-                        <button
-                          type="submit"
-                          disabled={otpSending || rawPhone.length !== 10}
-                          className="w-full py-4 px-8 bg-forest hover:bg-forest-light text-white text-sm sm:text-base font-semibold tracking-wider uppercase transition-all flex items-center justify-center gap-2.5 rounded-lg shadow-md hover:shadow-lg active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                          style={{ minHeight: "52px" }}
-                        >
-                          {otpSending ? (
-                            <>
-                              <RefreshCw className="w-4 h-4 animate-spin" /> Sending OTP...
-                            </>
-                          ) : (
-                            <>
-                              Send OTP <ChevronRight className="w-4 h-4" />
-                            </>
-                          )}
-                        </button>
+                            <div className="space-y-1.5">
+                              <label className="text-[11px] uppercase tracking-wider text-dark/70 font-semibold block">
+                                Email Address *
+                              </label>
+                              <div className="relative">
+                                <Mail className="w-4 h-4 text-forest/40 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                                <input
+                                  type="email"
+                                  required
+                                  value={guestEmail}
+                                  onChange={(e) => setGuestEmail(e.target.value)}
+                                  placeholder="for invoice & tracking"
+                                  className="w-full pl-10 pr-3.5 py-3 text-sm border border-forest/20 rounded-md focus:border-forest focus:ring-2 focus:ring-forest/10 outline-none bg-brand-bg/20"
+                                />
+                              </div>
+                            </div>
+                          </div>
 
-                        <div className="text-center pt-2">
                           <button
-                            type="button"
-                            onClick={() => {
-                              const clean = rawPhone.replace(/\D/g, "").slice(-10);
-                              if (clean.length !== 10) {
-                                setPhoneError("Please enter a valid 10-digit mobile number");
-                                return;
-                              }
-                              setPhoneError("");
-                              handleBypassOtp();
-                            }}
-                            className="text-xs font-medium text-forest/70 hover:text-forest transition-colors underline underline-offset-4 cursor-pointer"
+                            type="submit"
+                            className="w-full py-4 px-8 bg-forest hover:bg-forest-light text-white text-sm sm:text-base font-semibold tracking-wider uppercase transition-all flex items-center justify-center gap-2.5 rounded-lg shadow-md hover:shadow-lg active:scale-[0.99] cursor-pointer mt-2"
+                            style={{ minHeight: "52px" }}
                           >
-                            Or continue directly to Delivery Address &rarr;
+                            Continue to Delivery Address <ChevronRight className="w-4 h-4" />
                           </button>
-                        </div>
-                      </form>
+                        </form>
+                      )}
+
+                      {/* MODE B: EXISTING CUSTOMER LOGIN (Email & Password) */}
+                      {authMode === "login" && (
+                        <form onSubmit={handleCustomerLogin} className="space-y-4 pt-1">
+                          <p className="text-xs text-dark/65">
+                            Sign in with your email and password to access your saved delivery addresses.
+                          </p>
+
+                          {loginError && (
+                            <div className="p-3 bg-red-50 border border-red-200 text-xs text-red-600 rounded">
+                              {loginError}
+                            </div>
+                          )}
+
+                          <div className="space-y-1.5">
+                            <label className="text-[11px] uppercase tracking-wider text-dark/70 font-semibold block">
+                              Email Address
+                            </label>
+                            <div className="relative">
+                              <Mail className="w-4 h-4 text-forest/40 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                              <input
+                                type="email"
+                                required
+                                value={loginEmail}
+                                onChange={(e) => setLoginEmail(e.target.value)}
+                                placeholder="name@example.com"
+                                className="w-full pl-10 pr-3.5 py-3 text-sm border border-forest/20 rounded-md focus:border-forest focus:ring-2 focus:ring-forest/10 outline-none bg-brand-bg/20"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <div className="flex items-center justify-between">
+                              <label className="text-[11px] uppercase tracking-wider text-dark/70 font-semibold block">
+                                Password
+                              </label>
+                              <Link
+                                href="/forgot-password"
+                                className="text-xs text-gold hover:text-forest underline underline-offset-2"
+                              >
+                                Forgot password?
+                              </Link>
+                            </div>
+                            <div className="relative">
+                              <Lock className="w-4 h-4 text-forest/40 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                              <input
+                                type="password"
+                                required
+                                value={loginPassword}
+                                onChange={(e) => setLoginPassword(e.target.value)}
+                                placeholder="Enter your password"
+                                className="w-full pl-10 pr-3.5 py-3 text-sm border border-forest/20 rounded-md focus:border-forest focus:ring-2 focus:ring-forest/10 outline-none bg-brand-bg/20"
+                              />
+                            </div>
+                          </div>
+
+                          <button
+                            type="submit"
+                            disabled={loginLoading}
+                            className="w-full py-4 px-8 bg-forest hover:bg-forest-light text-white text-sm sm:text-base font-semibold tracking-wider uppercase transition-all flex items-center justify-center gap-2.5 rounded-lg shadow-md hover:shadow-lg active:scale-[0.99] disabled:opacity-50 cursor-pointer mt-2"
+                            style={{ minHeight: "52px" }}
+                          >
+                            {loginLoading ? (
+                              <>
+                                <RefreshCw className="w-4 h-4 animate-spin" /> Signing In...
+                              </>
+                            ) : (
+                              <>
+                                Sign In &amp; Continue <ChevronRight className="w-4 h-4" />
+                              </>
+                            )}
+                          </button>
+                        </form>
+                      )}
+
+                      {/* MODE C: CREATE ACCOUNT (Email & Password) */}
+                      {authMode === "register" && (
+                        <form onSubmit={handleCustomerRegister} className="space-y-4 pt-1">
+                          <p className="text-xs text-dark/65">
+                            Create your Root &amp; Harvest account for faster future checkouts and order tracking.
+                          </p>
+
+                          {regError && (
+                            <div className="p-3 bg-red-50 border border-red-200 text-xs text-red-600 rounded">
+                              {regError}
+                            </div>
+                          )}
+
+                          <div className="space-y-1.5">
+                            <label className="text-[11px] uppercase tracking-wider text-dark/70 font-semibold block">
+                              Full Name *
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              value={regName}
+                              onChange={(e) => setRegName(e.target.value)}
+                              placeholder="Your Name"
+                              className="w-full px-3.5 py-3 text-sm border border-forest/20 rounded-md focus:border-forest focus:ring-2 focus:ring-forest/10 outline-none bg-brand-bg/20"
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="space-y-1.5">
+                              <label className="text-[11px] uppercase tracking-wider text-dark/70 font-semibold block">
+                                Email Address *
+                              </label>
+                              <input
+                                type="email"
+                                required
+                                value={regEmail}
+                                onChange={(e) => setRegEmail(e.target.value)}
+                                placeholder="name@example.com"
+                                className="w-full px-3.5 py-3 text-sm border border-forest/20 rounded-md focus:border-forest focus:ring-2 focus:ring-forest/10 outline-none bg-brand-bg/20"
+                              />
+                            </div>
+
+                            <div className="space-y-1.5">
+                              <label className="text-[11px] uppercase tracking-wider text-dark/70 font-semibold block">
+                                Mobile Number (Optional)
+                              </label>
+                              <input
+                                type="tel"
+                                maxLength={10}
+                                value={regPhone}
+                                onChange={(e) => setRegPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                                placeholder="10-digit number"
+                                className="w-full px-3.5 py-3 text-sm border border-forest/20 rounded-md focus:border-forest focus:ring-2 focus:ring-forest/10 outline-none bg-brand-bg/20 font-mono"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="space-y-1.5">
+                              <label className="text-[11px] uppercase tracking-wider text-dark/70 font-semibold block">
+                                Password *
+                              </label>
+                              <input
+                                type="password"
+                                required
+                                value={regPassword}
+                                onChange={(e) => setRegPassword(e.target.value)}
+                                placeholder="Min 8 characters"
+                                className="w-full px-3.5 py-3 text-sm border border-forest/20 rounded-md focus:border-forest focus:ring-2 focus:ring-forest/10 outline-none bg-brand-bg/20"
+                              />
+                            </div>
+
+                            <div className="space-y-1.5">
+                              <label className="text-[11px] uppercase tracking-wider text-dark/70 font-semibold block">
+                                Confirm Password *
+                              </label>
+                              <input
+                                type="password"
+                                required
+                                value={regConfirmPassword}
+                                onChange={(e) => setRegConfirmPassword(e.target.value)}
+                                placeholder="Re-enter password"
+                                className="w-full px-3.5 py-3 text-sm border border-forest/20 rounded-md focus:border-forest focus:ring-2 focus:ring-forest/10 outline-none bg-brand-bg/20"
+                              />
+                            </div>
+                          </div>
+
+                          <button
+                            type="submit"
+                            disabled={regLoading}
+                            className="w-full py-4 px-8 bg-forest hover:bg-forest-light text-white text-sm sm:text-base font-semibold tracking-wider uppercase transition-all flex items-center justify-center gap-2.5 rounded-lg shadow-md hover:shadow-lg active:scale-[0.99] disabled:opacity-50 cursor-pointer mt-2"
+                            style={{ minHeight: "52px" }}
+                          >
+                            {regLoading ? (
+                              <>
+                                <RefreshCw className="w-4 h-4 animate-spin" /> Creating Account...
+                              </>
+                            ) : (
+                              <>
+                                Create Account &amp; Continue <ChevronRight className="w-4 h-4" />
+                              </>
+                            )}
+                          </button>
+                        </form>
+                      )}
                     </motion.div>
                   )}
 
-                  {/* ──────────────────────────────────────────────────────────── */}
                   {/* STEP 2: OTP VERIFICATION                                    */}
                   {/* ──────────────────────────────────────────────────────────── */}
                   {currentStep === "otp" && (

@@ -421,4 +421,214 @@ export class EmailService {
       throw err;
     }
   }
+
+  static async sendPasswordResetEmail(email: string, name: string | null | undefined, resetUrl: string) {
+    const transporter = this.getTransporter();
+    const subject = "Reset your Root & Harvest password";
+    const recipientName = name ? name : "Customer";
+    const html = `
+      <div style="font-family: sans-serif; max-width: 540px; margin: 0 auto; padding: 24px; border: 1px solid #e5e7eb; border-radius: 8px; color: #2b2b2b; background-color: #f8f5ef;">
+        <h2 style="color: #1e4a3a; font-family: serif; border-bottom: 2px solid #1e4a3a; padding-bottom: 10px; margin-top: 0; text-transform: uppercase; letter-spacing: 0.1em;">Root & Harvest</h2>
+        <h3 style="color: #1e4a3a; font-family: serif; margin-top: 16px;">Password Reset Request</h3>
+        <p style="font-size: 14px; line-height: 1.6; color: #374151;">
+          Hello ${recipientName},
+        </p>
+        <p style="font-size: 14px; line-height: 1.6; color: #374151;">
+          We received a request to reset your password for your Root & Harvest account. Click the secure link below to choose a new password:
+        </p>
+        <div style="text-align: center; margin: 28px 0;">
+          <a href="${resetUrl}" style="background-color: #1e4a3a; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 14px; display: inline-block;">
+            Reset Your Password
+          </a>
+        </div>
+        <p style="font-size: 13px; line-height: 1.5; color: #4b5563;">
+          This link will expire in <strong>1 hour</strong>. If you did not make this request, you can safely disregard this email—your account remains safe.
+        </p>
+        <p style="font-size: 12px; color: #9ca3af; border-top: 1px solid #e5e7eb; padding-top: 14px; margin-top: 24px;">
+          Root & Harvest — Farm Fresh & Pure Groceries | <a href="https://rootandharvest.in" style="color: #1e4a3a;">rootandharvest.in</a>
+        </p>
+      </div>
+    `;
+
+    if (!transporter) {
+      console.log(`\n[MOCK PASSWORD RESET EMAIL] To: ${email}\nSubject: ${subject}\nReset Link: ${resetUrl}\n`);
+      return;
+    }
+
+    try {
+      await transporter.sendMail({
+        from: `"Root & Harvest" <${this.getSmtpUser()}>`,
+        to: email,
+        subject,
+        html,
+      });
+      console.info(`[EMAIL_PASSWORD_RESET_SUCCESS] Reset link sent to ${email}`);
+    } catch (err) {
+      console.error(`[EMAIL_PASSWORD_RESET_ERROR] Failed to send to ${email}`, err);
+    }
+  }
+
+  static async sendEmailVerificationEmail(email: string, name: string | null | undefined, verifyUrl: string) {
+    const transporter = this.getTransporter();
+    const subject = "Verify your Root & Harvest account";
+    const recipientName = name ? name : "Customer";
+    const html = `
+      <div style="font-family: sans-serif; max-width: 540px; margin: 0 auto; padding: 24px; border: 1px solid #e5e7eb; border-radius: 8px; color: #2b2b2b; background-color: #f8f5ef;">
+        <h2 style="color: #1e4a3a; font-family: serif; border-bottom: 2px solid #1e4a3a; padding-bottom: 10px; margin-top: 0; text-transform: uppercase; letter-spacing: 0.1em;">Root & Harvest</h2>
+        <h3 style="color: #1e4a3a; font-family: serif; margin-top: 16px;">Welcome to Root & Harvest</h3>
+        <p style="font-size: 14px; line-height: 1.6; color: #374151;">
+          Hello ${recipientName},
+        </p>
+        <p style="font-size: 14px; line-height: 1.6; color: #374151;">
+          Thank you for creating an account with Root & Harvest. Please verify your email address by clicking the link below:
+        </p>
+        <div style="text-align: center; margin: 28px 0;">
+          <a href="${verifyUrl}" style="background-color: #1e4a3a; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 14px; display: inline-block;">
+            Verify Email Address
+          </a>
+        </div>
+        <p style="font-size: 13px; line-height: 1.5; color: #4b5563;">
+          This link will expire in <strong>24 hours</strong>. If you did not create this account, please ignore this email.
+        </p>
+        <p style="font-size: 12px; color: #9ca3af; border-top: 1px solid #e5e7eb; padding-top: 14px; margin-top: 24px;">
+          Root & Harvest — Farm Fresh & Pure Groceries | <a href="https://rootandharvest.in" style="color: #1e4a3a;">rootandharvest.in</a>
+        </p>
+      </div>
+    `;
+
+    if (!transporter) {
+      console.log(`\n[MOCK EMAIL VERIFY] To: ${email}\nSubject: ${subject}\nVerify Link: ${verifyUrl}\n`);
+      return;
+    }
+
+    try {
+      await transporter.sendMail({
+        from: `"Root & Harvest" <${this.getSmtpUser()}>`,
+        to: email,
+        subject,
+        html,
+      });
+      console.info(`[EMAIL_VERIFY_SUCCESS] Verification email sent to ${email}`);
+    } catch (err) {
+      console.error(`[EMAIL_VERIFY_ERROR] Failed to send to ${email}`, err);
+    }
+  }
+
+  static async sendPaymentSuccessEmail(order: any, items: any[], paymentId: string) {
+    if (!order.shippingEmail) {
+      console.warn("[EMAIL_PAYMENT_SUCCESS_WARN] No customer email available.");
+      return;
+    }
+    const transporter = this.getTransporter();
+    const subject = `Payment Received: Order ${order.orderNumber} - Root & Harvest`;
+    const itemsHtml = this.buildOrderItemsHtml(items);
+    const html = `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e5e7eb; border-radius: 8px; color: #2b2b2b; background-color: #f8f5ef;">
+        <h2 style="color: #1e4a3a; font-family: serif; border-bottom: 2px solid #1e4a3a; padding-bottom: 10px; margin-top: 0; text-transform: uppercase;">Root & Harvest</h2>
+        <div style="background-color: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 6px; padding: 12px 16px; margin: 16px 0;">
+          <h3 style="color: #065f46; margin: 0 0 4px 0; font-size: 16px;">Payment Successful</h3>
+          <p style="color: #047857; margin: 0; font-size: 13px;">We received your online payment of <strong>Rs. ${order.total}</strong> (Ref: ${paymentId}).</p>
+        </div>
+        <p style="font-size: 14px; line-height: 1.5;">Dear ${order.shippingName},</p>
+        <p style="font-size: 14px; line-height: 1.5;">
+          Your payment for order <strong>#${order.orderNumber}</strong> has been successfully processed. We are preparing your farm-fresh groceries.
+        </p>
+        <table style="width: 100%; border-collapse: collapse; margin-top: 16px; background-color: #ffffff; border-radius: 4px; overflow: hidden;">
+          <thead>
+            <tr style="background-color: #1e4a3a; color: #ffffff;">
+              <th style="padding: 10px 12px; text-align: left; font-size: 13px;">Item</th>
+              <th style="padding: 10px 12px; text-align: center; font-size: 13px;">Qty</th>
+              <th style="padding: 10px 12px; text-align: right; font-size: 13px;">Price</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemsHtml}
+          </tbody>
+          <tfoot>
+            <tr style="background-color: #f9fafb; font-weight: bold;">
+              <td colspan="2" style="padding: 10px 12px; text-align: right;">Total Amount:</td>
+              <td style="padding: 10px 12px; text-align: right; color: #1e4a3a;">Rs. ${order.total}</td>
+            </tr>
+          </tfoot>
+        </table>
+        <p style="font-size: 13px; color: #6b7280; margin-top: 24px;">
+          Deliver to: ${order.shippingAddress1}, ${order.shippingCity}, ${order.shippingState} - ${order.shippingPincode}<br>
+          Phone: ${order.shippingPhone}
+        </p>
+      </div>
+    `;
+
+    if (!transporter) {
+      console.log(`\n[MOCK PAYMENT SUCCESS EMAIL] To: ${order.shippingEmail}\nSubject: ${subject}\n`);
+      return;
+    }
+
+    try {
+      await transporter.sendMail({
+        from: `"Root & Harvest" <${this.getSmtpUser()}>`,
+        to: order.shippingEmail,
+        subject,
+        html,
+      });
+      console.info(`[EMAIL_PAYMENT_SUCCESS] Sent to ${order.shippingEmail}`);
+    } catch (err) {
+      console.error(`[EMAIL_PAYMENT_ERROR] Failed to send to ${order.shippingEmail}`, err);
+    }
+  }
+
+  static async sendOrderStatusUpdateEmail(order: any, items: any[], newStatus: string) {
+    if (!order.shippingEmail) return;
+    const transporter = this.getTransporter();
+
+    let statusTitle = "Order Update";
+    let statusMessage = "Your order status has been updated.";
+    if (newStatus === "shipped") {
+      statusTitle = "Your order has been shipped!";
+      statusMessage = "Your farm-fresh items are on their way to you.";
+    } else if (newStatus === "out_for_delivery") {
+      statusTitle = "Your order is out for delivery!";
+      statusMessage = "Our delivery partner is in your area and will arrive shortly.";
+    } else if (newStatus === "delivered") {
+      return this.sendOrderDeliveredEmail(order, items);
+    } else if (newStatus === "cancelled") {
+      statusTitle = "Your order has been cancelled";
+      statusMessage = "Your order has been cancelled. If payment was completed, your refund is being processed.";
+    }
+
+    const subject = `${statusTitle} - Order ${order.orderNumber} (Root & Harvest)`;
+    const html = `
+      <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto; padding: 24px; border: 1px solid #e5e7eb; border-radius: 8px; color: #2b2b2b; background-color: #f8f5ef;">
+        <h2 style="color: #1e4a3a; font-family: serif; border-bottom: 2px solid #1e4a3a; padding-bottom: 10px; margin-top: 0; text-transform: uppercase;">Root & Harvest</h2>
+        <h3 style="color: #1e4a3a; font-family: serif;">${statusTitle}</h3>
+        <p style="font-size: 14px; line-height: 1.6; color: #374151;">Dear ${order.shippingName},</p>
+        <p style="font-size: 14px; line-height: 1.6; color: #374151;">${statusMessage}</p>
+        <div style="background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 6px; padding: 14px 16px; margin: 16px 0; font-size: 13px;">
+          <strong>Order Number:</strong> #${order.orderNumber}<br>
+          <strong>Status:</strong> <span style="text-transform: capitalize; color: #1e4a3a; font-weight: 600;">${newStatus.replace(/_/g, " ")}</span><br>
+          <strong>Total:</strong> Rs. ${order.total}<br>
+          <strong>Delivery To:</strong> ${order.shippingAddress1}, ${order.shippingCity} - ${order.shippingPincode}
+        </div>
+        <p style="font-size: 12px; color: #9ca3af; border-top: 1px solid #e5e7eb; padding-top: 14px; margin-top: 24px;">
+          Questions? Reply to this email or reach us at <a href="mailto:hello@rootandharvest.in" style="color: #1e4a3a;">hello@rootandharvest.in</a>.
+        </p>
+      </div>
+    `;
+
+    if (!transporter) {
+      console.log(`\n[MOCK STATUS EMAIL] To: ${order.shippingEmail}\nSubject: ${subject}\n`);
+      return;
+    }
+
+    try {
+      await transporter.sendMail({
+        from: `"Root & Harvest" <${this.getSmtpUser()}>`,
+        to: order.shippingEmail,
+        subject,
+        html,
+      });
+      console.info(`[EMAIL_STATUS_SUCCESS] Sent ${newStatus} email to ${order.shippingEmail}`);
+    } catch (err) {
+      console.error(`[EMAIL_STATUS_ERROR] Failed to send to ${order.shippingEmail}`, err);
+    }
+  }
 }

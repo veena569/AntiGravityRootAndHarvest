@@ -9,6 +9,8 @@ interface AuthContextType {
   isLoading: boolean;
   login: (phone: string, firebaseIdToken: string, name?: string) => Promise<boolean>;
   loginWithEmail: (email: string, code: string, name?: string) => Promise<boolean>;
+  loginWithPassword: (email: string, password: string) => Promise<{ success: boolean; error?: string; addresses?: any[] }>;
+  registerWithPassword: (data: { email: string; password: string; name: string; phone?: string }) => Promise<{ success: boolean; error?: string }>;
   loginWithPhoneOtp: (phone: string, code: string, isLoginOnly?: boolean) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
@@ -118,6 +120,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const loginWithPassword = async (email: string, password: string) => {
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+      if (res.ok && data.user) {
+        setUser(data.user);
+        return { success: true, addresses: data.addresses || [] };
+      }
+      return { success: false, error: data.error || "Failed to log in" };
+    } catch {
+      return { success: false, error: "Network error. Please try again." };
+    }
+  };
+
+  const registerWithPassword = async (regData: { email: string; password: string; name: string; phone?: string }) => {
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(regData),
+      });
+      const data = await res.json();
+      if (res.ok && data.user) {
+        setUser(data.user);
+        return { success: true };
+      }
+      return { success: false, error: data.error || "Failed to create account" };
+    } catch {
+      return { success: false, error: "Network error. Please try again." };
+    }
+  };
+
   const logout = async () => {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
@@ -129,7 +167,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, loginWithEmail, loginWithPhoneOtp, logout, refresh }}>
+    <AuthContext.Provider value={{ user, isLoading, login, loginWithEmail, loginWithPassword, registerWithPassword, loginWithPhoneOtp, logout, refresh }}>
       {children}
     </AuthContext.Provider>
   );
