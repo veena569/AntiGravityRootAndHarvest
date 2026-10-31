@@ -86,8 +86,6 @@ export const config = {
     "/saved-addresses/:path*",
     "/admin/:path*",
     "/api/admin/:path*",
-    "/api/create-order",
-    "/api/get-order",
     "/api/orders",
     "/api/addresses",
   ],

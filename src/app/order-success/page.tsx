@@ -132,6 +132,12 @@ function OrderSuccessContent() {
           <p className="text-lg text-dark/70 font-light max-w-xl mx-auto leading-relaxed">
             Honest food begins with honest roots. Your order <span className="font-mono text-forest bg-forest/5 px-2 py-1">{order.orderNumber}</span> is being carefully prepared.
           </p>
+          {order.shippingEmail && (
+            <p className="text-sm text-dark/70 font-light">
+              A confirmation email &amp; receipt have been sent to{" "}
+              <span className="font-semibold text-forest">{order.shippingEmail}</span>.
+            </p>
+          )}
         </div>
       </div>
 
@@ -152,6 +158,26 @@ function OrderSuccessContent() {
           Continue Shopping
         </Link>
       </div>
+
+      {/* Optional Guest Account Creation Prompt */}
+      {!order.userId && order.shippingEmail && (
+        <div className="bg-forest/5 border border-forest/15 p-5 rounded-xl text-center max-w-lg mx-auto space-y-2">
+          <p className="text-xs text-forest font-semibold uppercase tracking-wider">
+            Order Placed as Guest ({order.shippingEmail})
+          </p>
+          <p className="text-xs text-dark/70 font-light leading-relaxed">
+            Want to track your orders, view order history, and save addresses for next time?
+          </p>
+          <div className="pt-1">
+            <Link
+              href={`/register?email=${encodeURIComponent(order.shippingEmail)}`}
+              className="inline-block text-xs uppercase tracking-widest font-semibold text-gold hover:text-gold/80 transition-colors underline"
+            >
+              Create an Account with this Email →
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* Customer Review Invitation */}
       <div className="bg-white border border-forest/10 p-8 rounded-2xl text-center space-y-4 shadow-xs max-w-xl mx-auto">
